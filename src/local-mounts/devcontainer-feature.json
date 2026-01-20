@@ -1,6 +1,6 @@
 {
   "id": "local-mounts",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "name": "Local Development Files Mount",
   "description": "Mounts local Git, SSH, GPG, and npm configuration files into the devcontainer for seamless development authentication.",
   "documentationURL": "https://github.com/helpers4/devcontainer/tree/main/src/local-mounts",
@@ -34,7 +34,8 @@
     }
   ],
   "containerEnv": {
-    "GPG_TTY": "/dev/pts/0"
+    "GPG_TTY": "/dev/pts/0",
+    "SSH_AUTH_SOCK": "${localEnv:SSH_AUTH_SOCK}"
   },
   "installsAfter": [
     "ghcr.io/devcontainers/features/common-utils"
