@@ -11,16 +11,26 @@ This repository contains a collection of **DevContainer Features** developed and
 ```
 devcontainer-features/
 ├── src/                              # Features source code
-│   ├── git-absorb/                   # git-absorb feature
+│   ├── angular-dev/                  # Angular development environment
 │   │   ├── devcontainer-feature.json # Metadata and options
 │   │   ├── install.sh                # Installation script
 │   │   └── README.md                 # Documentation
+│   ├── git-absorb/                   # git-absorb feature
+│   │   ├── devcontainer-feature.json
+│   │   ├── install.sh
+│   │   └── README.md
+│   ├── local-mounts/                 # Local dev files mount
+│   │   ├── devcontainer-feature.json
+│   │   ├── install.sh
+│   │   └── README.md
 │   └── shell-history-per-project/    # Shell history feature
 │       ├── devcontainer-feature.json
 │       ├── install.sh
 │       └── README.md
 ├── test/                             # Tests for each feature
+│   ├── angular-dev/test.sh
 │   ├── git-absorb/test.sh
+│   ├── local-mounts/test.sh
 │   └── shell-history-per-project/test.sh
 ├── .github/
 │   ├── agents.md                     # This file
@@ -62,6 +72,37 @@ devcontainer-features/
 - Installation in `/usr/local/bin/`
 - Git subcommand integration
 
+---
+
+### 3. local-mounts (v1.0.0)
+**Description:** Mounts local Git, SSH, GPG, and npm configuration files into the devcontainer for seamless development authentication.
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `username` | string | `node` | The username in the container to mount files for |
+
+**Features:**
+- Git configuration mounting (~/.gitconfig)
+- SSH keys for Git operations and remote connections (~/.ssh)
+- GPG keys for commit signing (~/.gnupg)
+- npm authentication for private registries (~/.npmrc)
+- Configurable target username
+
+---
+
+### 4. angular-dev (v1.0.0)
+**Description:** Angular-specific development environment with port forwarding, VS Code extensions, and CLI autocompletion.
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `installCli` | boolean | `false` | Install Angular CLI globally |
+
+**Features:**
+- Port 4200 forwarding for Angular dev server
+- VS Code extensions for Angular development (7 extensions)
+- CLI autocompletion for zsh and bash
+- Optional Angular CLI installation
+
 ## 🔧 Common Technical Patterns
 
 ### Installation Scripts
@@ -87,7 +128,9 @@ Tests use:
 {
     "features": {
         "ghcr.io/helpers4/devcontainer-features/shell-history-per-project:0": {},
-        "ghcr.io/helpers4/devcontainer-features/git-absorb:0": {}
+        "ghcr.io/helpers4/devcontainer-features/git-absorb:0": {},
+        "ghcr.io/helpers4/devcontainer-features/local-mounts:1": {},
+        "ghcr.io/helpers4/devcontainer-features/angular-dev:1": {}
     }
 }
 ```
@@ -98,6 +141,8 @@ Tests use:
 # Test a specific feature
 devcontainer features test --features shell-history-per-project
 devcontainer features test --features git-absorb
+devcontainer features test --features local-mounts
+devcontainer features test --features angular-dev
 ```
 
 ## 📝 Notes for AI Agents
