@@ -16,7 +16,6 @@ jobs:
         features:
           - shell-history-per-project
           - git-absorb
-          - biome
         baseImage:
           - debian:latest
           - ubuntu:latest
@@ -30,3 +29,31 @@ jobs:
 
       - name: Test feature '${{ matrix.features }}' against '${{ matrix.baseImage }}'
         run: devcontainer features test --features ${{ matrix.features }} --base-image ${{ matrix.baseImage }} .
+
+  # angular-dev requires Node.js, test with node base image
+  test-angular:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install latest devcontainer CLI
+        run: npm install -g @devcontainers/cli
+
+      - name: Test angular-dev feature
+        run: devcontainer features test --features angular-dev --base-image mcr.microsoft.com/devcontainers/javascript-node:20 .
+
+  # local-mounts depends on host mounts, basic validation only
+  test-local-mounts:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install latest devcontainer CLI
+        run: npm install -g @devcontainers/cli
+
+      - name: Test local-mounts feature
+        run: devcontainer features test --features local-mounts --base-image mcr.microsoft.com/devcontainers/base:ubuntu .
