@@ -1,10 +1,9 @@
 # Angular Development Environment (angular-dev)
 
-Angular-specific development environment with port forwarding, VS Code extensions, and CLI autocompletion.
+Angular-specific development environment with VS Code extensions and CLI autocompletion.
 
 ## Features
 
-- **Port forwarding**: Port 4200 automatically forwarded for `ng serve`
 - **VS Code extensions**: Essential Angular development extensions pre-installed
 - **CLI autocompletion**: Tab completion for Angular CLI commands in zsh and bash
 - **Optional CLI installation**: Install Angular CLI globally if needed
@@ -17,6 +16,25 @@ Add this feature to your `devcontainer.json`:
 {
     "features": {
         "ghcr.io/helpers4/devcontainer/angular-dev:1": {}
+    }
+}
+```
+
+### With Port Forwarding (Recommended)
+
+For the best development experience, add port forwarding for the Angular dev server:
+
+```json
+{
+    "features": {
+        "ghcr.io/helpers4/devcontainer/angular-dev:1": {}
+    },
+    "forwardPorts": [4200],
+    "portsAttributes": {
+        "4200": {
+            "label": "Angular Dev Server",
+            "onAutoForward": "notify"
+        }
     }
 }
 ```
@@ -46,6 +64,13 @@ If you want to install Angular CLI as part of this feature:
         "ghcr.io/helpers4/devcontainer/angular-dev:1": {
             "installCli": true
         }
+    },
+    "forwardPorts": [4200],
+    "portsAttributes": {
+        "4200": {
+            "label": "Angular Dev Server",
+            "onAutoForward": "notify"
+        }
     }
 }
 ```
@@ -70,9 +95,23 @@ If you want to install Angular CLI as part of this feature:
 
 ## Port Configuration
 
-| Port | Purpose | Auto-forward |
-|------|---------|--------------|
-| 4200 | Angular Dev Server | Yes (notify) |
+The Angular dev server runs on port 4200 by default. Since DevContainer features cannot configure port forwarding directly, you need to add it to your `devcontainer.json`:
+
+```json
+{
+    "forwardPorts": [4200],
+    "portsAttributes": {
+        "4200": {
+            "label": "Angular Dev Server",
+            "onAutoForward": "notify"
+        }
+    }
+}
+```
+
+| Port | Purpose | Recommended Action |
+|------|---------|-------------------|
+| 4200 | Angular Dev Server | Add to `forwardPorts` in devcontainer.json |
 
 ## CLI Autocompletion
 
@@ -120,6 +159,7 @@ If `ng` command is not available:
 - Check that Angular CLI is installed: `which ng`
 
 ### Port 4200 not accessible
+- Ensure `forwardPorts: [4200]` is in your `devcontainer.json`
 - Check if another process is using port 4200
 - Verify the dev server is running: `ng serve`
 - Check VS Code's Ports panel for forwarding status

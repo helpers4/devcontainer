@@ -1,10 +1,22 @@
-# DevContainer by helpers4
+# DevContainer Features by helpers4
 
 This repository contains a collection of DevContainer Features developed and maintained by helpers4.
 
 Published at: `ghcr.io/helpers4/devcontainer/<feature-name>`
 
 ## Features
+
+### angular-dev
+
+Angular-specific development environment with VS Code extensions and CLI autocompletion.
+
+**Key benefits:**
+- Essential VS Code extensions for Angular development
+- CLI autocompletion for zsh and bash
+- Optional Angular CLI installation
+- Ready-to-use Angular development setup
+
+[📖 Documentation](./src/angular-dev/README.md)
 
 ### shell-history-per-project
 
@@ -32,6 +44,18 @@ Installs git-absorb, a tool that automatically absorbs staged changes into their
 
 [📖 Documentation](./src/git-absorb/README.md)
 
+### local-mounts
+
+Mounts local Git, SSH, GPG, and npm configuration files into the devcontainer for seamless development authentication.
+
+**Key benefits:**
+- Git configuration available inside container
+- SSH keys for Git operations and remote connections
+- GPG keys for commit signing
+- npm authentication for private registries
+
+[📖 Documentation](./src/local-mounts/README.md)
+
 ## Usage
 
 Features from this repository are available via GitHub Container Registry. Reference them in your `devcontainer.json`:
@@ -39,8 +63,10 @@ Features from this repository are available via GitHub Container Registry. Refer
 ```json
 {
     "features": {
-        "ghcr.io/helpers4/devcontainer/shell-history-per-project:0": {},
-        "ghcr.io/helpers4/devcontainer/git-absorb:0": {}
+        "ghcr.io/helpers4/devcontainer/angular-dev:1": {},
+        "ghcr.io/helpers4/devcontainer/shell-history-per-project:1": {},
+        "ghcr.io/helpers4/devcontainer/git-absorb:1": {},
+        "ghcr.io/helpers4/devcontainer/local-mounts:1": {}
     }
 }
 ```
@@ -49,8 +75,10 @@ Features from this repository are available via GitHub Container Registry. Refer
 
 | Feature | Description | Documentation |
 |---------|-------------|---------------|
+| [angular-dev](./src/angular-dev) | Angular development environment with extensions and CLI autocompletion | [README](./src/angular-dev/README.md) |
 | [shell-history-per-project](./src/shell-history-per-project) | Per-project shell history persistence with multi-shell auto-detection | [README](./src/shell-history-per-project/README.md) |
 | [git-absorb](./src/git-absorb) | Automatic absorption of staged changes into logical commits | [README](./src/git-absorb/README.md) |
+| [local-mounts](./src/local-mounts) | Mount local Git, SSH, GPG, and npm config into devcontainer | [README](./src/local-mounts/README.md) |
 
 ## Development
 
@@ -61,11 +89,29 @@ This repository follows the [DevContainer Features specification](https://contai
 ```
 .
 ├── src/
+│   ├── angular-dev/
+│   │   ├── devcontainer-feature.json
+│   │   ├── install.sh
+│   │   └── README.md
+│   ├── git-absorb/
+│   │   ├── devcontainer-feature.json
+│   │   ├── install.sh
+│   │   └── README.md
+│   ├── local-mounts/
+│   │   ├── devcontainer-feature.json
+│   │   ├── install.sh
+│   │   └── README.md
 │   └── shell-history-per-project/
 │       ├── devcontainer-feature.json
 │       ├── install.sh
 │       └── README.md
 ├── test/
+│   ├── angular-dev/
+│   │   └── test.sh
+│   ├── git-absorb/
+│   │   └── test.sh
+│   ├── local-mounts/
+│   │   └── test.sh
 │   └── shell-history-per-project/
 │       └── test.sh
 └── README.md

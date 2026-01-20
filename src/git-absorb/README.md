@@ -17,7 +17,7 @@ Add this feature to your `devcontainer.json`:
 ```json
 {
     "features": {
-        "ghcr.io/helpers4/devcontainer/git-absorb:0": {}
+        "ghcr.io/helpers4/devcontainer/git-absorb:1": {}
     }
 }
 ```
@@ -35,7 +35,7 @@ Add this feature to your `devcontainer.json`:
 ```json
 {
     "features": {
-        "ghcr.io/helpers4/devcontainer/git-absorb:0": {}
+        "ghcr.io/helpers4/devcontainer/git-absorb:1": {}
     }
 }
 ```
@@ -45,7 +45,7 @@ Add this feature to your `devcontainer.json`:
 ```json
 {
     "features": {
-        "ghcr.io/helpers4/devcontainer/git-absorb:0": {
+        "ghcr.io/helpers4/devcontainer/git-absorb:1": {
             "version": "0.6.11"
         }
     }
