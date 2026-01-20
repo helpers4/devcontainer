@@ -27,14 +27,5 @@
         "cyrilletuzi.angular-schematics"
       ]
     }
-  },
-  "forwardPorts": [
-    4200
-  ],
-  "portsAttributes": {
-    "4200": {
-      "label": "Angular Dev Server",
-      "onAutoForward": "notify"
-    }
   }
 }
