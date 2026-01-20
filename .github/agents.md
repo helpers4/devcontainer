@@ -1,15 +1,15 @@
-# Agents.md - DevContainer Features Project Documentation
+# Agents.md - DevContainer Project Documentation
 
 **Last updated:** January 20, 2026
 
 ## 📋 Project Summary
 
-This repository contains a collection of **DevContainer Features** developed and maintained by **helpers4**. These features are published on GitHub Container Registry (`ghcr.io/helpers4/devcontainer-features/`).
+This repository (`helpers4/devcontainer`) contains a collection of **DevContainer Features** developed and maintained by **helpers4**. These features are published on GitHub Container Registry (`ghcr.io/helpers4/devcontainer/`).
 
 ## 🏗️ Project Structure
 
 ```
-devcontainer-features/
+devcontainer/
 ├── src/                              # Features source code
 │   ├── angular-dev/                  # Angular development environment
 │   │   ├── devcontainer-feature.json # Metadata and options
@@ -127,10 +127,10 @@ Tests use:
 ```json
 {
     "features": {
-        "ghcr.io/helpers4/devcontainer-features/shell-history-per-project:0": {},
-        "ghcr.io/helpers4/devcontainer-features/git-absorb:0": {},
-        "ghcr.io/helpers4/devcontainer-features/local-mounts:1": {},
-        "ghcr.io/helpers4/devcontainer-features/angular-dev:1": {}
+        "ghcr.io/helpers4/devcontainer/shell-history-per-project:0": {},
+        "ghcr.io/helpers4/devcontainer/git-absorb:0": {},
+        "ghcr.io/helpers4/devcontainer/local-mounts:1": {},
+        "ghcr.io/helpers4/devcontainer/angular-dev:1": {}
     }
 }
 ```

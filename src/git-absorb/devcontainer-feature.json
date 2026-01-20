@@ -3,7 +3,7 @@
   "id": "git-absorb",
   "name": "git-absorb",
   "description": "Installs git-absorb, a tool to automatically absorb staged changes into their logical commits. Like 'git commit --fixup' but automatic.",
-  "documentationURL": "https://github.com/helpers4/devcontainer-features/tree/main/src/git-absorb",
+  "documentationURL": "https://github.com/helpers4/devcontainer/tree/main/src/git-absorb",
   "options": {
     "version": {
       "type": "string",

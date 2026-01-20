@@ -16,7 +16,7 @@ Add this feature to your `devcontainer.json`:
 ```json
 {
     "features": {
-        "ghcr.io/helpers4/devcontainer-features/local-mounts:1": {}
+        "ghcr.io/helpers4/devcontainer/local-mounts:1": {}
     }
 }
 ```
@@ -28,7 +28,7 @@ If your container uses a different username than `node`:
 ```json
 {
     "features": {
-        "ghcr.io/helpers4/devcontainer-features/local-mounts:1": {
+        "ghcr.io/helpers4/devcontainer/local-mounts:1": {
             "username": "vscode"
         }
     }
@@ -66,7 +66,7 @@ For best results, ensure SSH agent forwarding is enabled. Add to your `devcontai
 ```json
 {
     "features": {
-        "ghcr.io/helpers4/devcontainer-features/local-mounts:1": {}
+        "ghcr.io/helpers4/devcontainer/local-mounts:1": {}
     },
     "mounts": [],
     "initializeCommand": "ssh-add"

@@ -1,6 +1,8 @@
-# DevContainer Features by helpers4
+# DevContainer by helpers4
 
 This repository contains a collection of DevContainer Features developed and maintained by helpers4.
+
+Published at: `ghcr.io/helpers4/devcontainer/<feature-name>`
 
 ## Features
 
@@ -37,8 +39,8 @@ Features from this repository are available via GitHub Container Registry. Refer
 ```json
 {
     "features": {
-        "ghcr.io/helpers4/devcontainer-features/shell-history-per-project:0": {},
-        "ghcr.io/helpers4/devcontainer-features/git-absorb:0": {}
+        "ghcr.io/helpers4/devcontainer/shell-history-per-project:0": {},
+        "ghcr.io/helpers4/devcontainer/git-absorb:0": {}
     }
 }
 ```

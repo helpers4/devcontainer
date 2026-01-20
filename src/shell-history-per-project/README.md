@@ -17,7 +17,7 @@ Add this feature to your `devcontainer.json`:
 ```json
 {
     "features": {
-        "ghcr.io/helpers4/devcontainer-features/shell-history-per-project:1": {}
+        "ghcr.io/helpers4/devcontainer/shell-history-per-project:1": {}
     }
 }
 ```
@@ -37,7 +37,7 @@ Add this feature to your `devcontainer.json`:
 ```json
 {
     "features": {
-        "ghcr.io/helpers4/devcontainer-features/shell-history-per-project:1": {}
+        "ghcr.io/helpers4/devcontainer/shell-history-per-project:1": {}
     }
 }
 ```
@@ -47,7 +47,7 @@ Add this feature to your `devcontainer.json`:
 ```json
 {
     "features": {
-        "ghcr.io/helpers4/devcontainer-features/shell-history-per-project:1": {
+        "ghcr.io/helpers4/devcontainer/shell-history-per-project:1": {
             "shell": "bash",
             "historyDirectory": "/workspaces/.custom-history",
             "maxHistorySize": "50000"
@@ -63,7 +63,7 @@ For persistent history across different development sessions, you might want to 
 ```json
 {
     "features": {
-        "ghcr.io/helpers4/devcontainer-features/shell-history-per-project:1": {
+        "ghcr.io/helpers4/devcontainer/shell-history-per-project:1": {
             "historyDirectory": "/workspaces/.shell-history"
         }
     },

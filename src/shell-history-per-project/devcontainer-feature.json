@@ -3,7 +3,7 @@
   "id": "shell-history-per-project",
   "name": "Shell History Per Project",
   "description": "Persist shell history per project by automatically detecting and configuring all available shells (zsh, bash, fish). Supports auto-detection or manual shell selection.",
-  "documentationURL": "https://github.com/helpers4/devcontainer-features/tree/main/src/shell-history-per-project",
+  "documentationURL": "https://github.com/helpers4/devcontainer/tree/main/src/shell-history-per-project",
   "options": {
     "shell": {
       "type": "string",

@@ -16,7 +16,7 @@ Add this feature to your `devcontainer.json`:
 ```json
 {
     "features": {
-        "ghcr.io/helpers4/devcontainer-features/angular-dev:1": {}
+        "ghcr.io/helpers4/devcontainer/angular-dev:1": {}
     }
 }
 ```
@@ -28,7 +28,7 @@ If you want to install Angular CLI as part of this feature:
 ```json
 {
     "features": {
-        "ghcr.io/helpers4/devcontainer-features/angular-dev:1": {
+        "ghcr.io/helpers4/devcontainer/angular-dev:1": {
             "installCli": true
         }
     }
@@ -43,7 +43,7 @@ If you want to install Angular CLI as part of this feature:
         "ghcr.io/devcontainers/features/node:1": {
             "version": "20"
         },
-        "ghcr.io/helpers4/devcontainer-features/angular-dev:1": {
+        "ghcr.io/helpers4/devcontainer/angular-dev:1": {
             "installCli": true
         }
     }
