@@ -6,6 +6,19 @@ Published at: `ghcr.io/helpers4/devcontainer/<feature-name>`
 
 ## Features
 
+### package-auto-install
+
+Automatically detects and runs npm/yarn/pnpm install in non-interactive mode after container creation. Handles corepack setup for Node 24+ and intelligently detects the package manager from package.json or lockfiles.
+
+**Key benefits:**
+- Automatic package manager detection from package.json or lockfiles
+- Corepack support for Node 24+ (auto-installs if needed)
+- Non-interactive mode (CI=true) prevents prompts
+- Smart command selection (npm ci, pnpm --frozen-lockfile, yarn --immutable)
+- Eliminates need for manual postCreateCommand
+
+[📖 Documentation](./src/package-auto-install/README.md)
+
 ### angular-dev
 
 Angular-specific development environment with VS Code extensions and CLI autocompletion.
@@ -46,13 +59,14 @@ Installs git-absorb, a tool that automatically absorbs staged changes into their
 
 ### local-mounts
 
-Mounts local Git, SSH, GPG, and npm configuration files into the devcontainer for seamless development authentication.
+Mounts local Git, SSH, GPG, and npm configuration files into the devcontainer for seamless development authentication. Now with proper SSH agent forwarding support.
 
 **Key benefits:**
 - Git configuration available inside container
-- SSH keys for Git operations and remote connections
+- SSH keys and SSH agent forwarding configured automatically
 - GPG keys for commit signing
 - npm authentication for private registries
+- Fixed SSH_AUTH_SOCK handling for devcontainer compatibility
 
 [📖 Documentation](./src/local-mounts/README.md)
 
@@ -62,7 +76,8 @@ Features from this repository are available via GitHub Container Registry. Refer
 
 ```json
 {
-    "features": {
+    "features": {package-auto-install:1": {},
+        "ghcr.io/helpers4/devcontainer/
         "ghcr.io/helpers4/devcontainer/angular-dev:1": {},
         "ghcr.io/helpers4/devcontainer/shell-history-per-project:1": {},
         "ghcr.io/helpers4/devcontainer/git-absorb:1": {},
@@ -74,7 +89,8 @@ Features from this repository are available via GitHub Container Registry. Refer
 ## Available Features
 
 | Feature | Description | Documentation |
-|---------|-------------|---------------|
+|--package-auto-install](./src/package-auto-install) | Automatic package installation with corepack support for Node 24+ | [README](./src/package-auto-install/README.md) |
+| [-------|-------------|---------------|
 | [angular-dev](./src/angular-dev) | Angular development environment with extensions and CLI autocompletion | [README](./src/angular-dev/README.md) |
 | [shell-history-per-project](./src/shell-history-per-project) | Per-project shell history persistence with multi-shell auto-detection | [README](./src/shell-history-per-project/README.md) |
 | [git-absorb](./src/git-absorb) | Automatic absorption of staged changes into logical commits | [README](./src/git-absorb/README.md) |
@@ -87,8 +103,10 @@ This repository follows the [DevContainer Features specification](https://contai
 ### Repository Structure
 
 ```
-.
-├── src/
+.package-auto-install/
+│   │   ├── devcontainer-feature.json
+│   │   ├── install.sh
+│   │   └── README.md
 │   ├── angular-dev/
 │   │   ├── devcontainer-feature.json
 │   │   ├── install.sh
@@ -106,6 +124,10 @@ This repository follows the [DevContainer Features specification](https://contai
 │       ├── install.sh
 │       └── README.md
 ├── test/
+│   ├── package-auto-install/
+│   │   └── test.sh── install.sh
+│       └── README.md
+├── test/
 │   ├── angular-dev/
 │   │   └── test.sh
 │   ├── git-absorb/
@@ -114,7 +136,8 @@ This repository follows the [DevContainer Features specification](https://contai
 │   │   └── test.sh
 │   └── shell-history-per-project/
 │       └── test.sh
-└── README.md
+└── README.mdpackage-auto-install
+devcontainer features test --features 
 ```
 
 ### Testing

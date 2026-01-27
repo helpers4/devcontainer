@@ -1,0 +1,55 @@
+{
+  "id": "package-auto-install",
+  "version": "1.0.0",
+  "name": "Automatic Package Installation",
+  "description": "Automatically detects and runs npm/yarn/pnpm install in non-interactive mode after container creation.",
+  "documentationURL": "https://github.com/helpers4/devcontainer/tree/main/src/package-auto-install",
+  "options": {
+    "command": {
+      "type": "string",
+      "enum": [
+        "install",
+        "ci",
+        "auto"
+      ],
+      "default": "auto",
+      "description": "Installation command to use: 'install', 'ci' (npm ci/pnpm install --frozen-lockfile), or 'auto' to detect"
+    },
+    "packageManager": {
+      "type": "string",
+      "enum": [
+        "auto",
+        "npm",
+        "yarn",
+        "pnpm"
+      ],
+      "default": "auto",
+      "description": "Package manager to use. 'auto' detects based on lockfile"
+    },
+    "workingDirectory": {
+      "type": "string",
+      "default": "/workspaces/${localWorkspaceFolderBasename}",
+      "description": "Directory where to run the install command"
+    },
+    "skipIfNodeModulesExists": {
+      "type": "boolean",
+      "default": false,
+      "description": "Skip installation if node_modules directory already exists"
+    },
+    "additionalArgs": {
+      "type": "string",
+      "default": "",
+      "description": "Additional arguments to pass to the install command"
+    }
+  },
+  "postCreateCommand": "/usr/local/bin/devcontainer-package-install",
+  "containerEnv": {
+    "CI": "true"
+  },
+  "installsAfter": [
+    "ghcr.io/devcontainers/features/common-utils",
+    "ghcr.io/devcontainers/features/node",
+    "ghcr.io/helpers4/devcontainer/angular-dev",
+    "ghcr.io/helpers4/devcontainer/local-mounts"
+  ]
+}
