@@ -1,0 +1,50 @@
+{
+  "id": "typescript-dev",
+  "version": "1.0.0",
+  "name": "TypeScript Development Environment",
+  "description": "Complete TypeScript/JavaScript development setup with Git integration, AI assistance, Markdown support, and editor enhancements.",
+  "documentationURL": "https://github.com/helpers4/devcontainer/tree/main/src/typescript-dev",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        // Core TypeScript & JavaScript
+        "ms-vscode.vscode-typescript-next",
+        "guilhermetheodoro.typescript-indexing",
+        "christian-kohler.npm-intellisense",
+        "christian-kohler.path-intellisense",
+        // Git & Version Control
+        "eamodio.gitlens",
+        "donjayamanne.githistory",
+        "gxl.git-graph-3",
+        "github.vscode-pull-request-github",
+        "github.vscode-github-actions",
+        "vivaxy.vscode-conventional-commits",
+        // AI Assistant
+        "github.copilot",
+        "github.copilot-chat",
+        // Editor Enhancements
+        "cardinal90.multi-cursor-case-preserve",
+        "moshfeu.compare-folders",
+        "xyz.local-history",
+        // Markdown and Documentation
+        "yzhang.markdown-all-in-one",
+        "davidanson.vscode-markdownlint",
+        "bierner.markdown-mermaid",
+        // File Format Support
+        "redhat.vscode-yaml",
+        "ms-vscode.vscode-json",
+        "mechatroner.rainbow-csv"
+      ],
+      "settings": {
+        "editor.formatOnSave": true,
+        "editor.codeActionsOnSave": {
+          "source.fixAll": "explicit"
+        },
+        "javascript.preferences.useAliasesForRenames": false,
+        "javascript.updateImportsOnFileMove.enabled": "always",
+        "typescript.preferences.useAliasesForRenames": false,
+        "typescript.updateImportsOnFileMove.enabled": "always"
+      }
+    }
+  }
+}
