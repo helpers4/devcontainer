@@ -50,6 +50,7 @@
     "ghcr.io/devcontainers/features/common-utils",
     "ghcr.io/devcontainers/features/node",
     "ghcr.io/helpers4/devcontainer/angular-dev",
+    "ghcr.io/helpers4/devcontainer/vite-plus",
     "ghcr.io/helpers4/devcontainer/local-mounts"
   ]
 }

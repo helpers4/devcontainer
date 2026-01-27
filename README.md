@@ -6,6 +6,20 @@ Published at: `ghcr.io/helpers4/devcontainer/<feature-name>`
 
 ## Features
 
+### vite-plus
+
+Complete Vite+ toolchain setup with VS Code extensions (Oxc, Vitest), optimized configuration, and optional global CLI tools. Perfect for modern web development with React, Vue, Svelte, and more.
+
+**Key benefits:**
+- Pre-configured Oxc formatter/linter (100x faster than ESLint)
+- Vitest test explorer integration
+- Smart defaults for Vite+ development
+- Global Oxc CLI installation option
+- Project setup helper command
+- Supports all Vite-compatible frameworks
+
+[📖 Documentation](./src/vite-plus/README.md)
+
 ### package-auto-install
 
 Automatically detects and runs npm/yarn/pnpm install in non-interactive mode after container creation. Handles corepack setup for Node 24+ and intelligently detects the package manager from package.json or lockfiles.
@@ -76,8 +90,9 @@ Features from this repository are available via GitHub Container Registry. Refer
 
 ```json
 {
-    "features": {package-auto-install:1": {},
-        "ghcr.io/helpers4/devcontainer/
+    "features": {
+        "ghcr.io/helpers4/devcontainer/vite-plus:1": {},
+        "ghcr.io/helpers4/devcontainer/package-auto-install:1": {},
         "ghcr.io/helpers4/devcontainer/angular-dev:1": {},
         "ghcr.io/helpers4/devcontainer/shell-history-per-project:1": {},
         "ghcr.io/helpers4/devcontainer/git-absorb:1": {},
@@ -89,8 +104,9 @@ Features from this repository are available via GitHub Container Registry. Refer
 ## Available Features
 
 | Feature | Description | Documentation |
-|--package-auto-install](./src/package-auto-install) | Automatic package installation with corepack support for Node 24+ | [README](./src/package-auto-install/README.md) |
-| [-------|-------------|---------------|
+|---------|-------------|---------------|
+| [vite-plus](./src/vite-plus) | Complete Vite+ toolchain with Oxc, Vitest, and VS Code integration | [README](./src/vite-plus/README.md) |
+| [package-auto-install](./src/package-auto-install) | Automatic package installation with corepack support for Node 24+ | [README](./src/package-auto-install/README.md) |
 | [angular-dev](./src/angular-dev) | Angular development environment with extensions and CLI autocompletion | [README](./src/angular-dev/README.md) |
 | [shell-history-per-project](./src/shell-history-per-project) | Per-project shell history persistence with multi-shell auto-detection | [README](./src/shell-history-per-project/README.md) |
 | [git-absorb](./src/git-absorb) | Automatic absorption of staged changes into logical commits | [README](./src/git-absorb/README.md) |

@@ -1,0 +1,74 @@
+{
+  "id": "vite-plus",
+  "version": "1.0.0",
+  "name": "Vite+ Development Environment",
+  "description": "Complete Vite+ toolchain setup with VS Code extensions, Oxc formatter/linter, Vitest, and optimized configuration.",
+  "documentationURL": "https://github.com/helpers4/devcontainer/tree/main/src/vite-plus",
+  "options": {
+    "installVite": {
+      "type": "boolean",
+      "default": true,
+      "description": "Install Vite CLI globally"
+    },
+    "installVitest": {
+      "type": "boolean",
+      "default": true,
+      "description": "Install Vitest CLI globally"
+    },
+    "installVitePlus": {
+      "type": "boolean",
+      "default": false,
+      "description": "Install Vite+ unified CLI globally (currently in early access)"
+    },
+    "installOxc": {
+      "type": "boolean",
+      "default": true,
+      "description": "Install Oxc CLI globally for linting and formatting"
+    },
+    "enableExperimentalFormatter": {
+      "type": "boolean",
+      "default": true,
+      "description": "Enable experimental Oxc formatter in VS Code settings"
+    }
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "oxc.oxc-vscode",
+        "vitest.explorer"
+      ],
+      "settings": {
+        "oxc.enable": true,
+        "oxc.lint.enable": true,
+        "oxc.fmt.enable": true,
+        "oxc.fmt.experimental": true,
+        "editor.defaultFormatter": "oxc.oxc-vscode",
+        "editor.formatOnSave": true,
+        "editor.codeActionsOnSave": {
+          "source.fixAll.oxc": "explicit"
+        },
+        "[typescript]": {
+          "editor.defaultFormatter": "oxc.oxc-vscode"
+        },
+        "[javascript]": {
+          "editor.defaultFormatter": "oxc.oxc-vscode"
+        },
+        "[typescriptreact]": {
+          "editor.defaultFormatter": "oxc.oxc-vscode"
+        },
+        "[javascriptreact]": {
+          "editor.defaultFormatter": "oxc.oxc-vscode"
+        },
+        "[json]": {
+          "editor.defaultFormatter": "oxc.oxc-vscode"
+        },
+        "vitest.enable": true,
+        "vitest.commandLine": "npx vitest"
+      }
+    }
+  },
+  "installsAfter": [
+    "ghcr.io/devcontainers/features/node",
+    "ghcr.io/devcontainers/features/common-utils"
+  ]
+}
