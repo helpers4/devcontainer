@@ -57,7 +57,7 @@ The feature automatically configures these environment variables:
 
 | Variable | Value | Purpose |
 |----------|-------|---------|
-| `SSH_AUTH_SOCK` | `${localEnv:SSH_AUTH_SOCK}` | SSH agent forwarding |
+| `SSH_AUTH_SOCK` | `/ssh-agent` | SSH agent forwarding |
 | `GPG_TTY` | `/dev/pts/0` | GPG commit signing |
 
 ## Prerequisites
