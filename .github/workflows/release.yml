@@ -4,20 +4,20 @@ on:
   workflow_dispatch:
   push:
     tags:
-      - 'v*'
+      - "v*"
 
 jobs:
   deploy:
     if: ${{ github.ref_type == 'tag'}}
     runs-on: ubuntu-latest
     permissions:
-      contents: write  # Need write permission to create feature tags
+      contents: write # Need write permission to create feature tags
       packages: write
 
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Fetch full history for proper git operations
+          fetch-depth: 0 # Fetch full history for proper git operations
 
       - name: Configure Git
         run: |
@@ -35,7 +35,7 @@ jobs:
         uses: devcontainers/action@v1
         with:
           publish-features: "true"
-          base-path-to-features: "./src"
+          base-path-to-features: "./features"
           generate-docs: "true"
 
         env:

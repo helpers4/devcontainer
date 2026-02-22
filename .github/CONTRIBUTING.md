@@ -69,8 +69,8 @@ pnpm typecheck
 ## Project Structure
 
 Each repository follows a consistent structure:
-- `src/` or `helpers/` - Source code
-- `tests/` - Test files
+- `features/` - Features source code
+- `test/` - Test files
 - `build/` - Build output (generated)
 - `.github/` - GitHub configuration
 - `docs/` - Documentation

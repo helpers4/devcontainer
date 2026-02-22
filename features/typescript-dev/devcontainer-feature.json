@@ -3,7 +3,7 @@
   "version": "1.0.4",
   "name": "TypeScript Development Environment",
   "description": "Complete TypeScript/JavaScript development setup with Git integration, AI assistance, Markdown support, and editor enhancements.",
-  "documentationURL": "https://github.com/helpers4/devcontainer/tree/main/src/typescript-dev",
+  "documentationURL": "https://github.com/helpers4/devcontainer/tree/main/features/typescript-dev",
   "customizations": {
     "vscode": {
       "extensions": [
