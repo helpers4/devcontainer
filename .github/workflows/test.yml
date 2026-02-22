@@ -14,6 +14,14 @@ jobs:
     strategy:
       matrix:
         include:
+          # essential-dev - works on any base image
+          - features: essential-dev
+            baseImage: debian:latest
+          - features: essential-dev
+            baseImage: ubuntu:latest
+          - features: essential-dev
+            baseImage: mcr.microsoft.com/devcontainers/base:ubuntu
+
           # shell-history-per-project - works on any base image
           - features: shell-history-per-project
             baseImage: debian:latest
@@ -43,7 +51,8 @@ jobs:
             baseImage: mcr.microsoft.com/devcontainers/typescript-node:20
 
           # typescript-dev - requires VS Code (extensions only, no install.sh logic)
-          - features: typescript-dev
+          # Tested with essential-dev as it's a dependency
+          - features: essential-dev,typescript-dev
             baseImage: mcr.microsoft.com/devcontainers/typescript-node:20
 
           # auto-header - works on any base image with bash and python3

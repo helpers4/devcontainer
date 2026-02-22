@@ -84,18 +84,30 @@ Mounts local Git, SSH, GPG, and npm configuration files into the devcontainer fo
 
 [📖 Documentation](./features/local-mounts/README.md)
 
-### typescript-dev
+### essential-dev
 
-Complete TypeScript/JavaScript development setup with Git integration, AI assistance, Markdown support, and essential editor enhancements. Perfect base for all TypeScript/JavaScript projects.
+Core development environment with Git integration, GitHub Copilot, Markdown support, and essential editor enhancements. Perfect base for all development projects.
 
 **Key benefits:**
-- Latest TypeScript with indexing and import management
 - Git integration with history, graph visualization, and PR support
 - GitHub Copilot for AI-powered code assistance
 - Complete Markdown support with preview and linting
 - Multi-cursor, code comparison, and local file history
-- YAML, JSON, CSV file format support out-of-the-box
+- File format support (YAML, JSON, CSV, XML, Makefile)
 - Works out-of-the-box with zero configuration
+
+[📖 Documentation](./features/essential-dev/README.md)
+
+### typescript-dev
+
+TypeScript/JavaScript development setup with indexing, import management, HTML/CSS intelligence, and web tools. Built on top of `essential-dev` for Git, Copilot, and editor enhancements.
+
+**Key benefits:**
+- Latest TypeScript with indexing and import management
+- HTML and CSS intelligence with auto-rename
+- Automatic import/export management and path aliases
+- Web development ready with code generation utilities
+- Requires `essential-dev` for core tools
 
 [📖 Documentation](./features/typescript-dev/README.md)
 
@@ -120,6 +132,7 @@ Features from this repository are available via GitHub Container Registry. Refer
 ```json
 {
     "features": {
+        "ghcr.io/helpers4/devcontainer/essential-dev:1": {},
         "ghcr.io/helpers4/devcontainer/vite-plus:1": {},
         "ghcr.io/helpers4/devcontainer/package-auto-install:1": {},
         "ghcr.io/helpers4/devcontainer/typescript-dev:1": {},
@@ -138,10 +151,11 @@ Features from this repository are available via GitHub Container Registry. Refer
 
 | Feature | Description | Documentation |
 |---------|-------------|---------------|
+| [essential-dev](./features/essential-dev) | Core dev environment with Git, Copilot, Markdown, and editor tools | [README](./features/essential-dev/README.md) |
 | [vuto-header](./features/auto-header) | Automatic file headers with customizable templates (simple or custom) | [README](./features/auto-header/README.md) |
 | [aite-plus](./features/vite-plus) | Complete Vite+ toolchain with Oxc, Vitest, and VS Code integration | [README](./features/vite-plus/README.md) |
 | [package-auto-install](./features/package-auto-install) | Automatic package installation with corepack support for Node 24+ | [README](./features/package-auto-install/README.md) |
-| [typescript-dev](./features/typescript-dev) | Complete TypeScript/JavaScript dev environment with Git, AI, and Markdown support | [README](./features/typescript-dev/README.md) |
+| [typescript-dev](./features/typescript-dev) | TypeScript/JavaScript dev with indexing and web tools (requires essential-dev) | [README](./features/typescript-dev/README.md) |
 | [angular-dev](./features/angular-dev) | Angular development environment with extensions and CLI autocompletion | [README](./features/angular-dev/README.md) |
 | [shell-history-per-project](./features/shell-history-per-project) | Per-project shell history persistence with multi-shell auto-detection | [README](./features/shell-history-per-project/README.md) |
 | [git-absorb](./features/git-absorb) | Automatic absorption of staged changes into logical commits | [README](./features/git-absorb/README.md) |
