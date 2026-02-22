@@ -51,8 +51,8 @@ jobs:
             baseImage: mcr.microsoft.com/devcontainers/typescript-node:20
 
           # typescript-dev - requires VS Code (extensions only, no install.sh logic)
-          # Tested with essential-dev as it's a dependency
-          - features: essential-dev,typescript-dev
+          # Will automatically install essential-dev via installsAfter dependency
+          - features: typescript-dev
             baseImage: mcr.microsoft.com/devcontainers/typescript-node:20
 
           # auto-header - works on any base image with bash and python3
