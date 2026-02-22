@@ -1,9 +1,12 @@
 {
   "id": "typescript-dev",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "name": "TypeScript Development Environment",
-  "description": "Complete TypeScript/JavaScript development setup with Git integration, AI assistance, Markdown support, and editor enhancements.",
+  "description": "TypeScript/JavaScript development setup with indexing, import management, HTML/CSS intelligence, and web tools. Requires essential-dev for Git, Copilot, and editor enhancements.",
   "documentationURL": "https://github.com/helpers4/devcontainer/tree/main/features/typescript-dev",
+  "installsAfter": [
+    "ghcr.io/helpers4/devcontainer/essential-dev"
+  ],
   "customizations": {
     "vscode": {
       "extensions": [
@@ -15,32 +18,6 @@
         "YoavBls.pretty-ts-errors",
         "steoates.autoimport",
         "stringham.move-ts",
-        // Git & Version Control
-        "eamodio.gitlens",
-        "donjayamanne.githistory",
-        "gxl.git-graph-3",
-        "github.vscode-pull-request-github",
-        "github.vscode-github-actions",
-        "vivaxy.vscode-conventional-commits",
-        // AI Assistant
-        "github.copilot",
-        "github.copilot-chat",
-        // Editor Enhancements
-        "cardinal90.multi-cursor-case-preserve",
-        "moshfeu.compare-folders",
-        "xyz.local-history",
-        "editorconfig.editorconfig",
-        // Markdown and Documentation
-        "yzhang.markdown-all-in-one",
-        "davidanson.vscode-markdownlint",
-        "bierner.markdown-mermaid",
-        // File Format Support
-        "redhat.vscode-yaml",
-        "redhat.vscode-xml",
-        "ms-vscode.vscode-json",
-        "adamraichu.zip-viewer",
-        "mechatroner.rainbow-csv",
-        "ms-vscode.makefile-tools",
         // HTML & CSS Intelligence
         "ecmel.vscode-html-css",
         "formulahendry.auto-rename-tag",
@@ -48,50 +25,13 @@
         "quicktype.quicktype"
       ],
       "settings": {
-        // Editor Configuration
-        "editor.formatOnSave": true,
-        "editor.codeActionsOnSave": {
-          "source.fixAll": "explicit"
-        },
-        // Terminal Configuration
-        "terminal.integrated.defaultProfile.linux": "zsh",
-        "terminal.integrated.profiles.linux": {
-          "bash": {
-            "path": "bash",
-            "icon": "terminal-bash"
-          },
-          "zsh": {
-            "path": "zsh",
-            "icon": "terminal-zsh"
-          }
-        },
-        // Search Configuration
-        "search.exclude": {
-          ".history": true,
-          ".copilot": true
-        },
         // TypeScript & JavaScript
         "javascript.preferences.useAliasesForRenames": false,
         "javascript.updateImportsOnFileMove.enabled": "always",
         "typescript.preferences.useAliasesForRenames": false,
         "typescript.updateImportsOnFileMove.enabled": "always",
         // Package Manager
-        "npm.packageManager": "pnpm",
-        // Markdown Configuration
-        "markdown.extension.toc.levels": "2..6",
-        "markdown.extension.preview.autoShowPreviewToSide": true,
-        "[markdown]": {
-          "editor.wordWrap": "on",
-          "editor.rulers": [
-            80,
-            120
-          ],
-          "editor.quickSuggestions": {
-            "comments": "off",
-            "strings": "off",
-            "other": "off"
-          }
-        }
+        "npm.packageManager": "pnpm"
       }
     }
   }

@@ -1,113 +1,60 @@
 # TypeScript Development Environment (typescript-dev)
 
-Complete TypeScript/JavaScript development setup with Git integration, AI assistance, Markdown support, and essential editor enhancements. Perfect base for all TypeScript/JavaScript projects.
+TypeScript/JavaScript development setup with indexing, import management, HTML/CSS intelligence, and web tools. Built on top of `essential-dev` for Git, Copilot, and editor enhancements.
 
 ## Features
 
 - **TypeScript First**: Latest TypeScript with indexing and import management
-- **Git Integration**: History, graph visualization, PR support, conventional commits
-- **GitHub Copilot**: AI-powered code assistance included
-- **Markdown Support**: Full markdown editing with preview and linting
-- **Editor Enhancements**: Multi-cursor, code comparison, local history
-- **File Format Support**: YAML, JSON, CSV support out-of-box
-- **Zero Configuration**: Works out-of-the-box, no options needed
+- **JavaScript Support**: Full JavaScript editing with quick fixes and auto-imports
+- **HTML & CSS Intelligence**: Smart HTML and CSS editing with auto-rename
+- **Import Management**: Automatic import/export management and path aliases
+- **Web Development Ready**: HTML/CSS tools and code generation utilities
+- **Requires essential-dev**: For Git, Copilot, Markdown, and editor enhancements
 
 ## What's Included
 
-### Core Extensions (Always)
-
-**TypeScript & JavaScript**
+### TypeScript & JavaScript
 - `ms-vscode.vscode-typescript-next` - Latest TypeScript features
 - `guilhermetheodoro.typescript-indexing` - Fast TypeScript indexing
 - `christian-kohler.npm-intellisense` - npm package autocomplete
+- `christian-kohler.path-intellisense` - Path autocomplete
+- `YoavBls.pretty-ts-errors` - Pretty TypeScript error output
+- `steoates.autoimport` - Auto-import mechanism
+- `stringham.move-ts` - Move TypeScript files intelligently
 
-**Git & Version Control**
-- `donjayamanne.githistory` - View git log history
-- `gxl.git-graph-3` - Git graph visualization
-- `github.vscode-pull-request-github` - GitHub PR support
-- `github.vscode-github-actions` - GitHub Actions integration
-- `vivaxy.vscode-conventional-commits` - Conventional commits help
+### HTML & CSS Intelligence
+- `ecmel.vscode-html-css` - CSS class name completion in HTML
+- `formulahendry.auto-rename-tag` - Auto-rename paired HTML tags
 
-**AI Assistant**
-- `github.copilot` - AI code completion
-- `github.copilot-chat` - AI chat interface
-
-**Editor Enhancements**
-- `cardinal90.multi-cursor-case-preserve` - Smart multi-cursor case handling
-- `moshfeu.compare-folders` - Folder comparison
-- `xyz.local-history` - Local file history
-
-**Markdown & Documentation**
-- `yzhang.markdown-all-in-one` - Complete markdown support
-- `davidanson.vscode-markdownlint` - Markdown linting
-- `bierner.markdown-mermaid` - Mermaid diagram support
-
-**File Format Support**
-- `redhat.vscode-yaml` - YAML syntax and validation
-- `ms-vscode.vscode-json` - JSON editing
-- `mechatroner.rainbow-csv` - CSV/TSV highlighting
+### Code Generation
+- `quicktype.quicktype` - Generate types from JSON
 
 ## Usage
 
 ### Basic Setup
 
-Add this feature to your `devcontainer.json`:
+> **Note**: This feature requires `essential-dev` for Git, Copilot, and editor tools.
+
+Add to your `devcontainer.json`:
 
 ```json
 {
     "features": {
+        "ghcr.io/helpers4/devcontainer/essential-dev:1": {},
         "ghcr.io/helpers4/devcontainer/typescript-dev:1": {}
     }
 }
 ```
-
-That's it! All extensions and settings are applied automatically.
-
-## Recommended Combinations
 
 ### For Vite/React Projects
 
 ```json
 {
     "features": {
-        "ghcr.io/helpers4/devcontainer/vite-plus:1": {},
-        "ghcr.io/helpers4/devcontainer/typescript-dev:1": {
-            "includeWebTools": true
-        },
-        "ghcr.io/helpers4/devcontainer/package-auto-install:1": {},
-        "ghcr.io/helpers4/devcontainer/local-mounts:1": {}
-    }
-}
-```
-
-### For Library Projects
-
-```json
-{
-    "features": {
-        "ghcr.io/helpers4/devcontainer/vite-plus:1": {},
-        "ghcr.io/h/Vue Projects
-
-```json
-{
-    "features": {
+        "ghcr.io/helpers4/devcontainer/essential-dev:1": {},
         "ghcr.io/helpers4/devcontainer/vite-plus:1": {},
         "ghcr.io/helpers4/devcontainer/typescript-dev:1": {},
         "ghcr.io/helpers4/devcontainer/package-auto-install:1": {},
-        "ghcr.io/helpers4/devcontainer/local-mounts:1": {}
-    }
-}
-```
-
-### For Library Projects
-
-```json
-{
-    "features": {
-        "ghcr.io/helpers4/devcontainer/vite-plus:1": {},
-        "ghcr.io/helpers4/devcontainer/typescript-dev:1": {},
-        "ghcr.io/helpers4/devcontainer/package-auto-install:1": {},
-        "ghcr.io/helpers4/devcontainer/git-absorb:1": {},
         "ghcr.io/helpers4/devcontainer/local-mounts:1": {}
     }
 }
@@ -118,16 +65,39 @@ That's it! All extensions and settings are applied automatically.
 ```json
 {
     "features": {
+        "ghcr.io/helpers4/devcontainer/essential-dev:1": {},
         "ghcr.io/helpers4/devcontainer/vite-plus:1": { "installOxc": true },
-        "ghcr.io/helpers4/devcontainer/typescript-dev:1": {tor.rulers": [80],
-    "editor.quickSuggestions": {
-      "comments": "off",
-      "strings": "off",
-      "other": "off"
+        "ghcr.io/helpers4/devcontainer/typescript-dev:1": {},
+        "ghcr.io/helpers4/devcontainer/package-auto-install:1": {},
+        "ghcr.io/helpers4/devcontainer/git-absorb:1": {},
+        "ghcr.io/helpers4/devcontainer/local-mounts:1": {}
     }
-  }
 }
 ```
+
+## Settings
+
+This feature configures the following VS Code settings specific to TypeScript/JavaScript:
+
+```jsonc
+{
+  // Auto-import configuration
+  "javascript.preferences.useAliasesForRenames": false,
+  "javascript.updateImportsOnFileMove.enabled": "always",
+  "typescript.preferences.useAliasesForRenames": false,
+  "typescript.updateImportsOnFileMove.enabled": "always",
+  
+  // Package manager
+  "npm.packageManager": "pnpm"
+}
+```
+
+## Complementary Features
+
+- **essential-dev** - Core development tools (include this first)
+- **vite-plus** - Vite toolchain with Oxc formatter/linter
+- **package-auto-install** - Automatic npm/yarn/pnpm install
+- **local-mounts** - Mount local Git, SSH, GPG, npm config
 
 ## Not Included (By Design)
 
@@ -143,37 +113,20 @@ That's it! All extensions and settings are applied automatically.
 - React/Vue snippets - Add per framework
 - Cloudflare Workers - Project-specific
 
-**Spell Checking**
-- Handled by formatter (Oxc) in `vite-plus`
-
-**License Headers**
-- Optional via `includeLicenseHeader` option
-- Use PSI Header extension
+**General Tools** (included in essential-dev)
+- Git integration
+- GitHub Copilot
+- Markdown support
+- File format support (YAML, JSON, CSV)
 
 ## Perfect With
 
 This feature pairs perfectly with:
+- **[essential-dev](../essential-dev)** - Core development tools (required)
 - **[vite-plus](../vite-plus)** - TypeScript + Vite + Oxc/Vitest toolchain
 - **[package-auto-install](../package-auto-install)** - Automatic dependency installation
 - **[local-mounts](../local-mounts)** - Git/SSH/GPG configuration
 - **[git-absorb](../git-absorb)** - Commit cleanup tools
-- **[shell-history-per-project](../shell-history-per-project)** - Per-project shell history
-
-## Tips
-
-### Git Workflow
-- Use `git-graph-3` for visual branch management
-- Use `vivaxy.vscode-conventional-commits` for commit message help
-- Add `git-absorb` feature for automatic fixup commits
-
-### Markdown Writing
-- Enable word wrap for comfortable editing
-- Use Mermaid diagrams for architecture
-- Markdown linting keeps documentation clean
-
-### Import Management
-- TypeScript will auto-update imports when files move
-- npm-intellisense helps with package imports
 
 ## License
 
