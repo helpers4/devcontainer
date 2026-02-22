@@ -90,6 +90,24 @@ That's it! All extensions and settings are applied automatically.
 }
 ```
 
+## Terminal Shell Integration
+
+[VS Code Shell Integration](https://code.visualstudio.com/docs/terminal/shell-integration) is automatically enabled with this feature. It provides:
+
+### Benefits
+- **Command Awareness**: VS Code tracks commands executed in the terminal
+- **Exit Codes**: Visual indicators for success (✓) and failure (✗)
+- **Run History**: Easy navigation through previously executed commands
+- **Smart Suggestions**: Context-aware suggestions for frequently used commands
+- **Decorations**: Visual separators between commands for cleaner display
+
+### Supported Shells
+- **zsh** (primary)
+- **bash**
+- **fish**
+
+All shells are automatically detected and configured when available.
+
 ## Not Included (By Design)
 
 **Language-Specific Tools**
