@@ -3,7 +3,7 @@
   "version": "1.0.4",
   "name": "Local Development Files Mount",
   "description": "Mounts local Git, SSH, GPG, and npm configuration files into the devcontainer at /home/node for the 'node' user. Provides seamless development authentication.",
-  "documentationURL": "https://github.com/helpers4/devcontainer/tree/main/src/local-mounts",
+  "documentationURL": "https://github.com/helpers4/devcontainer/tree/main/features/local-mounts",
   "options": {},
   "mounts": [
     {

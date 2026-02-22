@@ -3,7 +3,7 @@
   "version": "1.0.1",
   "name": "Vite+ Development Environment",
   "description": "Complete Vite+ toolchain setup with VS Code extensions, Oxc formatter/linter, Vitest, and optimized configuration.",
-  "documentationURL": "https://github.com/helpers4/devcontainer/tree/main/src/vite-plus",
+  "documentationURL": "https://github.com/helpers4/devcontainer/tree/main/features/vite-plus",
   "options": {
     "installVite": {
       "type": "boolean",

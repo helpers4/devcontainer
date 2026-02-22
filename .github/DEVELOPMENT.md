@@ -1,12 +1,12 @@
 # DevContainer Features Development
 
 ## Structure
-- `src/` - Contains the features
+- `features/` - Contains the features
 - `test/` - Contains test scripts for each feature
 - `.github/workflows/` - CI/CD pipelines
 
 ## Development workflow
-1. Create feature in `src/<feature-name>/`
+1. Create feature in `features/<feature-name>/`
 2. Add test script in `test/<feature-name>/`
 3. Test locally with devcontainer CLI
 4. Submit PR for review

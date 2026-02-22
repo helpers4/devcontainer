@@ -10,7 +10,7 @@ This repository (`helpers4/devcontainer`) contains a collection of **DevContaine
 
 ```
 devcontainer/
-├── src/                              # Features source code
+├── features/                         # Features source code
 │   ├── angular-dev/                  # Angular development environment
 │   │   ├── devcontainer-feature.json # Metadata and options
 │   │   ├── install.sh                # Installation script
@@ -193,9 +193,9 @@ This project follows [Conventional Commits](https://www.conventionalcommits.org/
 - **Never push for intermediate human review:** Do not push the branch for intermediate human review. Only push when the work is complete and ready for final review.
 
 ### Adding a New Feature
-1. Create `src/<feature-name>/devcontainer-feature.json`
-2. Create `src/<feature-name>/install.sh`
-3. Create `src/<feature-name>/README.md`
+1. Create `features/<feature-name>/devcontainer-feature.json`
+2. Create `features/<feature-name>/install.sh`
+3. Create `features/<feature-name>/README.md`
 4. Create `test/<feature-name>/test.sh`
 5. Update main `README.md`
 6. Update this `agents.md` file

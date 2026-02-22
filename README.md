@@ -18,7 +18,7 @@ Complete Vite+ toolchain setup with VS Code extensions (Oxc, Vitest), optimized 
 - Project setup helper command
 - Supports all Vite-compatible frameworks
 
-[📖 Documentation](./src/vite-plus/README.md)
+[📖 Documentation](./features/vite-plus/README.md)
 
 ### package-auto-install
 
@@ -31,7 +31,7 @@ Automatically detects and runs npm/yarn/pnpm install in non-interactive mode aft
 - Smart command selection (npm ci, pnpm --frozen-lockfile, yarn --immutable)
 - Eliminates need for manual postCreateCommand
 
-[📖 Documentation](./src/package-auto-install/README.md)
+[📖 Documentation](./features/package-auto-install/README.md)
 
 ### angular-dev
 
@@ -43,7 +43,7 @@ Angular-specific development environment with VS Code extensions and CLI autocom
 - Optional Angular CLI installation
 - Ready-to-use Angular development setup
 
-[📖 Documentation](./src/angular-dev/README.md)
+[📖 Documentation](./features/angular-dev/README.md)
 
 ### shell-history-per-project
 
@@ -56,7 +56,7 @@ Persist shell history per project by automatically detecting and configuring all
 - Team collaboration friendly
 - Clean separation between personal and project commands
 
-[📖 Documentation](./src/shell-history-per-project/README.md)
+[📖 Documentation](./features/shell-history-per-project/README.md)
 
 ### git-absorb
 
@@ -69,7 +69,7 @@ Installs git-absorb, a tool that automatically absorbs staged changes into their
 - Lightweight single binary installation
 - Perfect for cleaning up commit history
 
-[📖 Documentation](./src/git-absorb/README.md)
+[📖 Documentation](./features/git-absorb/README.md)
 
 ### local-mounts
 
@@ -82,7 +82,7 @@ Mounts local Git, SSH, GPG, and npm configuration files into the devcontainer fo
 - npm authentication for private registries
 - Fixed SSH_AUTH_SOCK handling for devcontainer compatibility
 
-[📖 Documentation](./src/local-mounts/README.md)
+[📖 Documentation](./features/local-mounts/README.md)
 
 ### typescript-dev
 
@@ -97,7 +97,7 @@ Complete TypeScript/JavaScript development setup with Git integration, AI assist
 - YAML, JSON, CSV file format support out-of-the-box
 - Works out-of-the-box with zero configuration
 
-[📖 Documentation](./src/typescript-dev/README.md)
+[📖 Documentation](./features/typescript-dev/README.md)
 
 ### auto-header
 
@@ -111,7 +111,7 @@ Automatically configures file headers with customizable templates based on proje
 - Works in VS Code with zero configuration needed after setup
 - Perfect for maintaining consistent file headers across team projects
 
-[📖 Documentation](./src/auto-header/README.md)
+[📖 Documentation](./features/auto-header/README.md)
 
 ## Usage
 
@@ -138,14 +138,14 @@ Features from this repository are available via GitHub Container Registry. Refer
 
 | Feature | Description | Documentation |
 |---------|-------------|---------------|
-| [vuto-header](./src/auto-header) | Automatic file headers with customizable templates (simple or custom) | [README](./src/auto-header/README.md) |
-| [aite-plus](./src/vite-plus) | Complete Vite+ toolchain with Oxc, Vitest, and VS Code integration | [README](./src/vite-plus/README.md) |
-| [package-auto-install](./src/package-auto-install) | Automatic package installation with corepack support for Node 24+ | [README](./src/package-auto-install/README.md) |
-| [typescript-dev](./src/typescript-dev) | Complete TypeScript/JavaScript dev environment with Git, AI, and Markdown support | [README](./src/typescript-dev/README.md) |
-| [angular-dev](./src/angular-dev) | Angular development environment with extensions and CLI autocompletion | [README](./src/angular-dev/README.md) |
-| [shell-history-per-project](./src/shell-history-per-project) | Per-project shell history persistence with multi-shell auto-detection | [README](./src/shell-history-per-project/README.md) |
-| [git-absorb](./src/git-absorb) | Automatic absorption of staged changes into logical commits | [README](./src/git-absorb/README.md) |
-| [local-mounts](./src/local-mounts) | Mount local Git, SSH, GPG, and npm config into devcontainer | [README](./src/local-mounts/README.md) |
+| [vuto-header](./features/auto-header) | Automatic file headers with customizable templates (simple or custom) | [README](./features/auto-header/README.md) |
+| [aite-plus](./features/vite-plus) | Complete Vite+ toolchain with Oxc, Vitest, and VS Code integration | [README](./features/vite-plus/README.md) |
+| [package-auto-install](./features/package-auto-install) | Automatic package installation with corepack support for Node 24+ | [README](./features/package-auto-install/README.md) |
+| [typescript-dev](./features/typescript-dev) | Complete TypeScript/JavaScript dev environment with Git, AI, and Markdown support | [README](./features/typescript-dev/README.md) |
+| [angular-dev](./features/angular-dev) | Angular development environment with extensions and CLI autocompletion | [README](./features/angular-dev/README.md) |
+| [shell-history-per-project](./features/shell-history-per-project) | Per-project shell history persistence with multi-shell auto-detection | [README](./features/shell-history-per-project/README.md) |
+| [git-absorb](./features/git-absorb) | Automatic absorption of staged changes into logical commits | [README](./features/git-absorb/README.md) |
+| [local-mounts](./features/local-mounts) | Mount local Git, SSH, GPG, and npm config into devcontainer | [README](./features/local-mounts/README.md) |
 
 ## Development
 
