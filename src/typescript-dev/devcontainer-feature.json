@@ -3,7 +3,7 @@
   "version": "1.0.5",
   "name": "TypeScript Development Environment",
   "description": "TypeScript/JavaScript development setup with indexing, import management, HTML/CSS intelligence, and web tools. Requires essential-dev for Git, Copilot, and editor enhancements.",
-  "documentationURL": "https://github.com/helpers4/devcontainer/tree/main/features/typescript-dev",
+  "documentationURL": "https://github.com/helpers4/devcontainer/tree/main/src/typescript-dev",
   "installsAfter": [
     "ghcr.io/helpers4/devcontainer/essential-dev"
   ],
