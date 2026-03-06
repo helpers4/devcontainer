@@ -9,7 +9,7 @@ Mounts local Git, SSH, GPG, and npm configuration files into the devcontainer fo
 - **SSH agent forwarding**: Automatic `SSH_AUTH_SOCK` configuration
 - **GPG keys**: Sign commits with your GPG keys
 - **npm authentication**: Your `.npmrc` for private registry access
-- **Robust fallback**: Creates empty files if mounts fail, preventing silent failures
+- **Post-start verification**: Validates mounted content and reports issues
 
 ## Usage
 
@@ -24,6 +24,31 @@ Add this feature to your `devcontainer.json`:
 ```
 
 That's it! The feature handles everything automatically.
+
+## Prerequisites
+
+This feature mounts host files/directories into the container. Docker bind mounts are evaluated **before** the feature install script runs.
+
+### Required
+
+- VS Code + Dev Containers extension
+- Docker running
+- Host paths to mount must exist (for example: `~/.gitconfig`, `~/.ssh`, `~/.gnupg`, `~/.npmrc`)
+
+### Required for SSH agent forwarding
+
+- An SSH agent must be running on the host
+- `SSH_AUTH_SOCK` must be set and point to a valid Unix socket
+
+Check on host:
+
+```bash
+echo "$SSH_AUTH_SOCK"
+test -S "$SSH_AUTH_SOCK" && echo OK || echo MISSING
+ssh-add -l
+```
+
+If one of these host paths does not exist, container startup can fail with a bind-mount error.
 
 ### With custom username (if not using 'node')
 
@@ -66,8 +91,10 @@ The feature automatically configures these environment variables:
 
 1. **Docker mounts** your local configuration files based on the `mounts` specification
 2. **Verification script** (`install.sh`) runs inside the container to verify the mounts
-3. **Fallback mechanism** creates empty files if mounts fail (prevents silent failures)
+3. **Fallback mechanism** creates placeholders after startup when possible
 4. **Logging** shows what was mounted and what might need attention
+
+> Important: bind mounts are resolved before the feature script runs. Missing host sources can block container startup.
 
 ## Troubleshooting
 
@@ -139,23 +166,11 @@ git config --global user.name  # Should show your name
 This feature includes a **robust fallback mechanism**:
 
 1. ✅ If mount succeeded → Uses mounted files
-2. ✅ If mount failed but file exists locally → Tells you to configure it
-3. ✅ If mount failed and file is empty → Creates empty placeholder  
-4. ✅ Never crashes or silently fails
+2. ✅ If mounted file content is empty → warns with troubleshooting hints
+3. ✅ If startup succeeded but target path is missing → creates placeholder where possible
+4. ⚠️ If host bind source is missing before startup → Docker can fail before script execution
 
 The `install.sh` script verifies all mounts and provides clear feedback on what's available.
-
-## SSH Agent Forwarding
-
-The feature automatically configures SSH agent forw forwarding for you. For best results:
-
-1. **Ensure your SSH agent is running** (usually auto on macOS, manual on Linux):
-   ```bash
-   eval $(ssh-agent -s)
-   ssh-add  # Load your keys
-   ```
-
-2. **The feature takes care of the rest** - `SSH_AUTH_SOCK` is automatically configured
 
 ## Version History
 
