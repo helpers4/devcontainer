@@ -125,6 +125,19 @@ Automatically configures file headers with customizable templates based on proje
 
 [📖 Documentation](./features/auto-header/README.md)
 
+### peon-ping
+
+Installs [peon-ping](https://peonping.com/) for game character voice notifications when your AI coding agent finishes or needs permission. Includes the Peon Pet VS Code extension.
+
+**Key benefits:**
+- Sound notifications from 165+ packs (Warcraft, StarCraft, Portal, Zelda…)
+- Multi-IDE hooks: Claude Code, Copilot, Cursor, Codex, and more
+- Animated Peon Pet sidebar companion in VS Code
+- Devcontainer-aware audio relay to host machine
+- Non-interactive, idempotent installation
+
+[📖 Documentation](./features/peon-ping/README.md)
+
 ## Usage
 
 Features from this repository are available via GitHub Container Registry. Reference them in your `devcontainer.json`:
@@ -142,7 +155,8 @@ Features from this repository are available via GitHub Container Registry. Refer
         "ghcr.io/helpers4/devcontainer/angular-dev:1": {},
         "ghcr.io/helpers4/devcontainer/shell-history-per-project:1": {},
         "ghcr.io/helpers4/devcontainer/git-absorb:1": {},
-        "ghcr.io/helpers4/devcontainer/local-mounts:1": {}
+        "ghcr.io/helpers4/devcontainer/local-mounts:1": {},
+        "ghcr.io/helpers4/devcontainer/peon-ping:1": {}
     }
 }
 ```
@@ -160,6 +174,7 @@ Features from this repository are available via GitHub Container Registry. Refer
 | [shell-history-per-project](./features/shell-history-per-project) | Per-project shell history persistence with multi-shell auto-detection | [README](./features/shell-history-per-project/README.md) |
 | [git-absorb](./features/git-absorb) | Automatic absorption of staged changes into logical commits | [README](./features/git-absorb/README.md) |
 | [local-mounts](./features/local-mounts) | Mount local Git, SSH, GPG, and npm config into devcontainer | [README](./features/local-mounts/README.md) |
+| [peon-ping](./features/peon-ping) | AI agent sound notifications with multi-IDE hooks and Peon Pet extension | [README](./features/peon-ping/README.md) |
 
 ## Development
 
