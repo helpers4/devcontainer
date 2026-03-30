@@ -74,7 +74,7 @@ check_packages() {
 # ── Prerequisites ────────────────────────────────────────────────────────────
 
 echo "🔧 Installing prerequisites..."
-check_packages curl ca-certificates python3
+check_packages curl ca-certificates python3 alsa-utils
 
 # ── Install peon-ping ────────────────────────────────────────────────────────
 
