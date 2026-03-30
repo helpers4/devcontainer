@@ -93,10 +93,17 @@ if [ "${NO_RC}" = "true" ]; then
 fi
 
 # Run installer as the target user (peon-ping handles non-interactive detection)
-su - "${USERNAME}" -c "curl -fsSL https://raw.githubusercontent.com/PeonPing/peon-ping/main/install.sh | bash -s -- ${INSTALLER_ARGS}" || {
-    echo "❌ peon-ping installation failed"
+# The installer may exit non-zero if its sound test fails (no audio device during
+# Docker build).  We tolerate that and verify the actual installation ourselves.
+su - "${USERNAME}" -c "curl -fsSL https://raw.githubusercontent.com/PeonPing/peon-ping/main/install.sh | bash -s -- ${INSTALLER_ARGS}" || \
+    echo "⚠️  peon-ping installer exited with errors (sound test failure during build is expected)"
+
+# Verify the binary was actually installed (fail now if curl/download truly failed)
+PEON_BIN="${USER_HOME}/.local/bin/peon"
+if [ ! -x "${PEON_BIN}" ] && ! su - "${USERNAME}" -c "command -v peon" > /dev/null 2>&1; then
+    echo "❌ peon binary not found after installation — install truly failed"
     exit 1
-}
+fi
 
 # ── Set volume ───────────────────────────────────────────────────────────────
 
@@ -295,7 +302,6 @@ fi
 echo ""
 echo "🔍 Verifying installation..."
 
-PEON_BIN="${USER_HOME}/.local/bin/peon"
 if [ -x "${PEON_BIN}" ] || su - "${USERNAME}" -c "command -v peon" > /dev/null 2>&1; then
     echo "   ✅ peon binary found"
 else
