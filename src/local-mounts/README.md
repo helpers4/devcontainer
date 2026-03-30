@@ -1,12 +1,12 @@
 # Local Development Files Mount (local-mounts)
 
-Mounts local Git, SSH, GPG, and npm configuration files into the devcontainer for seamless development authentication.
+Mounts local Git, SSH, GPG, and npm configuration files into the devcontainer for seamless development authentication, including custom container usernames.
 
 ## Features
 
 - **Git configuration**: Your `.gitconfig` is automatically mounted
 - **SSH keys**: Access your SSH keys for Git operations and remote connections  
-- **SSH agent forwarding**: Automatic `SSH_AUTH_SOCK` configuration
+- **SSH agent forwarding (stable)**: Uses `~/.ssh/agent.sock` to avoid dynamic socket path issues
 - **GPG keys**: Sign commits with your GPG keys
 - **npm authentication**: Your `.npmrc` for private registry access
 - **Post-start verification**: Validates mounted content and reports issues
@@ -25,6 +25,20 @@ Add this feature to your `devcontainer.json`:
 
 That's it! The feature handles everything automatically.
 
+### With custom username (if not using `node`)
+
+```json
+{
+   "features": {
+      "ghcr.io/helpers4/devcontainer/local-mounts:1": {
+         "username": "vscode"
+      }
+   }
+}
+```
+
+> Make sure this matches your container user (`remoteUser`) to keep paths and ownership consistent.
+
 ## Prerequisites
 
 This feature mounts host files/directories into the container. Docker bind mounts are evaluated **before** the feature install script runs.
@@ -38,7 +52,7 @@ This feature mounts host files/directories into the container. Docker bind mount
 ### Required for SSH agent forwarding
 
 - An SSH agent must be running on the host
-- `SSH_AUTH_SOCK` must be set and point to a valid Unix socket
+- Recommended: expose a **stable** socket at `~/.ssh/agent.sock`
 
 Check on host:
 
@@ -46,37 +60,32 @@ Check on host:
 echo "$SSH_AUTH_SOCK"
 test -S "$SSH_AUTH_SOCK" && echo OK || echo MISSING
 ssh-add -l
+
+# Recommended stable socket for this feature
+export SSH_AUTH_SOCK="$HOME/.ssh/agent.sock"
+if [[ ! -S "$SSH_AUTH_SOCK" ]]; then
+   rm -f "$SSH_AUTH_SOCK"
+   eval "$(ssh-agent -a "$SSH_AUTH_SOCK")" >/dev/null
+fi
 ```
 
 If one of these host paths does not exist, container startup can fail with a bind-mount error.
-
-### With custom username (if not using 'node')
-
-```json
-{
-    "features": {
-        "ghcr.io/helpers4/devcontainer/local-mounts:1": {
-            "username": "vscode"
-        }
-    }
-}
-```
 
 ## Options
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
-| `username` | string | `node` | The username in the container to mount files for |
+| `username` | string | `node` | Container username that receives synchronized local config files |
 
 ## What Gets Mounted
 
-| Local Path | Container Path | Purpose |
-|------------|----------------|---------|
-| `~/.gitconfig` | `/home/node/.gitconfig` | Git user configuration |
-| `~/.ssh` | `/home/node/.ssh` | SSH keys and config |
-| `~/.gnupg` | `/home/node/.gnupg` | GPG keys for commit signing |
-| `~/.npmrc` | `/home/node/.npmrc` | npm registry authentication |
-| `$SSH_AUTH_SOCK` | `/ssh-agent` | SSH agent forwarding |
+| Local Path | Container Mount (staging) | Final Sync Target | Purpose |
+|------------|----------------------------|-------------------|---------|
+| `~/.gitconfig` | `/tmp/local-mounts/.gitconfig` | `/home/<username>/.gitconfig` | Git user configuration |
+| `~/.ssh` | `/tmp/local-mounts/.ssh` | `/home/<username>/.ssh` | SSH keys and config |
+| `~/.gnupg` | `/tmp/local-mounts/.gnupg` | `/home/<username>/.gnupg` | GPG keys for commit signing |
+| `~/.npmrc` | `/tmp/local-mounts/.npmrc` | `/home/<username>/.npmrc` | npm registry authentication |
+| `~/.ssh/agent.sock` | `/tmp/local-mounts/.ssh/agent.sock` | `SSH_AUTH_SOCK` | Stable SSH agent socket forwarding |
 
 ## Environment Variables
 
@@ -84,13 +93,13 @@ The feature automatically configures these environment variables:
 
 | Variable | Value | Purpose |
 |----------|-------|---------|
-| `SSH_AUTH_SOCK` | `/ssh-agent` | SSH agent socket forwarding |
+| `SSH_AUTH_SOCK` | `/tmp/local-mounts/.ssh/agent.sock` | SSH agent socket forwarding |
 | `GPG_TTY` | `/dev/pts/0` | GPG tty for signing |
 
 ## How It Works
 
 1. **Docker mounts** your local configuration files based on the `mounts` specification
-2. **Verification script** (`install.sh`) runs inside the container to verify the mounts
+2. **Verification script** (`install.sh`) runs inside the container to sync from staging mounts into `/home/<username>`
 3. **Fallback mechanism** creates placeholders after startup when possible
 4. **Logging** shows what was mounted and what might need attention
 
@@ -143,7 +152,12 @@ git config --global user.name  # Should show your name
    ssh-add -l  # Should list your keys
    ```
 
-2. Inside container, verify:
+2. Prefer a stable socket path on host:
+   ```bash
+   export SSH_AUTH_SOCK="$HOME/.ssh/agent.sock"
+   ```
+
+3. Inside container, verify:
    ```bash
    env | grep SSH_AUTH_SOCK
    ssh-add -l  # Should work
@@ -174,5 +188,7 @@ The `install.sh` script verifies all mounts and provides clear feedback on what'
 
 ## Version History
 
+- **v1.0.5**: Removed fragile direct `$SSH_AUTH_SOCK` bind mount and switched to stable `~/.ssh/agent.sock` strategy
+- **v1.0.6**: Added `username` option with mount staging (`/tmp/local-mounts`) and sync to `/home/<username>`
 - **v1.0.4**: Fixed `.npmrc` mounting with robust fallback verification
 - **v1.0.3**: Initial release

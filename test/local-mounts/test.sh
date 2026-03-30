@@ -41,6 +41,25 @@ for mount in "${MOUNT_POINTS[@]}"; do
     fi
 done
 
+# Test 4: SSH agent socket strategy (informational)
+if [ -n "$SSH_AUTH_SOCK" ]; then
+    echo "ℹ️  INFO: SSH_AUTH_SOCK is set to: $SSH_AUTH_SOCK"
+    if [ -S "$SSH_AUTH_SOCK" ]; then
+        echo "✅ PASS: SSH_AUTH_SOCK points to a valid socket"
+    else
+        echo "⚠️  WARN: SSH_AUTH_SOCK is set but is not a valid socket"
+    fi
+else
+    echo "ℹ️  INFO: SSH_AUTH_SOCK not set (SSH agent forwarding optional)"
+fi
+
+STABLE_SOCKET="/tmp/local-mounts/.ssh/agent.sock"
+if [ -S "$STABLE_SOCKET" ]; then
+    echo "✅ PASS: Stable SSH socket found at $STABLE_SOCKET"
+else
+    echo "ℹ️  INFO: Stable SSH socket not found at $STABLE_SOCKET (agent may be disabled)"
+fi
+
 echo ""
 echo "🎉 local-mounts feature test complete!"
 echo ""
