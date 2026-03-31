@@ -120,6 +120,19 @@ devcontainer features test .                             # Test all
 | peon-ping | — | Health check endpoint | — |
 | shell-history-per-project | 1.0.2 | Persistent shell history (zsh/bash/fish) | — |
 
+### CI/CD Workflows
+
+| Workflow | Trigger | Jobs |
+|----------|---------|------|
+| `pr-validation.yml` | Pull request → main | conventional-commits, test-features (matrix), shellcheck, pr-comment |
+| `test.yml` | Push → main | Feature tests matrix |
+| `release.yml` | Published release | Publish features to GHCR |
+
+- **conventional-commits** — Validates PR commit messages against conventional commit format
+- **test-features** — Matrix of 16 feature/baseImage combos (`devcontainer features test`)
+- **shellcheck** — Lints all `install.sh` scripts with ShellCheck
+- **pr-comment** — Posts/updates a status summary comment on the PR
+
 ### Adding a New Feature
 
 1. Create `src/<feature-name>/devcontainer-feature.json`
@@ -127,8 +140,9 @@ devcontainer features test .                             # Test all
 3. Create `src/<feature-name>/README.md`
 4. Create `test/<feature-name>/test.sh`
 5. Update main `README.md`
-6. **Update `.github/workflows/test.yml`** — Add feature to test matrix with appropriate base image
-7. Update this `AGENTS.md` (scopes + features table)
+6. **Update `.github/workflows/pr-validation.yml`** — Add feature to test matrix with appropriate base image
+7. **Update `.github/workflows/test.yml`** — Add feature to test matrix
+8. Update this `AGENTS.md` (scopes + features table)
 
 ### Usage
 
