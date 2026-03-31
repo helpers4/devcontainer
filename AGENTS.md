@@ -1,49 +1,23 @@
-# AGENTS.md - AI Coding Agent Instructions
-
-This file provides context and guidelines for AI coding agents (GitHub Copilot, Claude, etc.) working on helpers4 repositories.
+# AGENTS.md - DevContainer Features
 
 ## ⛔ CRITICAL RESTRICTIONS
 
-### Forbidden Actions
 - **NEVER execute `git push`** - The user will push manually after review
 - **NEVER use GPT models** - Use Claude models only (claude-sonnet-4, Claude Opus 4.5)
+- **Everything in English** - Code, comments, commits, documentation, logs, PR descriptions
 
-### Model Restriction Rationale
-Claude models have shown consistent behavior with this codebase's coding conventions and TypeScript strict mode requirements. GPT models are not preferred for this project.
+## Organization Context
 
-## Organization Overview
+**helpers4** is a collection of open-source utilities across 5 repos: `typescript`, `devcontainer` (this repo), `action`, `website`, `.github`. All licensed AGPL-3.0.
 
-**helpers4** is a collection of open-source utilities:
-- **typescript**: Tree-shakable TypeScript utility functions (12+ categories)
-- **devcontainer**: Development container features for consistent environments
-- **action**: GitHub Actions for automation and CI/CD workflows
-- **website**: Documentation and landing page
-
-## General Principles
-
-### Code Style
-- Use TypeScript with strict mode enabled
-- Avoid `any` type - use `unknown` or specific types instead
-- Include JSDoc comments with `@param`, `@returns`, `@example`
-- Use 2-space indentation
-- Use single quotes for strings
-- Prefer descriptive variable and function names
-
-### Commit Messages
+## Commit Messages
 
 Follow [Conventional Commits](https://www.conventionalcommits.org/) with a gitmoji between the scope and the description.
 
 **Format:** `<type>(<scope>): <emoji> <description>`
 
-**Examples:**
-- `feat(git-absorb): ✨ add version selection option`
-- `fix(local-mounts): 🐛 fix symlink creation`
-- `docs(typescript-dev): 📝 update README`
-- `chore(CI-CD): 🔧 update dependencies`
+**Scopes:** angular-dev, auto-header, essential-dev, git-absorb, local-mounts, package-auto-install, peon-ping, shell-history-per-project, typescript-dev, vite-plus, CI-CD
 
-**Scopes:** angular-dev, git-absorb, local-mounts, package-auto-install, shell-history-per-project, typescript-dev, vite-plus, CI-CD
-
-**Types:**
 | Emoji | Type | Description |
 |-------|------|-------------|
 | ✨ | feat | New feature |
@@ -58,116 +32,127 @@ Follow [Conventional Commits](https://www.conventionalcommits.org/) with a gitmo
 | 📦 | build | Build system |
 | ⏪ | revert | Revert |
 
-### Testing
+**Examples:**
+- `feat(git-absorb): ✨ add version selection option`
+- `fix(local-mounts): 🐛 fix symlink creation`
+- `docs(typescript-dev): 📝 update README`
+- `chore(CI-CD): 🔧 update dependencies`
 
-- Add tests for new features
-- Ensure all tests pass locally
-- Use the test framework specified in each repository
-- Aim for good coverage on critical paths
+---
 
-### Documentation
+## This Repository
 
-- Update README for user-facing changes
-- Add/update comments for complex logic
-- Update CHANGELOG if provided
+**Purpose:** DevContainer Features published on GitHub Container Registry (`ghcr.io/helpers4/devcontainer/`).
 
-## Repository-Specific Guidelines
+### Project Structure
 
-### TypeScript (`helpers4/typescript`)
-
-**Purpose**: Utility functions organized by category (array, date, object, promise, string, etc.)
-
-**Tech Stack**:
-- Node.js >= 24.0.0
-- TypeScript 5.x
-- Vite + Rollup for builds
-- Vitest for testing
-- oxlint for linting
-
-**Key Rules**:
-- Tree-shakable exports only
-- One helper function per file
-- Tests colocated (`.test.ts` or `.spec.ts`)
-- Each category has `index.ts` for re-exports
-- License header required on all source files
-
-**Commands**:
-```bash
-pnpm test              # Run tests
-pnpm build             # Build all packages
-pnpm typecheck         # TypeScript check
-pnpm lint              # Lint with oxlint
+```
+devcontainer/
+├── src/                              # Feature source code
+│   ├── essential-dev/                # Core dev environment (Git, Copilot, Markdown)
+│   ├── typescript-dev/               # TypeScript/JS dev (requires essential-dev)
+│   ├── angular-dev/                  # Angular dev with port forwarding
+│   ├── vite-plus/                    # Vite development setup
+│   ├── package-auto-install/         # Automatic package installation
+│   ├── auto-header/                  # Automatic AGPL-3.0 file headers
+│   ├── git-absorb/                   # git-absorb tool installation
+│   ├── local-mounts/                 # Mount local Git/SSH/GPG/npm config
+│   ├── peon-ping/                    # Health check endpoint
+│   └── shell-history-per-project/    # Persistent shell history per project
+├── test/                             # One test.sh per feature
+├── .github/
+│   ├── workflows/                    # CI/CD (test matrix)
+│   ├── CONTRIBUTING.md
+│   └── DEVELOPMENT.md
+├── AGENTS.md                         # This file
+├── LICENSE                           # AGPL-3.0
+└── README.md
 ```
 
-### DevContainer (`helpers4/devcontainer`)
+### Feature File Structure
 
-**Purpose**: Development container features for consistent dev environments
+Each feature in `src/<name>/` contains:
+- `devcontainer-feature.json` — Metadata, options, dependencies
+- `install.sh` — Installation script
+- `README.md` — Usage documentation
 
-**Tech Stack**:
-- Docker-based dev containers
-- Various feature packages (typescript-dev, vite-plus, git-absorb, etc.)
+### Installation Script Pattern
 
-**Key Files**:
-- `devcontainer-feature.json` - Feature metadata
-- `install.sh` - Feature installation script
-- `test.sh` - Feature tests
+All `install.sh` scripts follow:
+1. Root privileges verification
+2. Automatic non-root user detection
+3. Dependencies installation via `apt`
+4. Architecture detection (x86_64, aarch64)
+5. Download from GitHub releases (when applicable)
+6. Installation in `/usr/local/bin/`
+7. Installation verification
+8. Cleanup (`trap cleanup`)
 
-### Action (`helpers4/action`)
+**Requirements:**
+- Bash with `set -e`
+- Must support both x86_64 and aarch64
+- All features declare `installsAfter: ["ghcr.io/devcontainers/features/common-utils"]`
 
-**Purpose**: GitHub Actions for workflow automation
+### Testing
 
-**Key Files**:
-- `action.yml` - Action metadata
-- `scripts/` - Implementation scripts
-- `README.md` - Usage documentation
+```bash
+devcontainer features test --features <feature-name> .  # Test one feature
+devcontainer features test .                             # Test all
+```
 
-### Website (`helpers4/website`)
+**Base image requirements:**
+- Shell features → any base image (debian, ubuntu)
+- Node.js features → `mcr.microsoft.com/devcontainers/javascript-node:20`+
+- TypeScript features → `mcr.microsoft.com/devcontainers/typescript-node:20`+
 
-**Purpose**: Documentation portals and landing page
+### Available Features
 
-**Tech Stack**:
-- Qwik (landing page)
-- Docusaurus (documentation portals)
-- Vite for builds
+| Feature | Version | Description | Dependencies |
+|---------|---------|-------------|--------------|
+| essential-dev | 1.0.0 | Git, Copilot, Markdown, editor enhancements | — |
+| typescript-dev | 1.0.5 | TypeScript/JS dev with import management | essential-dev |
+| angular-dev | 1.0.2 | Angular dev, port 4200 forwarding | — |
+| vite-plus | — | Vite development setup | — |
+| package-auto-install | — | Auto-detect and install packages | — |
+| auto-header | — | AGPL-3.0 license headers | — |
+| git-absorb | 1.0.2 | git-absorb from GitHub releases | — |
+| local-mounts | 1.0.4 | Mount ~/.gitconfig, ~/.ssh, ~/.gnupg, ~/.npmrc | — |
+| peon-ping | — | Health check endpoint | — |
+| shell-history-per-project | 1.0.2 | Persistent shell history (zsh/bash/fish) | — |
 
-**Sections**:
-- `/`: Landing page
-- `/ts`: TypeScript documentation
-- `/dev-container`: DevContainer documentation
-- `/action`: GitHub Actions documentation
+### Adding a New Feature
 
-## Common Tasks
+1. Create `src/<feature-name>/devcontainer-feature.json`
+2. Create `src/<feature-name>/install.sh`
+3. Create `src/<feature-name>/README.md`
+4. Create `test/<feature-name>/test.sh`
+5. Update main `README.md`
+6. **Update `.github/workflows/test.yml`** — Add feature to test matrix with appropriate base image
+7. Update this `AGENTS.md` (scopes + features table)
 
-### Adding a Feature
-1. Create your changes
-2. Add tests
-3. Follow commit conventions
-4. Ensure tests pass locally
-5. Create clear PR description
+### Usage
 
-### Fixing a Bug
-1. Identify root cause
-2. Write minimal fix
-3. Add test case for the bug
-4. Verify no regressions
+```json
+{
+  "features": {
+    "ghcr.io/helpers4/devcontainer/essential-dev:1": {},
+    "ghcr.io/helpers4/devcontainer/typescript-dev:1": {},
+    "ghcr.io/helpers4/devcontainer/vite-plus:1": {},
+    "ghcr.io/helpers4/devcontainer/package-auto-install:1": {},
+    "ghcr.io/helpers4/devcontainer/git-absorb:1": {},
+    "ghcr.io/helpers4/devcontainer/local-mounts:1": {},
+    "ghcr.io/helpers4/devcontainer/shell-history-per-project:1": {}
+  }
+}
+```
 
-### Updating Documentation
-1. Keep changes accurate and current
-2. Use clear, concise language
-3. Include code examples where helpful
-4. Test links and examples
+### License Header (required on all scripts)
 
-## Contributing Owners
-
-- **@baxyz** - Organization owner and maintainer
-
-## Important Notes
-
-- **Open communication**: Ask questions in issues/PRs if unclear
-- **Test locally**: Always verify changes work locally first
-- **Review existing code**: Understand patterns before implementing
-- **Backward compatibility**: Consider implications for existing users
-- **Type safety**: Maintain strong typing across the project
+```bash
+# This file is part of helpers4.
+# Copyright (C) 2025 baxyz
+# SPDX-License-Identifier: AGPL-3.0-or-later
+```
 
 ## Repository Links
 
