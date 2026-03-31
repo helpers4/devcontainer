@@ -31,22 +31,32 @@ Claude models have shown consistent behavior with this codebase's coding convent
 
 ### Commit Messages
 
-Follow [Conventional Commits](https://www.conventionalcommits.org/):
+Follow [Conventional Commits](https://www.conventionalcommits.org/) with a gitmoji between the scope and the description.
 
-```
-<type>(<scope>): <description>
+**Format:** `<type>(<scope>): <emoji> <description>`
 
-- Detail 1
-- Detail 2
-```
+**Examples:**
+- `feat(git-absorb): ✨ add version selection option`
+- `fix(local-mounts): 🐛 fix symlink creation`
+- `docs(typescript-dev): 📝 update README`
+- `chore(CI-CD): 🔧 update dependencies`
 
-**Types**:
-- `feat`: ✨ New feature
-- `fix`: 🐛 Bug fix
-- `refactor`: ♻️ Code refactoring
-- `docs`: 📚 Documentation
-- `test`: 🧪 Tests
-- `chore`: 🔧 Maintenance
+**Scopes:** angular-dev, git-absorb, local-mounts, package-auto-install, shell-history-per-project, typescript-dev, vite-plus, CI-CD
+
+**Types:**
+| Emoji | Type | Description |
+|-------|------|-------------|
+| ✨ | feat | New feature |
+| 🐛 | fix | Bug fix |
+| 📝 | docs | Documentation |
+| ♻️ | refactor | Code refactoring |
+| ✅ | test | Tests |
+| 🔧 | chore | Maintenance |
+| 🚀 | perf | Performance |
+| 💄 | style | Code style |
+| 👷 | ci | CI/CD |
+| 📦 | build | Build system |
+| ⏪ | revert | Revert |
 
 ### Testing
 

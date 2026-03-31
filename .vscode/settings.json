@@ -63,5 +63,10 @@
     "typescript-dev",
     "vite-plus",
     "CI-CD"
+  ],
+  "github.copilot.chat.commitMessageGeneration.instructions": [
+    {
+      "text": "Generate commit messages in English only. Use Conventional Commits format with a gitmoji between the scope and the description: `<type>(<scope>): <emoji> <description>`. The scope is optional but when used MUST be one of: angular-dev, git-absorb, local-mounts, package-auto-install, shell-history-per-project, typescript-dev, vite-plus, CI-CD. Types and their emoji: feat → ✨, fix → 🐛, docs → 📝, refactor → ♻️, test → ✅, chore → 🔧, perf → 🚀, style → 💄, ci → 👷, build → 📦, revert → ⏪. Always include the emoji. Keep the description short (≤72 chars), lowercase, imperative mood, no period at the end. If there are multiple logical changes, use a bullet list in the body. Examples: `feat(git-absorb): ✨ add version selection option`, `fix(local-mounts): 🐛 fix symlink creation`, `docs(typescript-dev): 📝 update README`."
+    }
   ]
 }
