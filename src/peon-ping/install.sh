@@ -2,7 +2,7 @@
 
 # Peon Ping DevContainer Feature
 # Copyright (c) 2025 helpers4
-# Licensed under AGPL-3.0 - see LICENSE file for details
+# Licensed under LGPL-3.0 - see LICENSE file for details
 #
 # Installs peon-ping and configures multi-IDE hooks for AI agent sound notifications
 

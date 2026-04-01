@@ -2,7 +2,7 @@
 
 # Angular Development Environment DevContainer Feature
 # Copyright (c) 2025 helpers4
-# Licensed under AGPL-3.0 - see LICENSE file for details
+# Licensed under LGPL-3.0 - see LICENSE file for details
 #
 # Configures Angular development environment with CLI autocompletion
 

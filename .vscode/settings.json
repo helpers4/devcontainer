@@ -2,7 +2,7 @@
   "psi-header.config": {
     "author": "baxyz",
     "authorEmail": "baxy@etik.com",
-    "license": "AGPL-3.0-or-later",
+    "license": "LGPL-3.0-or-later",
     "company": "",
     "copyrightHolder": "baxyz",
     "forceToTop": true

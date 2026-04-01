@@ -2,7 +2,7 @@
 
 # Local Mounts DevContainer Feature
 # Copyright (c) 2025 helpers4
-# Licensed under AGPL-3.0 - see LICENSE file for details
+# Licensed under LGPL-3.0 - see LICENSE file for details
 #
 # Mounts local Git, SSH, GPG, and npm configuration files into the devcontainer
 # for a configurable container user (default: node)

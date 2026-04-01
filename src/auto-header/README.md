@@ -85,14 +85,14 @@ This command:
 
 ## Examples
 
-### TypeScript Project with AGPL License
+### TypeScript Project with LGPL License
 
 ```json
 {
   "features": {
     "ghcr.io/helpers4/devcontainer/auto-header:latest": {
       "projectName": "helpers4-typescript",
-      "license": "AGPL-3.0",
+      "license": "LGPL-3.0",
       "company": "helpers4",
       "sinceYear": "2025",
       "contributors": "Alice, Bob, Charlie"
@@ -183,7 +183,7 @@ The script will use the appropriate `.vscode` directory for each project.
 - `MIT` - MIT License
 - `Apache-2.0` - Apache License 2.0
 - `GPL-3.0` - GNU General Public License v3.0
-- `AGPL-3.0` - GNU Affero General Public License v3.0
+- `LGPL-3.0` - GNU Lesser General Public License v3.0
 - `BSD-2-Clause` - BSD 2-Clause License
 - `BSD-3-Clause` - BSD 3-Clause License
 - `ISC` - ISC License
@@ -238,7 +238,7 @@ This feature complements the helpers4 development environment:
 ## License
 
 Copyright (c) 2025 helpers4  
-Licensed under AGPL-3.0 - see LICENSE file for details
+Licensed under LGPL-3.0 - see LICENSE file for details
 
 ## See Also
 

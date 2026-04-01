@@ -8,7 +8,7 @@
 
 ## Organization Context
 
-**helpers4** is a collection of open-source utilities across 5 repos: `typescript`, `devcontainer` (this repo), `action`, `website`, `.github`. All licensed AGPL-3.0.
+**helpers4** is a collection of open-source utilities across 5 repos: `typescript`, `devcontainer` (this repo), `action`, `website`, `.github`. All licensed LGPL-3.0.
 
 ## Commit Messages
 
@@ -54,7 +54,7 @@ devcontainer/
 │   ├── angular-dev/                  # Angular dev with port forwarding
 │   ├── vite-plus/                    # Vite development setup
 │   ├── package-auto-install/         # Automatic package installation
-│   ├── auto-header/                  # Automatic AGPL-3.0 file headers
+│   ├── auto-header/                  # Automatic LGPL-3.0 file headers
 │   ├── git-absorb/                   # git-absorb tool installation
 │   ├── local-mounts/                 # Mount local Git/SSH/GPG/npm config
 │   ├── peon-ping/                    # Health check endpoint
@@ -65,7 +65,7 @@ devcontainer/
 │   ├── CONTRIBUTING.md
 │   └── DEVELOPMENT.md
 ├── AGENTS.md                         # This file
-├── LICENSE                           # AGPL-3.0
+├── LICENSE                           # LGPL-3.0
 └── README.md
 ```
 
@@ -114,7 +114,7 @@ devcontainer features test .                             # Test all
 | angular-dev | 1.0.2 | Angular dev, port 4200 forwarding | — |
 | vite-plus | — | Vite development setup | — |
 | package-auto-install | — | Auto-detect and install packages | — |
-| auto-header | — | AGPL-3.0 license headers | — |
+| auto-header | — | LGPL-3.0 license headers | — |
 | git-absorb | 1.0.2 | git-absorb from GitHub releases | — |
 | local-mounts | 1.0.4 | Mount ~/.gitconfig, ~/.ssh, ~/.gnupg, ~/.npmrc | — |
 | peon-ping | — | Health check endpoint | — |
@@ -165,7 +165,7 @@ devcontainer features test .                             # Test all
 ```bash
 # This file is part of helpers4.
 # Copyright (C) 2025 baxyz
-# SPDX-License-Identifier: AGPL-3.0-or-later
+# SPDX-License-Identifier: LGPL-3.0-or-later
 ```
 
 ## Repository Links

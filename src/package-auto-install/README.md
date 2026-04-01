@@ -209,4 +209,4 @@ Planned features:
 
 ## License
 
-AGPL-3.0 - See LICENSE file for details
+LGPL-3.0 - See LICENSE file for details
