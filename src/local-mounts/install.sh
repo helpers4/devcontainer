@@ -82,6 +82,35 @@ _sync_dir_from_mount "${SOURCE_HOME}/.ssh" "${TARGET_HOME}/.ssh" ".ssh"
 _sync_dir_from_mount "${SOURCE_HOME}/.gnupg" "${TARGET_HOME}/.gnupg" ".gnupg"
 _sync_file_from_mount "${SOURCE_HOME}/.npmrc" "${TARGET_HOME}/.npmrc" ".npmrc"
 
+# ============================================================================
+# WORKAROUND: cp -a may silently fail to copy files within mounted dirs
+# Explicitly ensure SSH keys/config and GPG private keys are synced
+# ============================================================================
+
+# Ensure SSH keys and config are synced
+if [ -d "${SOURCE_HOME}/.ssh" ]; then
+    for f in "${SOURCE_HOME}/.ssh/id_"*; do
+        [ -f "$f" ] && cp -f "$f" "${TARGET_HOME}/.ssh/" 2>/dev/null || true
+    done
+    [ -f "${SOURCE_HOME}/.ssh/config" ] && \
+        cp -f "${SOURCE_HOME}/.ssh/config" "${TARGET_HOME}/.ssh/" 2>/dev/null || true
+    chmod 700 "${TARGET_HOME}/.ssh" 2>/dev/null || true
+    find "${TARGET_HOME}/.ssh" -name "id_*" ! -name "*.pub" -exec chmod 600 {} \; 2>/dev/null || true
+    find "${TARGET_HOME}/.ssh" -name "*.pub" -exec chmod 644 {} \; 2>/dev/null || true
+    [ -f "${TARGET_HOME}/.ssh/config" ] && chmod 600 "${TARGET_HOME}/.ssh/config" 2>/dev/null || true
+    echo "✅ SSH keys and config synchronized"
+fi
+
+# Ensure GPG private keys are synced
+if [ -d "${SOURCE_HOME}/.gnupg/private-keys-v1.d" ]; then
+    mkdir -p "${TARGET_HOME}/.gnupg/private-keys-v1.d" 2>/dev/null || true
+    cp -f "${SOURCE_HOME}/.gnupg/private-keys-v1.d/"*.key \
+          "${TARGET_HOME}/.gnupg/private-keys-v1.d/" 2>/dev/null || true
+    chmod 700 "${TARGET_HOME}/.gnupg/private-keys-v1.d" 2>/dev/null || true
+    chmod 600 "${TARGET_HOME}/.gnupg/private-keys-v1.d/"*.key 2>/dev/null || true
+    echo "✅ GPG private keys synchronized"
+fi
+
 _ensure_config_files "${TARGET_HOME}"
 
 # Best effort ownership fix for target user
