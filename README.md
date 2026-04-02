@@ -1,8 +1,24 @@
-# DevContainer Features by helpers4
+<h1 align="center">helpers4 — DevContainer Features</h1>
 
-This repository contains a collection of DevContainer Features developed and maintained by helpers4.
+<p align="center">
+  <strong>Production-ready DevContainer Features for instant, reproducible development environments.</strong>
+</p>
 
-Published at: `ghcr.io/helpers4/devcontainer/<feature-name>`
+<p align="center">
+  <a href="https://github.com/helpers4/devcontainer/blob/main/LICENSE"><img src="https://img.shields.io/github/license/helpers4/devcontainer?color=blue" alt="license" /></a>
+  <a href="https://github.com/helpers4/devcontainer"><img src="https://img.shields.io/github/last-commit/helpers4/devcontainer" alt="last commit" /></a>
+  <a href="https://containers.dev/features"><img src="https://img.shields.io/badge/devcontainer-features-blue?logo=visual-studio-code&logoColor=white" alt="DevContainer Features" /></a>
+</p>
+
+---
+
+## Overview
+
+This repository contains a collection of DevContainer Features developed and maintained by the helpers4 organization. All features are published to the GitHub Container Registry and can be referenced directly in any `devcontainer.json`.
+
+```
+ghcr.io/helpers4/devcontainer/<feature-name>
+```
 
 ## Features
 
@@ -176,6 +192,10 @@ Features from this repository are available via GitHub Container Registry. Refer
 | [local-mounts](./features/local-mounts) | Mount local Git, SSH, GPG, and npm config into devcontainer | [README](./features/local-mounts/README.md) |
 | [peon-ping](./features/peon-ping) | AI agent sound notifications with multi-IDE hooks and Peon Pet extension | [README](./features/peon-ping/README.md) |
 
+## Documentation
+
+Full documentation is available at [**helpers4.dev/dev-container**](https://helpers4.dev/dev-container).
+
 ## Development
 
 This repository follows the [DevContainer Features specification](https://containers.dev/implementors/features/) and is compatible with the [DevContainer Features distribution](https://containers.dev/implementors/features-distribution/).
@@ -194,6 +214,8 @@ Features are automatically published to GitHub Container Registry via GitHub Act
 
 ## Contributing
 
+Contributions are welcome! Please follow the established feature structure and test your changes locally before submitting.
+
 1. Fork the repository
 2. Create a feature branch
 3. Add your feature following the established patterns
@@ -202,8 +224,22 @@ Features are automatically published to GitHub Container Registry via GitHub Act
 
 ## License
 
-This project is licensed under the GNU Lesser General Public License v3.0. See [LICENSE](LICENSE) for details.
+This project is licensed under the [GNU Lesser General Public License v3.0](LICENSE).
 
 ## Acknowledgments
 
-Inspired by the [DevContainers Features](https://github.com/devcontainers/features) repository and [stuart leeks' dev-container-features](https://github.com/stuartleeks/dev-container-features) for the shell-history concept, with the key difference being project-scoped rather than global user history persistence.
+Inspired by the official [DevContainers Features](https://github.com/devcontainers/features) repository and [Stuart Leeks' dev-container-features](https://github.com/stuartleeks/dev-container-features) for the shell-history concept — with the key difference being project-scoped rather than global user history persistence.
+
+## Contributors
+
+<table>
+<tr>
+    <td align="center" style="word-wrap: break-word; width: 150.0; height: 150.0">
+        <a href="https://github.com/baxyz">
+            <img src="https://avatars.githubusercontent.com/u/7852177?v=4" width="100;" alt="Bérenger"/>
+            <br />
+            <sub style="font-size:14px"><b>Bérenger</b></sub>
+        </a>
+    </td>
+</tr>
+</table>
