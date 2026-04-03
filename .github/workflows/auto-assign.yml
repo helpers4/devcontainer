@@ -13,7 +13,7 @@ permissions:
 jobs:
   auto-assign:
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Assign issue to baxyz
         if: github.event_name == 'issues'
