@@ -34,6 +34,12 @@ if [ "$INSTALL_OXC" = "true" ]; then
             OXC_VERSION=$(oxc --version 2>/dev/null || echo "unknown")
             echo "   Version: ${OXC_VERSION}"
         fi
+
+        if [ "$ENABLE_EXPERIMENTAL_FORMATTER" = "true" ]; then
+            echo "   Experimental formatter: enabled (via VS Code settings)"
+        else
+            echo "   Experimental formatter: disabled"
+        fi
     else
         echo "⚠️  Failed to install Oxc CLI, but continuing..."
     fi
