@@ -6,7 +6,7 @@ Mounts local Git, SSH, GPG, and npm configuration files into the devcontainer fo
 
 - **Git configuration**: Your `.gitconfig` is automatically mounted
 - **SSH keys**: Access your SSH keys for Git operations and remote connections  
-- **SSH agent forwarding (stable)**: Uses `~/.ssh/agent.sock` to avoid dynamic socket path issues
+- **SSH agent forwarding**: Runtime detection with fallback chain (stable socket → VS Code native → legacy)
 - **GPG keys**: Sign commits with your GPG keys
 - **npm authentication**: Your `.npmrc` for private registry access
 - **Post-start verification**: Validates mounted content and reports issues
@@ -49,25 +49,59 @@ This feature mounts host files/directories into the container. Docker bind mount
 - Docker running
 - Host paths to mount must exist (for example: `~/.gitconfig`, `~/.ssh`, `~/.gnupg`, `~/.npmrc`)
 
-### Required for SSH agent forwarding
+### SSH agent forwarding
 
-- An SSH agent must be running on the host
-- Recommended: expose a **stable** socket at `~/.ssh/agent.sock`
+SSH agent forwarding works **out of the box** via VS Code's native mechanism — no extra configuration needed.
 
-Check on host:
+For **optimal reliability** (especially across container rebuilds and reconnections), you can optionally configure a stable socket on your host:
+
+**macOS / Linux (zsh)** — add to `~/.zshrc`:
 
 ```bash
-echo "$SSH_AUTH_SOCK"
-test -S "$SSH_AUTH_SOCK" && echo OK || echo MISSING
-ssh-add -l
-
-# Recommended stable socket for this feature
+# Stable SSH agent socket (optional, recommended for devcontainers)
 export SSH_AUTH_SOCK="$HOME/.ssh/agent.sock"
 if [[ ! -S "$SSH_AUTH_SOCK" ]]; then
-   rm -f "$SSH_AUTH_SOCK"
-   eval "$(ssh-agent -a "$SSH_AUTH_SOCK")" >/dev/null
+    rm -f "$SSH_AUTH_SOCK"
+    eval "$(ssh-agent -a "$SSH_AUTH_SOCK")" >/dev/null
+    ssh-add 2>/dev/null
 fi
 ```
+
+**Linux (bash)** — add to `~/.bashrc`:
+
+```bash
+# Stable SSH agent socket (optional, recommended for devcontainers)
+export SSH_AUTH_SOCK="$HOME/.ssh/agent.sock"
+if [ ! -S "$SSH_AUTH_SOCK" ]; then
+    rm -f "$SSH_AUTH_SOCK"
+    eval "$(ssh-agent -a "$SSH_AUTH_SOCK")" > /dev/null
+    ssh-add 2>/dev/null
+fi
+```
+
+**macOS with Keychain** — add to `~/.zshrc`:
+
+```bash
+export SSH_AUTH_SOCK="$HOME/.ssh/agent.sock"
+if [[ ! -S "$SSH_AUTH_SOCK" ]]; then
+    rm -f "$SSH_AUTH_SOCK"
+    eval "$(ssh-agent -a "$SSH_AUTH_SOCK")" >/dev/null
+    ssh-add --apple-use-keychain 2>/dev/null
+fi
+```
+
+After adding the snippet, reload your shell (`source ~/.zshrc`) and verify:
+
+```bash
+echo "$SSH_AUTH_SOCK"       # Should show ~/.ssh/agent.sock
+ssh-add -l                  # Should list your keys
+```
+
+The feature detects the socket at **runtime** with this priority:
+
+1. **Stable socket** (`/tmp/local-mounts/.ssh/agent.sock`) — if exposed on the host
+2. **VS Code native forwarding** — automatic, works out of the box
+3. **Legacy `/ssh-agent`** — backward compatibility
 
 If one of these host paths does not exist, container startup can fail with a bind-mount error.
 
@@ -93,7 +127,7 @@ The feature automatically configures these environment variables:
 
 | Variable | Value | Purpose |
 |----------|-------|---------|
-| `SSH_AUTH_SOCK` | `/tmp/local-mounts/.ssh/agent.sock` | SSH agent socket forwarding |
+| `SSH_AUTH_SOCK` | *(set at runtime via `/etc/profile.d/`)* | SSH agent socket — detected with fallback chain |
 | `GPG_TTY` | `/dev/pts/0` | GPG tty for signing |
 
 ## How It Works
@@ -145,23 +179,27 @@ ls -la ~/.gitconfig
 git config --global user.name  # Should show your name
 ```
 
-### SSH keys not working
+### SSH agent not forwarded (Permission denied)
 
-1. Ensure SSH agent is running on host:
+If `git fetch` or `ssh -T git@github.com` fails with `Permission denied (publickey)`:
+
+1. Check the socket inside the container:
    ```bash
-   ssh-add -l  # Should list your keys
+   echo "$SSH_AUTH_SOCK"
+   test -S "$SSH_AUTH_SOCK" && echo "OK" || echo "MISSING"
+   ssh-add -l
    ```
 
-2. Prefer a stable socket path on host:
+2. If the socket is missing, check VS Code's native forwarding on the host:
    ```bash
-   export SSH_AUTH_SOCK="$HOME/.ssh/agent.sock"
+   # On host
+   ssh-add -l           # Must show keys
+   echo "$SSH_AUTH_SOCK"  # Must point to a valid socket
    ```
 
-3. Inside container, verify:
-   ```bash
-   env | grep SSH_AUTH_SOCK
-   ssh-add -l  # Should work
-   ```
+3. Optionally configure a stable socket on the host (see SSH section above).
+
+4. Rebuild the container after fixing the host configuration.
 
 ### GPG keys not found
 
@@ -188,7 +226,8 @@ The `install.sh` script verifies all mounts and provides clear feedback on what'
 
 ## Version History
 
-- **v1.0.5**: Removed fragile direct `$SSH_AUTH_SOCK` bind mount and switched to stable `~/.ssh/agent.sock` strategy
+- **v1.0.7**: Replaced static `containerEnv` SSH_AUTH_SOCK with runtime detection via `/etc/profile.d/` — preserves VS Code native forwarding as fallback
 - **v1.0.6**: Added `username` option with mount staging (`/tmp/local-mounts`) and sync to `/home/<username>`
+- **v1.0.5**: Removed fragile direct `$SSH_AUTH_SOCK` bind mount and switched to stable `~/.ssh/agent.sock` strategy
 - **v1.0.4**: Fixed `.npmrc` mounting with robust fallback verification
 - **v1.0.3**: Initial release

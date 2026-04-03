@@ -153,30 +153,52 @@ _check_mount_status "${TARGET_HOME}" ".gitconfig" ".gitconfig" || true
 
 echo ""
 
-# Test SSH agent forwarding
+# ============================================================================
+# SSH_AUTH_SOCK: Runtime detection with fallback chain
+# ============================================================================
+# containerEnv is static and overrides VS Code's native SSH forwarding.
+# Instead, detect at shell startup time with proper fallback.
+# Priority: 1) Stable host socket  2) VS Code native forwarding  3) Legacy /ssh-agent
+
+cat > /etc/profile.d/local-mounts-ssh.sh << 'PROFILE_EOF'
+# local-mounts: SSH agent socket detection (runtime)
+_LOCAL_MOUNTS_SSH_SOCK="/tmp/local-mounts/.ssh/agent.sock"
+
+if [ -S "$_LOCAL_MOUNTS_SSH_SOCK" ]; then
+    # Stable host socket is mounted and active
+    export SSH_AUTH_SOCK="$_LOCAL_MOUNTS_SSH_SOCK"
+elif [ -n "$SSH_AUTH_SOCK" ] && [ -S "$SSH_AUTH_SOCK" ]; then
+    # VS Code's native SSH agent forwarding is working — keep it
+    :
+elif [ -S "/ssh-agent" ]; then
+    # Legacy external mount
+    export SSH_AUTH_SOCK="/ssh-agent"
+fi
+
+unset _LOCAL_MOUNTS_SSH_SOCK
+PROFILE_EOF
+
+chmod +x /etc/profile.d/local-mounts-ssh.sh
+echo "✅ SSH agent detection installed (/etc/profile.d/local-mounts-ssh.sh)"
+
+# Test SSH agent forwarding at install time (informational only)
 STABLE_SSH_AGENT_SOCKET="${SOURCE_HOME}/.ssh/agent.sock"
 
 if [ -S "$STABLE_SSH_AGENT_SOCKET" ]; then
-    export SSH_AUTH_SOCK="$STABLE_SSH_AGENT_SOCKET"
-    echo "✅ SSH agent forwarding is working (stable socket: $SSH_AUTH_SOCK)"
+    echo "✅ SSH stable socket found at ${STABLE_SSH_AGENT_SOCKET}"
     if command -v ssh-add >/dev/null 2>&1; then
-        if ssh-add -l >/dev/null 2>&1; then
-            KEY_COUNT=$(ssh-add -l 2>/dev/null | wc -l)
-            echo "   - ${KEY_COUNT} SSH key(s) loaded"
-        else
-            echo "   - No SSH keys loaded in agent"
-        fi
+        SSH_AUTH_SOCK="$STABLE_SSH_AGENT_SOCKET" ssh-add -l >/dev/null 2>&1 \
+            && echo "   - SSH keys accessible via stable socket" \
+            || echo "   - No SSH keys loaded in agent"
     fi
 elif [ -n "$SSH_AUTH_SOCK" ] && [ -S "$SSH_AUTH_SOCK" ]; then
-    echo "✅ SSH agent forwarding is working"
+    echo "✅ SSH agent forwarding available (VS Code native: $SSH_AUTH_SOCK)"
 elif [ -S "/ssh-agent" ]; then
-    # Backward compatibility if an external config still mounts /ssh-agent
-    export SSH_AUTH_SOCK="/ssh-agent"
-    echo "✅ SSH agent forwarding is working (legacy socket: $SSH_AUTH_SOCK)"
+    echo "✅ SSH agent forwarding available (legacy socket: /ssh-agent)"
 elif [ -d "${TARGET_HOME}/.ssh" ]; then
-    echo "✅ SSH keys directory available at ${TARGET_HOME}/.ssh"
+    echo "ℹ️  No SSH agent socket found — VS Code native forwarding will be used at runtime"
     if [ -f "${TARGET_HOME}/.ssh/id_rsa" ] || [ -f "${TARGET_HOME}/.ssh/id_ed25519" ]; then
-        echo "   - SSH keys detected"
+        echo "   - SSH keys detected in ${TARGET_HOME}/.ssh"
     fi
 else
     echo "ℹ️  No SSH configuration detected (optional)"

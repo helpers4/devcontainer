@@ -41,7 +41,16 @@ for mount in "${MOUNT_POINTS[@]}"; do
     fi
 done
 
-# Test 4: SSH agent socket strategy (informational)
+# Test 4: SSH agent runtime detection script exists
+PROFILE_SCRIPT="/etc/profile.d/local-mounts-ssh.sh"
+if [ -f "$PROFILE_SCRIPT" ]; then
+    echo "✅ PASS: SSH agent detection script installed at ${PROFILE_SCRIPT}"
+else
+    echo "❌ FAIL: SSH agent detection script not found at ${PROFILE_SCRIPT}"
+    exit 1
+fi
+
+# Test 5: SSH agent socket strategy (informational)
 if [ -n "$SSH_AUTH_SOCK" ]; then
     echo "ℹ️  INFO: SSH_AUTH_SOCK is set to: $SSH_AUTH_SOCK"
     if [ -S "$SSH_AUTH_SOCK" ]; then
@@ -50,7 +59,7 @@ if [ -n "$SSH_AUTH_SOCK" ]; then
         echo "⚠️  WARN: SSH_AUTH_SOCK is set but is not a valid socket"
     fi
 else
-    echo "ℹ️  INFO: SSH_AUTH_SOCK not set (SSH agent forwarding optional)"
+    echo "ℹ️  INFO: SSH_AUTH_SOCK not set (will be resolved at shell startup via profile.d)"
 fi
 
 STABLE_SOCKET="/tmp/local-mounts/.ssh/agent.sock"
