@@ -77,7 +77,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Install latest devcontainer CLI
         run: npm install -g @devcontainers/cli
@@ -91,7 +91,7 @@ jobs:
       status: ${{ steps.status.outputs.status }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Run ShellCheck on install scripts
         run: |
