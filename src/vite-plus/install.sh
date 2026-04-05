@@ -56,7 +56,6 @@ if [ "$INSTALL_VITE_PLUS" = "true" ]; then
 
         # Also install for the non-root user if different
         if [ "$USERNAME" != "root" ]; then
-            USER_HOME=$(eval echo "~${USERNAME}")
             su - "$USERNAME" -c 'curl -fsSL https://vite.plus | bash' 2>/dev/null || true
         fi
 
