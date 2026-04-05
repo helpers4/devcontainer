@@ -47,7 +47,7 @@ Add this feature to your `devcontainer.json`:
 ```
 
 This will:
-1. Install `vp` (Vite+ unified CLI) globally
+1. Install `vp` (Vite+ unified CLI) for the devcontainer user
 2. Install Oxc and Vitest VS Code extensions
 3. Configure Oxc as the default formatter
 4. Enable format-on-save and auto-fix
@@ -76,7 +76,7 @@ If you prefer standalone tools instead of or alongside `vp`:
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
-| `installVitePlus` | boolean | `true` | Install Vite+ unified CLI (`vp`) via the official installer |
+| `installVitePlus` | boolean | `true` | Install Vite+ unified CLI (`vp`) for the devcontainer user (`~/.vite-plus/bin`) |
 | `installVite` | boolean | `false` | Install standalone Vite CLI via npm (not needed with `vp`) |
 | `installVitest` | boolean | `false` | Install standalone Vitest CLI via npm (not needed with `vp`) |
 | `installOxc` | boolean | `false` | Install Oxc language server via npm (not needed with `vp`) |
