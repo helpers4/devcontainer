@@ -17,14 +17,9 @@ check "node is available" command -v node
 check "npm is available" command -v npm
 
 # Check vp (Vite+ unified CLI) installation
-if command -v vp >/dev/null 2>&1; then
-    check "vp CLI is available" command -v vp
-    check "vp version displays" vp --version
-elif [ -f "${HOME}/.vite-plus/bin/vp" ]; then
-    check "vp binary exists in ~/.vite-plus/bin" test -f "${HOME}/.vite-plus/bin/vp"
-else
-    echo "⚠️  vp CLI not found (installVitePlus=false or installer path not in PATH)"
-fi
+# vp is required by default (installVitePlus=true), so this must pass
+check "vp CLI is available" command -v vp
+check "vp version displays" vp --version
 
 # Check standalone Vite CLI (optional, not needed with vp)
 if command -v vite >/dev/null 2>&1; then

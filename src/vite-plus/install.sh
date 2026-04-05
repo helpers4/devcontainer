@@ -34,6 +34,25 @@ if [ "$USERNAME" = "automatic" ] || [ "$USERNAME" = "root" ]; then
     fi
 fi
 
+# Ensure apt is in non-interactive mode
+export DEBIAN_FRONTEND=noninteractive
+
+# Update apt if needed
+apt_get_update() {
+    if [ "$(find /var/lib/apt/lists/* | wc -l)" = "0" ]; then
+        echo "Running apt-get update..."
+        apt-get update -y
+    fi
+}
+
+# Check and install packages
+check_packages() {
+    if ! dpkg -s "$@" > /dev/null 2>&1; then
+        apt_get_update
+        apt-get -y install --no-install-recommends "$@"
+    fi
+}
+
 # Check if node/npm is available (needed for fallback tools and npm-based installs)
 if ! command -v npm >/dev/null 2>&1; then
     echo "❌ npm not found. Please ensure Node.js feature is installed first."
@@ -44,30 +63,55 @@ fi
 if [ "$INSTALL_VITE_PLUS" = "true" ]; then
     echo "📦 Installing Vite+ unified CLI (vp) via official installer..."
 
-    # Install vp using the official installer
-    if curl -fsSL https://vite.plus | bash 2>/dev/null; then
-        echo "✅ Vite+ CLI (vp) installed"
+    # Ensure curl and ca-certificates are available
+    check_packages curl ca-certificates
 
-        # Source environment to make vp available
-        VP_HOME="${HOME}/.vite-plus"
-        if [ -d "$VP_HOME" ]; then
-            export PATH="${VP_HOME}/bin:${PATH}"
-        fi
+    # Download installer to a temp file to avoid pipefail issues
+    INSTALLER_SCRIPT=$(mktemp)
+    trap 'rm -f "$INSTALLER_SCRIPT"' EXIT
 
-        # Also install for the non-root user if different
-        if [ "$USERNAME" != "root" ]; then
-            su - "$USERNAME" -c 'curl -fsSL https://vite.plus | bash' 2>/dev/null || true
-        fi
+    if ! curl -fsSL https://vite.plus -o "$INSTALLER_SCRIPT"; then
+        echo "❌ Failed to download Vite+ installer."
+        exit 1
+    fi
+    chmod 644 "$INSTALLER_SCRIPT"
 
-        # Verify installation
-        if command -v vp >/dev/null 2>&1; then
-            VP_VERSION=$(vp --version 2>/dev/null || echo "unknown")
-            echo "   Version: ${VP_VERSION}"
+    # Install vp for the devcontainer user (per-user install in ~/.vite-plus/bin)
+    if [ "$USERNAME" != "root" ]; then
+        if su - "$USERNAME" -c "bash '$INSTALLER_SCRIPT'"; then
+            USER_HOME=$(eval echo "~${USERNAME}")
+            USER_VP_HOME="${USER_HOME}/.vite-plus"
+            if [ -d "$USER_VP_HOME" ]; then
+                echo "✅ Vite+ CLI (vp) installed at ${USER_VP_HOME}/bin"
+            fi
+
+            # Verify vp is available for the user
+            if su - "$USERNAME" -c 'command -v vp' >/dev/null 2>&1; then
+                VP_VERSION=$(su - "$USERNAME" -c 'vp --version 2>/dev/null' || echo "unknown")
+                echo "   Version: ${VP_VERSION}"
+            else
+                echo "   vp installed, will be available in new shell sessions for ${USERNAME}"
+            fi
         else
-            echo "   vp installed, will be available in new shell sessions"
+            echo "❌ Failed to install Vite+ CLI via official installer."
+            exit 1
         fi
     else
-        echo "⚠️  Failed to install Vite+ CLI via official installer, but continuing..."
+        # Root-only fallback
+        if bash "$INSTALLER_SCRIPT"; then
+            echo "✅ Vite+ CLI (vp) installed"
+            VP_HOME="${HOME}/.vite-plus"
+            if [ -d "$VP_HOME" ]; then
+                export PATH="${VP_HOME}/bin:${PATH}"
+            fi
+            if command -v vp >/dev/null 2>&1; then
+                VP_VERSION=$(vp --version 2>/dev/null || echo "unknown")
+                echo "   Version: ${VP_VERSION}"
+            fi
+        else
+            echo "❌ Failed to install Vite+ CLI via official installer."
+            exit 1
+        fi
     fi
 fi
 
