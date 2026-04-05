@@ -1,34 +1,29 @@
 {
   "id": "vite-plus",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "name": "Vite+ Development Environment",
-  "description": "Complete Vite+ toolchain setup with VS Code extensions, Oxc formatter/linter, Vitest, and optimized configuration.",
+  "description": "Complete Vite+ unified toolchain setup (vp) with Vite, Vitest, Oxlint, Oxfmt, Rolldown, tsdown, and VS Code integration.",
   "documentationURL": "https://github.com/helpers4/devcontainer/tree/main/features/vite-plus",
   "options": {
-    "installVite": {
+    "installVitePlus": {
       "type": "boolean",
       "default": true,
-      "description": "Install Vite CLI globally"
+      "description": "Install Vite+ unified CLI (vp) globally via the official installer"
+    },
+    "installVite": {
+      "type": "boolean",
+      "default": false,
+      "description": "Install Vite CLI globally via npm (not needed if using vp)"
     },
     "installVitest": {
       "type": "boolean",
-      "default": true,
-      "description": "Install Vitest CLI globally"
-    },
-    "installVitePlus": {
-      "type": "boolean",
       "default": false,
-      "description": "Install Vite+ unified CLI globally (currently in early access)"
+      "description": "Install Vitest CLI globally via npm (not needed if using vp)"
     },
     "installOxc": {
       "type": "boolean",
-      "default": true,
-      "description": "Install Oxc CLI globally for linting and formatting"
-    },
-    "enableExperimentalFormatter": {
-      "type": "boolean",
-      "default": true,
-      "description": "Enable experimental Oxc formatter in VS Code settings"
+      "default": false,
+      "description": "Install Oxc language server globally via npm (not needed if using vp)"
     }
   },
   "customizations": {
@@ -42,7 +37,6 @@
         "oxc.enable": true,
         "oxc.lint.enable": true,
         "oxc.fmt.enable": true,
-        "oxc.fmt.experimental": true,
         "editor.defaultFormatter": "oxc.oxc-vscode",
         "editor.formatOnSave": true,
         "editor.codeActionsOnSave": {

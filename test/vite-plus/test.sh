@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# This file is part of helpers4.
+# Copyright (C) 2025 baxyz
+# SPDX-License-Identifier: LGPL-3.0-or-later
+
 # Test script for vite-plus feature
 
 set -e
@@ -12,16 +16,24 @@ check "node is available" command -v node
 
 check "npm is available" command -v npm
 
-check "vite CLI is available" command -v vite
-
-check "vitest CLI is available" command -v vitest
-
-# Check Oxc installation (optional)
-if command -v oxc >/dev/null 2>&1; then
-    check "oxc CLI is available" command -v oxc
-    check "oxc version displays" oxc --version
+# Check vp (Vite+ unified CLI) installation
+if command -v vp >/dev/null 2>&1; then
+    check "vp CLI is available" command -v vp
+    check "vp version displays" vp --version
+elif [ -f "${HOME}/.vite-plus/bin/vp" ]; then
+    check "vp binary exists in ~/.vite-plus/bin" test -f "${HOME}/.vite-plus/bin/vp"
 else
-    echo "⚠️  Oxc CLI not installed (installOxc=false or failed to install)"
+    echo "⚠️  vp CLI not found (installVitePlus=false or installer path not in PATH)"
+fi
+
+# Check standalone Vite CLI (optional, not needed with vp)
+if command -v vite >/dev/null 2>&1; then
+    check "vite CLI is available" command -v vite
+fi
+
+# Check standalone Vitest CLI (optional, not needed with vp)
+if command -v vitest >/dev/null 2>&1; then
+    check "vitest CLI is available" command -v vitest
 fi
 
 reportResults
