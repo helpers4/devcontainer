@@ -60,7 +60,7 @@ For **optimal reliability** (especially across container rebuilds and reconnecti
 ```bash
 # Stable SSH agent socket (optional, recommended for devcontainers)
 export SSH_AUTH_SOCK="$HOME/.ssh/agent.sock"
-if [[ ! -S "$SSH_AUTH_SOCK" ]]; then
+if ! ssh-add -l &>/dev/null; then
     rm -f "$SSH_AUTH_SOCK"
     eval "$(ssh-agent -a "$SSH_AUTH_SOCK")" >/dev/null
     ssh-add 2>/dev/null
@@ -72,7 +72,7 @@ fi
 ```bash
 # Stable SSH agent socket (optional, recommended for devcontainers)
 export SSH_AUTH_SOCK="$HOME/.ssh/agent.sock"
-if [ ! -S "$SSH_AUTH_SOCK" ]; then
+if ! ssh-add -l >/dev/null 2>&1; then
     rm -f "$SSH_AUTH_SOCK"
     eval "$(ssh-agent -a "$SSH_AUTH_SOCK")" > /dev/null
     ssh-add 2>/dev/null
@@ -83,7 +83,7 @@ fi
 
 ```bash
 export SSH_AUTH_SOCK="$HOME/.ssh/agent.sock"
-if [[ ! -S "$SSH_AUTH_SOCK" ]]; then
+if ! ssh-add -l &>/dev/null; then
     rm -f "$SSH_AUTH_SOCK"
     eval "$(ssh-agent -a "$SSH_AUTH_SOCK")" >/dev/null
     ssh-add --apple-use-keychain 2>/dev/null

@@ -53,7 +53,10 @@ _sync_dir_from_mount() {
 
     if [ -d "${source_dir}" ]; then
         mkdir -p "${target_dir}" 2>/dev/null || true
-        cp -a "${source_dir}/." "${target_dir}/" 2>/dev/null || true
+        if ! cp -a "${source_dir}/." "${target_dir}/" 2>&1; then
+            echo "⚠️  cp -a failed for ${config_name}, falling back to file-by-file copy"
+            find "${source_dir}" -maxdepth 1 -type f -exec cp -f {} "${target_dir}/" \;
+        fi
         echo "✅ ${config_name} synchronized to ${target_dir}"
     elif [ ! -d "${target_dir}" ]; then
         mkdir -p "${target_dir}" 2>/dev/null || true
@@ -87,18 +90,22 @@ _sync_file_from_mount "${SOURCE_HOME}/.npmrc" "${TARGET_HOME}/.npmrc" ".npmrc"
 # Explicitly ensure SSH keys/config and GPG private keys are synced
 # ============================================================================
 
-# Ensure SSH keys and config are synced
+# Ensure ALL SSH files are synced (not just id_* keys)
 if [ -d "${SOURCE_HOME}/.ssh" ]; then
-    for f in "${SOURCE_HOME}/.ssh/id_"*; do
-        [ -f "$f" ] && cp -f "$f" "${TARGET_HOME}/.ssh/" 2>/dev/null || true
-    done
-    [ -f "${SOURCE_HOME}/.ssh/config" ] && \
-        cp -f "${SOURCE_HOME}/.ssh/config" "${TARGET_HOME}/.ssh/" 2>/dev/null || true
-    chmod 700 "${TARGET_HOME}/.ssh" 2>/dev/null || true
-    find "${TARGET_HOME}/.ssh" -name "id_*" ! -name "*.pub" -exec chmod 600 {} \; 2>/dev/null || true
-    find "${TARGET_HOME}/.ssh" -name "*.pub" -exec chmod 644 {} \; 2>/dev/null || true
-    [ -f "${TARGET_HOME}/.ssh/config" ] && chmod 600 "${TARGET_HOME}/.ssh/config" 2>/dev/null || true
-    echo "✅ SSH keys and config synchronized"
+    find "${SOURCE_HOME}/.ssh" -maxdepth 1 -type f -exec cp -f {} "${TARGET_HOME}/.ssh/" \;
+    # Fix permissions
+    chmod 700 "${TARGET_HOME}/.ssh"
+    find "${TARGET_HOME}/.ssh" -name "id_*" ! -name "*.pub" -exec chmod 600 {} \;
+    find "${TARGET_HOME}/.ssh" -name "*.pub" -exec chmod 644 {} \;
+    [ -f "${TARGET_HOME}/.ssh/config" ] && chmod 600 "${TARGET_HOME}/.ssh/config"
+    # Verify sync completeness
+    SOURCE_COUNT=$(find "${SOURCE_HOME}/.ssh" -maxdepth 1 -type f 2>/dev/null | wc -l)
+    TARGET_COUNT=$(find "${TARGET_HOME}/.ssh" -maxdepth 1 -type f 2>/dev/null | wc -l)
+    if [ "$SOURCE_COUNT" -gt 0 ] && [ "$TARGET_COUNT" -lt "$SOURCE_COUNT" ]; then
+        echo "⚠️  SSH sync incomplete: ${TARGET_COUNT}/${SOURCE_COUNT} files copied"
+    else
+        echo "✅ SSH files synchronized (${TARGET_COUNT} files)"
+    fi
 fi
 
 # Ensure GPG private keys are synced
@@ -162,15 +169,16 @@ echo ""
 
 cat > /etc/profile.d/local-mounts-ssh.sh << 'PROFILE_EOF'
 # local-mounts: SSH agent socket detection (runtime)
+# Uses ssh-add -l to verify agent is alive (not just that the socket file exists)
 _LOCAL_MOUNTS_SSH_SOCK="/tmp/local-mounts/.ssh/agent.sock"
 
-if [ -S "$_LOCAL_MOUNTS_SSH_SOCK" ]; then
-    # Stable host socket is mounted and active
+if [ -S "$_LOCAL_MOUNTS_SSH_SOCK" ] && SSH_AUTH_SOCK="$_LOCAL_MOUNTS_SSH_SOCK" ssh-add -l >/dev/null 2>&1; then
+    # Stable host socket is mounted and agent responds
     export SSH_AUTH_SOCK="$_LOCAL_MOUNTS_SSH_SOCK"
-elif [ -n "$SSH_AUTH_SOCK" ] && [ -S "$SSH_AUTH_SOCK" ]; then
+elif [ -n "$SSH_AUTH_SOCK" ] && [ -S "$SSH_AUTH_SOCK" ] && ssh-add -l >/dev/null 2>&1; then
     # VS Code's native SSH agent forwarding is working — keep it
     :
-elif [ -S "/ssh-agent" ]; then
+elif [ -S "/ssh-agent" ] && SSH_AUTH_SOCK="/ssh-agent" ssh-add -l >/dev/null 2>&1; then
     # Legacy external mount
     export SSH_AUTH_SOCK="/ssh-agent"
 fi
