@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 
-# Peon Ping DevContainer Feature
-# Copyright (c) 2025 helpers4
-# Licensed under LGPL-3.0 - see LICENSE file for details
+# This file is part of helpers4.
+# Copyright (C) 2025 baxyz
+# SPDX-License-Identifier: LGPL-3.0-or-later
 #
 # Installs peon-ping and configures multi-IDE hooks for AI agent sound notifications
 
@@ -13,6 +13,17 @@ PACKS="${PACKS:-"default"}"
 NO_RC="${NORC:-"true"}"
 IDE_SETUP="${IDESETUP:-"vscode"}"
 VOLUME="${VOLUME:-"0.5"}"
+
+# Validate volume is a valid float between 0.0 and 1.0
+if ! echo "${VOLUME}" | grep -qE '^[0-9]+(\.[0-9]+)?$'; then
+    echo "⚠️  Invalid volume '${VOLUME}', falling back to 0.5"
+    VOLUME="0.5"
+elif python3 -c "v=float('${VOLUME}'); exit(0 if 0.0 <= v <= 1.0 else 1)" 2>/dev/null; then
+    : # volume is valid
+else
+    echo "⚠️  Volume '${VOLUME}' out of range [0.0–1.0], clamping to 0.5"
+    VOLUME="0.5"
+fi
 
 USERNAME="${USERNAME:-"${_REMOTE_USER:-"automatic"}"}"
 
@@ -113,14 +124,18 @@ PEON_CONFIG="${PEON_CONFIG_DIR}/config.json"
 if [ -f "${PEON_CONFIG}" ] && command -v python3 > /dev/null 2>&1; then
     echo "🔧 Setting volume to ${VOLUME}..."
     python3 << PYEOF
-import json
+import json, sys
+
 path = "${PEON_CONFIG}"
-with open(path) as f:
-    cfg = json.load(f)
-cfg["volume"] = float("${VOLUME}")
-with open(path, "w") as f:
-    json.dump(cfg, f, indent=2)
-    f.write("\n")
+try:
+    with open(path) as f:
+        cfg = json.load(f)
+    cfg["volume"] = max(0.0, min(1.0, float("${VOLUME}")))
+    with open(path, "w") as f:
+        json.dump(cfg, f, indent=2)
+        f.write("\n")
+except (json.JSONDecodeError, ValueError, OSError) as e:
+    print(f"⚠️  Could not update volume in {path}: {e}", file=sys.stderr)
 PYEOF
 fi
 
@@ -146,15 +161,24 @@ merge_hooks_json() {
     local new_hooks="$2"
 
     python3 << PYEOF
-import json, os
+import json, os, sys
 
 target_path = "${target}"
-new_hooks = json.loads("""${new_hooks}""")
+try:
+    new_hooks = json.loads("""${new_hooks}""")
+except json.JSONDecodeError as e:
+    print(f"⚠️  Invalid hooks JSON: {e}", file=sys.stderr)
+    sys.exit(0)
 
-if os.path.exists(target_path):
-    with open(target_path) as f:
-        data = json.load(f)
-else:
+try:
+    if os.path.exists(target_path):
+        with open(target_path) as f:
+            data = json.load(f)
+    else:
+        os.makedirs(os.path.dirname(target_path), exist_ok=True)
+        data = {"version": 1, "hooks": {}}
+except (json.JSONDecodeError, OSError) as e:
+    print(f"⚠️  Could not read {target_path}, creating fresh: {e}", file=sys.stderr)
     os.makedirs(os.path.dirname(target_path), exist_ok=True)
     data = {"version": 1, "hooks": {}}
 
@@ -164,14 +188,16 @@ for event, entries in new_hooks.items():
     event_list = existing_hooks.setdefault(event, [])
     existing_cmds = [e.get("bash", e.get("command", "")) for e in event_list]
     for entry in entries:
-        cmd = entry.get("bash", entry.get("command", ""))
         if not any("peon-ping" in c for c in existing_cmds):
             event_list.append(entry)
 
 data["hooks"] = existing_hooks
-with open(target_path, "w") as f:
-    json.dump(data, f, indent=2)
-    f.write("\n")
+try:
+    with open(target_path, "w") as f:
+        json.dump(data, f, indent=2)
+        f.write("\n")
+except OSError as e:
+    print(f"⚠️  Could not write {target_path}: {e}", file=sys.stderr)
 PYEOF
 }
 
@@ -195,22 +221,29 @@ HOOKS_FILE="${HOOKS_DIR}/hooks.json"
 mkdir -p "${HOOKS_DIR}"
 
 if [ -f "${HOOKS_FILE}" ]; then
-    python3 << 'PYEOF'
-import json, os
+    HOOKS_FILE="${HOOKS_FILE}" python3 << 'PYEOF'
+import json, os, sys
 
 path = os.environ.get("HOOKS_FILE", ".github/hooks/hooks.json")
 if not os.path.exists(path):
-    exit(0)
+    sys.exit(0)
 
-with open(path) as f:
-    data = json.load(f)
+try:
+    with open(path) as f:
+        data = json.load(f)
+except (json.JSONDecodeError, OSError) as e:
+    print(f"⚠️  Could not read {path}: {e}", file=sys.stderr)
+    data = {"version": 1, "hooks": {}}
 
 hooks = data.setdefault("hooks", {})
+
+# VS Code hook event names (PascalCase, auto-mapped from lowerCamelCase by VS Code).
+# See https://code.visualstudio.com/docs/copilot/customization/hooks#_hook-lifecycle-events
 new_entries = {
-    "sessionStart":          [{"type": "command", "bash": "bash ~/.claude/hooks/peon-ping/adapters/copilot.sh sessionStart"}],
-    "userPromptSubmitted":   [{"type": "command", "bash": "bash ~/.claude/hooks/peon-ping/adapters/copilot.sh userPromptSubmitted"}],
-    "postToolUse":           [{"type": "command", "bash": "bash ~/.claude/hooks/peon-ping/adapters/copilot.sh postToolUse"}],
-    "errorOccurred":         [{"type": "command", "bash": "bash ~/.claude/hooks/peon-ping/adapters/copilot.sh errorOccurred"}]
+    "SessionStart":        [{"type": "command", "bash": "bash ~/.claude/hooks/peon-ping/adapters/copilot.sh SessionStart"}],
+    "UserPromptSubmit":    [{"type": "command", "bash": "bash ~/.claude/hooks/peon-ping/adapters/copilot.sh UserPromptSubmit"}],
+    "PostToolUse":         [{"type": "command", "bash": "bash ~/.claude/hooks/peon-ping/adapters/copilot.sh PostToolUse"}],
+    "Stop":                [{"type": "command", "bash": "bash ~/.claude/hooks/peon-ping/adapters/copilot.sh Stop"}]
 }
 
 for event, entries in new_entries.items():
@@ -221,26 +254,29 @@ for event, entries in new_entries.items():
             event_list.append(entry)
 
 data["hooks"] = hooks
-with open(path, "w") as f:
-    json.dump(data, f, indent=2)
-    f.write("\n")
+try:
+    with open(path, "w") as f:
+        json.dump(data, f, indent=2)
+        f.write("\n")
+except OSError as e:
+    print(f"⚠️  Could not write {path}: {e}", file=sys.stderr)
 PYEOF
 else
     cat > "${HOOKS_FILE}" << 'JSONEOF'
 {
   "version": 1,
   "hooks": {
-    "sessionStart": [
-      { "type": "command", "bash": "bash ~/.claude/hooks/peon-ping/adapters/copilot.sh sessionStart" }
+    "SessionStart": [
+      { "type": "command", "bash": "bash ~/.claude/hooks/peon-ping/adapters/copilot.sh SessionStart" }
     ],
-    "userPromptSubmitted": [
-      { "type": "command", "bash": "bash ~/.claude/hooks/peon-ping/adapters/copilot.sh userPromptSubmitted" }
+    "UserPromptSubmit": [
+      { "type": "command", "bash": "bash ~/.claude/hooks/peon-ping/adapters/copilot.sh UserPromptSubmit" }
     ],
-    "postToolUse": [
-      { "type": "command", "bash": "bash ~/.claude/hooks/peon-ping/adapters/copilot.sh postToolUse" }
+    "PostToolUse": [
+      { "type": "command", "bash": "bash ~/.claude/hooks/peon-ping/adapters/copilot.sh PostToolUse" }
     ],
-    "errorOccurred": [
-      { "type": "command", "bash": "bash ~/.claude/hooks/peon-ping/adapters/copilot.sh errorOccurred" }
+    "Stop": [
+      { "type": "command", "bash": "bash ~/.claude/hooks/peon-ping/adapters/copilot.sh Stop" }
     ]
   }
 }
