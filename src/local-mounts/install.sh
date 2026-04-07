@@ -53,7 +53,7 @@ _sync_dir_from_mount() {
 
     if [ -d "${source_dir}" ]; then
         mkdir -p "${target_dir}" 2>/dev/null || true
-        if ! cp -a "${source_dir}/." "${target_dir}/" 2>&1; then
+        if ! cp -a "${source_dir}/." "${target_dir}/" 2>/dev/null; then
             echo "⚠️  cp -a failed for ${config_name}, falling back to file-by-file copy"
             find "${source_dir}" -maxdepth 1 -type f -exec cp -f {} "${target_dir}/" \;
         fi
