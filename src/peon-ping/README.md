@@ -105,7 +105,7 @@ Or add it to your devcontainer.json:
 }
 ```
 
-This creates hooks for `sessionStart`, `userPromptSubmitted`, `postToolUse`, and `errorOccurred` events using the Copilot adapter.
+This creates hooks for `SessionStart`, `UserPromptSubmit`, `PostToolUse`, and `Stop` events using the Copilot adapter.
 
 ### Cursor
 
