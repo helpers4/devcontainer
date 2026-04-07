@@ -18,9 +18,7 @@ VOLUME="${VOLUME:-"0.5"}"
 if ! echo "${VOLUME}" | grep -qE '^[0-9]+(\.[0-9]+)?$'; then
     echo "⚠️  Invalid volume '${VOLUME}', falling back to 0.5"
     VOLUME="0.5"
-elif python3 -c "v=float('${VOLUME}'); exit(0 if 0.0 <= v <= 1.0 else 1)" 2>/dev/null; then
-    : # volume is valid
-else
+elif ! awk "BEGIN { v=${VOLUME}; exit (v >= 0.0 && v <= 1.0) ? 0 : 1 }"; then
     echo "⚠️  Volume '${VOLUME}' out of range [0.0–1.0], clamping to 0.5"
     VOLUME="0.5"
 fi

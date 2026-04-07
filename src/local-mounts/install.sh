@@ -169,21 +169,29 @@ echo ""
 
 cat > /etc/profile.d/local-mounts-ssh.sh << 'PROFILE_EOF'
 # local-mounts: SSH agent socket detection (runtime)
-# Uses ssh-add -l to verify agent is alive (not just that the socket file exists)
+# ssh-add -l exits: 0 = keys loaded, 1 = no keys, 2 = cannot connect
+# We accept 0 and 1 (agent alive), reject only 2 (dead/missing agent)
 _LOCAL_MOUNTS_SSH_SOCK="/tmp/local-mounts/.ssh/agent.sock"
 
-if [ -S "$_LOCAL_MOUNTS_SSH_SOCK" ] && SSH_AUTH_SOCK="$_LOCAL_MOUNTS_SSH_SOCK" ssh-add -l >/dev/null 2>&1; then
+_ssh_agent_responds() {
+    local _rc=0
+    SSH_AUTH_SOCK="$1" ssh-add -l >/dev/null 2>&1 || _rc=$?
+    [ "$_rc" -ne 2 ]
+}
+
+if [ -S "$_LOCAL_MOUNTS_SSH_SOCK" ] && _ssh_agent_responds "$_LOCAL_MOUNTS_SSH_SOCK"; then
     # Stable host socket is mounted and agent responds
     export SSH_AUTH_SOCK="$_LOCAL_MOUNTS_SSH_SOCK"
-elif [ -n "$SSH_AUTH_SOCK" ] && [ -S "$SSH_AUTH_SOCK" ] && ssh-add -l >/dev/null 2>&1; then
+elif [ -n "$SSH_AUTH_SOCK" ] && [ -S "$SSH_AUTH_SOCK" ] && _ssh_agent_responds "$SSH_AUTH_SOCK"; then
     # VS Code's native SSH agent forwarding is working — keep it
     :
-elif [ -S "/ssh-agent" ] && SSH_AUTH_SOCK="/ssh-agent" ssh-add -l >/dev/null 2>&1; then
+elif [ -S "/ssh-agent" ] && _ssh_agent_responds "/ssh-agent"; then
     # Legacy external mount
     export SSH_AUTH_SOCK="/ssh-agent"
 fi
 
 unset _LOCAL_MOUNTS_SSH_SOCK
+unset -f _ssh_agent_responds
 PROFILE_EOF
 
 chmod +x /etc/profile.d/local-mounts-ssh.sh
