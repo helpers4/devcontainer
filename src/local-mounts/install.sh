@@ -1,16 +1,16 @@
 #!/usr/bin/env bash
 
-# Local Mounts DevContainer Feature
-# Copyright (c) 2025 helpers4
-# Licensed under LGPL-3.0 - see LICENSE file for details
+# This file is part of helpers4.
+# Copyright (C) 2025 baxyz
+# SPDX-License-Identifier: LGPL-3.0-or-later
 #
-# Mounts local Git, SSH, GPG, and npm configuration files into the devcontainer
-# for a configurable container user (default: node)
-# This script runs INSIDE the container to verify and fix mounts
+# Installs local-mounts devcontainer feature.
+# This script runs at BUILD TIME — bind mounts are NOT available yet.
+# File sync from mounts happens at container start via postStartCommand.
 
 set -e
 
-USERNAME="${_BUILD_ARG_USERNAME:-node}"
+USERNAME="${USERNAME:-"${_BUILD_ARG_USERNAME:-"node"}"}"
 SOURCE_HOME="/tmp/local-mounts"
 
 # Resolve target home robustly
@@ -21,151 +21,57 @@ else
 fi
 
 echo "🔧 Setting up local-mounts devcontainer feature..."
-echo "📁 Container user: ${USERNAME}"
-echo "📁 Home directory: ${TARGET_HOME}"
-echo "📁 Mount staging: ${SOURCE_HOME}"
+echo "   Container user: ${USERNAME}"
+echo "   Home directory: ${TARGET_HOME}"
+echo "   Mount staging: ${SOURCE_HOME}"
 echo ""
 
 # ============================================================================
-# CRITICAL: Verify mounts worked and create fallbacks if needed
+# 1. Create directory structure (build time)
 # ============================================================================
-# Docker bind mounts may fail silently. This section ensures all
-# configuration files exist in the target home for the configured user.
+# Bind mounts are NOT available during docker build.
+# Create the target directories so they exist when the container starts.
 
-_sync_file_from_mount() {
-    local source_file="$1"
-    local target_file="$2"
-    local config_name="$3"
+mkdir -p "${TARGET_HOME}/.ssh" "${TARGET_HOME}/.gnupg" 2>/dev/null || true
+chmod 700 "${TARGET_HOME}/.ssh" "${TARGET_HOME}/.gnupg" 2>/dev/null || true
+touch "${TARGET_HOME}/.gitconfig" "${TARGET_HOME}/.npmrc" 2>/dev/null || true
 
-    if [ -f "${source_file}" ]; then
-        cp -f "${source_file}" "${target_file}" 2>/dev/null || true
-        echo "✅ ${config_name} synchronized to ${target_file}"
-    elif [ ! -f "${target_file}" ]; then
-        touch "${target_file}" 2>/dev/null || true
-        echo "ℹ️  ${config_name} mount source not found, created empty ${target_file}"
-    fi
-}
-
-_sync_dir_from_mount() {
-    local source_dir="$1"
-    local target_dir="$2"
-    local config_name="$3"
-
-    if [ -d "${source_dir}" ]; then
-        mkdir -p "${target_dir}" 2>/dev/null || true
-        if ! cp -a "${source_dir}/." "${target_dir}/" 2>/dev/null; then
-            echo "⚠️  cp -a failed for ${config_name}, falling back to file-by-file copy"
-            find "${source_dir}" -maxdepth 1 -type f -exec cp -f {} "${target_dir}/" \;
-        fi
-        echo "✅ ${config_name} synchronized to ${target_dir}"
-    elif [ ! -d "${target_dir}" ]; then
-        mkdir -p "${target_dir}" 2>/dev/null || true
-        echo "ℹ️  ${config_name} mount source not found, created ${target_dir}"
-    fi
-}
-
-_ensure_config_files() {
-    local target_dir="$1"
-    
-    # Ensure directories exist
-    mkdir -p "${target_dir}/.ssh" 2>/dev/null || true
-    mkdir -p "${target_dir}/.gnupg" 2>/dev/null || true
-    chmod 700 "${target_dir}/.ssh" 2>/dev/null || true
-    chmod 700 "${target_dir}/.gnupg" 2>/dev/null || true
-    
-    # Ensure regular files exist (empty if not mounted)
-    touch "${target_dir}/.gitconfig" 2>/dev/null || true
-    touch "${target_dir}/.npmrc" 2>/dev/null || true
-}
-
-mkdir -p "${TARGET_HOME}" 2>/dev/null || true
-
-_sync_file_from_mount "${SOURCE_HOME}/.gitconfig" "${TARGET_HOME}/.gitconfig" ".gitconfig"
-_sync_dir_from_mount "${SOURCE_HOME}/.ssh" "${TARGET_HOME}/.ssh" ".ssh"
-_sync_dir_from_mount "${SOURCE_HOME}/.gnupg" "${TARGET_HOME}/.gnupg" ".gnupg"
-_sync_file_from_mount "${SOURCE_HOME}/.npmrc" "${TARGET_HOME}/.npmrc" ".npmrc"
-
-# ============================================================================
-# WORKAROUND: cp -a may silently fail to copy files within mounted dirs
-# Explicitly ensure SSH keys/config and GPG private keys are synced
-# ============================================================================
-
-# Ensure ALL SSH files are synced (not just id_* keys)
-if [ -d "${SOURCE_HOME}/.ssh" ]; then
-    find "${SOURCE_HOME}/.ssh" -maxdepth 1 -type f -exec cp -f {} "${TARGET_HOME}/.ssh/" \;
-    # Fix permissions
-    chmod 700 "${TARGET_HOME}/.ssh"
-    find "${TARGET_HOME}/.ssh" -name "id_*" ! -name "*.pub" -exec chmod 600 {} \;
-    find "${TARGET_HOME}/.ssh" -name "*.pub" -exec chmod 644 {} \;
-    [ -f "${TARGET_HOME}/.ssh/config" ] && chmod 600 "${TARGET_HOME}/.ssh/config"
-    # Verify sync completeness
-    SOURCE_COUNT=$(find "${SOURCE_HOME}/.ssh" -maxdepth 1 -type f 2>/dev/null | wc -l)
-    TARGET_COUNT=$(find "${TARGET_HOME}/.ssh" -maxdepth 1 -type f 2>/dev/null | wc -l)
-    if [ "$SOURCE_COUNT" -gt 0 ] && [ "$TARGET_COUNT" -lt "$SOURCE_COUNT" ]; then
-        echo "⚠️  SSH sync incomplete: ${TARGET_COUNT}/${SOURCE_COUNT} files copied"
-    else
-        echo "✅ SSH files synchronized (${TARGET_COUNT} files)"
-    fi
-fi
-
-# Ensure GPG private keys are synced
-if [ -d "${SOURCE_HOME}/.gnupg/private-keys-v1.d" ]; then
-    mkdir -p "${TARGET_HOME}/.gnupg/private-keys-v1.d" 2>/dev/null || true
-    cp -f "${SOURCE_HOME}/.gnupg/private-keys-v1.d/"*.key \
-          "${TARGET_HOME}/.gnupg/private-keys-v1.d/" 2>/dev/null || true
-    chmod 700 "${TARGET_HOME}/.gnupg/private-keys-v1.d" 2>/dev/null || true
-    chmod 600 "${TARGET_HOME}/.gnupg/private-keys-v1.d/"*.key 2>/dev/null || true
-    echo "✅ GPG private keys synchronized"
-fi
-
-_ensure_config_files "${TARGET_HOME}"
-
-# Best effort ownership fix for target user
+# Fix ownership for target user
 if getent passwd "${USERNAME}" >/dev/null 2>&1; then
-    chown -R "${USERNAME}:${USERNAME}" "${TARGET_HOME}/.ssh" "${TARGET_HOME}/.gnupg" "${TARGET_HOME}/.gitconfig" "${TARGET_HOME}/.npmrc" 2>/dev/null || true
+    chown -R "${USERNAME}:${USERNAME}" \
+        "${TARGET_HOME}/.ssh" \
+        "${TARGET_HOME}/.gnupg" \
+        "${TARGET_HOME}/.gitconfig" \
+        "${TARGET_HOME}/.npmrc" 2>/dev/null || true
 fi
 
-# ============================================================================
-# VERIFY: Check what was actually mounted vs what's empty
-# ============================================================================
-
-_check_mount_status() {
-    local target_dir="$1"
-    local config_file="$2"
-    local config_name="$3"
-    
-    if [ ! -f "${target_dir}/${config_file}" ]; then
-        echo "⚠️  ${config_name} not found - creating empty"
-        touch "${target_dir}/${config_file}" 2>/dev/null || true
-        return 1
-    fi
-    
-    # Check if file is empty (likely mount failed)
-    if [ ! -s "${target_dir}/${config_file}" ]; then
-        echo "⚠️  ${config_name} is empty (mount may have failed)"
-        return 1
-    fi
-    
-    echo "✅ ${config_name} is present and has content"
-    return 0
-}
-
-echo "📋 Verifying configuration file mounts:"
-echo ""
-
-_check_mount_status "${TARGET_HOME}" ".npmrc" ".npmrc" || true
-_check_mount_status "${TARGET_HOME}" ".gitconfig" ".gitconfig" || true
-[ -d "${TARGET_HOME}/.ssh" ] && echo "✅ .ssh directory exists" || echo "⚠️  .ssh directory not found"
-[ -d "${TARGET_HOME}/.gnupg" ] && echo "✅ .gnupg directory exists" || echo "⚠️  .gnupg directory not found"
-
-echo ""
+echo "✅ Directory structure created"
 
 # ============================================================================
-# SSH_AUTH_SOCK: Runtime detection with fallback chain
+# 2. Install runtime sync script
 # ============================================================================
-# containerEnv is static and overrides VS Code's native SSH forwarding.
-# Instead, detect at shell startup time with proper fallback.
-# Priority: 1) Stable host socket  2) VS Code native forwarding  3) Legacy /ssh-agent
+# This script runs at container start (via postStartCommand) when bind mounts
+# are available. It copies files from /tmp/local-mounts/ to the user's home.
+
+mkdir -p /usr/local/share/local-mounts
+
+# Store build-time configuration for runtime use
+cat > /usr/local/share/local-mounts/config << CONF_EOF
+LOCAL_MOUNTS_USERNAME="${USERNAME}"
+LOCAL_MOUNTS_SOURCE="${SOURCE_HOME}"
+LOCAL_MOUNTS_TARGET="${TARGET_HOME}"
+CONF_EOF
+
+cp "$(dirname "$0")/sync-files.sh" /usr/local/share/local-mounts/sync-files.sh
+chmod +x /usr/local/share/local-mounts/sync-files.sh
+
+echo "✅ Runtime sync script installed (/usr/local/share/local-mounts/sync-files.sh)"
+
+# ============================================================================
+# 3. Install SSH_AUTH_SOCK runtime detection (profile.d)
+# ============================================================================
+# Detects the best SSH agent socket at shell startup.
+# Priority: 1) Stable host socket  2) VS Code native  3) Legacy /ssh-agent
 
 cat > /etc/profile.d/local-mounts-ssh.sh << 'PROFILE_EOF'
 # local-mounts: SSH agent socket detection (runtime)
@@ -195,79 +101,45 @@ unset -f _ssh_agent_responds
 PROFILE_EOF
 
 chmod +x /etc/profile.d/local-mounts-ssh.sh
+
 echo "✅ SSH agent detection installed (/etc/profile.d/local-mounts-ssh.sh)"
 
-# Test SSH agent forwarding at install time (informational only)
-STABLE_SSH_AGENT_SOCKET="${SOURCE_HOME}/.ssh/agent.sock"
+# ============================================================================
+# 4. Install one-time sync fallback (profile.d)
+# ============================================================================
+# Safety net: if postStartCommand didn't run (or hasn't finished yet),
+# the first interactive shell triggers the sync.
 
-if [ -S "$STABLE_SSH_AGENT_SOCKET" ]; then
-    echo "✅ SSH stable socket found at ${STABLE_SSH_AGENT_SOCKET}"
-    if command -v ssh-add >/dev/null 2>&1; then
-        SSH_AUTH_SOCK="$STABLE_SSH_AGENT_SOCKET" ssh-add -l >/dev/null 2>&1 \
-            && echo "   - SSH keys accessible via stable socket" \
-            || echo "   - No SSH keys loaded in agent"
-    fi
-elif [ -n "$SSH_AUTH_SOCK" ] && [ -S "$SSH_AUTH_SOCK" ]; then
-    echo "✅ SSH agent forwarding available (VS Code native: $SSH_AUTH_SOCK)"
-elif [ -S "/ssh-agent" ]; then
-    echo "✅ SSH agent forwarding available (legacy socket: /ssh-agent)"
-elif [ -d "${TARGET_HOME}/.ssh" ]; then
-    echo "ℹ️  No SSH agent socket found — VS Code native forwarding will be used at runtime"
-    if [ -f "${TARGET_HOME}/.ssh/id_rsa" ] || [ -f "${TARGET_HOME}/.ssh/id_ed25519" ]; then
-        echo "   - SSH keys detected in ${TARGET_HOME}/.ssh"
-    fi
-else
-    echo "ℹ️  No SSH configuration detected (optional)"
+cat > /etc/profile.d/local-mounts-sync.sh << 'PROFILE_EOF'
+# local-mounts: one-time file sync fallback
+# Runs sync on first shell if postStartCommand hasn't completed yet
+_LOCAL_MOUNTS_MARKER="/tmp/.local-mounts-synced"
+if [ ! -f "$_LOCAL_MOUNTS_MARKER" ] && [ -d "/tmp/local-mounts" ]; then
+    /usr/local/share/local-mounts/sync-files.sh 2>/dev/null || true
 fi
+unset _LOCAL_MOUNTS_MARKER
+PROFILE_EOF
 
-# Test GPG setup
-if command -v gpg >/dev/null 2>&1; then
-    if [ -d "${TARGET_HOME}/.gnupg" ]; then
-        if gpg --list-secret-keys >/dev/null 2>&1; then
-            GPG_KEYS=$(gpg --list-secret-keys --keyid-format LONG 2>/dev/null | grep -c "^sec" || echo "0")
-            echo "✅ GPG configured (${GPG_KEYS} secret key(s) found)"
-        else
-            echo "ℹ️  GPG mounted but no secret keys"
-        fi
-    else
-        echo "ℹ️  GPG directory not available (optional for commit signing)"
-    fi
-else
-    echo "ℹ️  GPG not installed"
-fi
+chmod +x /etc/profile.d/local-mounts-sync.sh
 
-# Special check for .npmrc - this is the critical one
-echo ""
-if [ -f "${TARGET_HOME}/.npmrc" ] && [ -s "${TARGET_HOME}/.npmrc" ]; then
-    echo "✅ npm configuration (.npmrc) mounted with content"
-    if grep -qE "(authToken|_auth|//.*:_)" "${TARGET_HOME}/.npmrc" 2>/dev/null; then
-        echo "   - Authentication tokens are configured"
-    else
-        echo "   - No tokens configured (public registries only)"
-    fi
-elif [ -f "${TARGET_HOME}/.npmrc" ]; then
-    echo "⚠️  npm configuration (.npmrc) exists but is empty"
-    echo "   - This might indicate the mount failed or source file was empty"
-    echo "   - Configure tokens in ~/.npmrc on your host machine"
-else
-    echo "⚠️  npm configuration (.npmrc) not found"
-    echo "   ➜ Edit ~/.npmrc on your host machine to add authentication tokens"
-fi
+echo "✅ Sync fallback installed (/etc/profile.d/local-mounts-sync.sh)"
+
+# ============================================================================
+# Summary
+# ============================================================================
 
 echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "🎉 Local development files mount verification complete!"
+echo "🎉 local-mounts feature installed!"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo ""
-echo "📋 Configuration Summary:"
+echo "📋 Architecture:"
+echo "   Build time  → Directory structure + scripts installed"
+echo "   Start time  → postStartCommand syncs files from bind mounts"
+echo "   Shell start → SSH_AUTH_SOCK detection + sync fallback"
+echo ""
+echo "📁 Targets:"
 echo "   Git config  → ${TARGET_HOME}/.gitconfig"
-echo "   SSH keys    → ${TARGET_HOME}/.ssh"
-echo "   GPG keys    → ${TARGET_HOME}/.gnupg"
+echo "   SSH keys    → ${TARGET_HOME}/.ssh/"
+echo "   GPG keys    → ${TARGET_HOME}/.gnupg/"
 echo "   npm tokens  → ${TARGET_HOME}/.npmrc"
-echo "   SSH agent   → ${STABLE_SSH_AGENT_SOCKET}"
-echo ""
-echo "🔧 To troubleshoot mount issues:"
-echo "   1. Check host files exist: ls -la ~/{.npmrc,.gitconfig,.ssh,.gnupg}"
-echo "   2. Verify mount points:   ls -la ${TARGET_HOME}/"
-echo "   3. Compare file contents: diff ~/.npmrc ${TARGET_HOME}/.npmrc"
-echo "   - ~/.npmrc     → ${TARGET_HOME}/.npmrc"

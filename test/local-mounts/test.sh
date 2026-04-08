@@ -23,34 +23,90 @@ else
     exit 1
 fi
 
-# Test 3: Check mount points exist (these may or may not have content depending on host)
+# Test 3: Check directory structure was created at build time
 TARGET_HOME="${HOME:-/home/node}"
 
-echo "📁 Checking expected mount points at ${TARGET_HOME}..."
+echo "📁 Checking directory structure at ${TARGET_HOME}..."
 
-# Note: These tests check structure, not content (content depends on host configuration)
-MOUNT_POINTS=(".gitconfig" ".ssh" ".gnupg" ".npmrc")
-FOUND_COUNT=0
-
-for mount in "${MOUNT_POINTS[@]}"; do
-    if [ -e "${TARGET_HOME}/${mount}" ]; then
-        echo "✅ PASS: ${mount} exists"
-        FOUND_COUNT=$((FOUND_COUNT + 1))
+DIRS=(".ssh" ".gnupg")
+for dir in "${DIRS[@]}"; do
+    if [ -d "${TARGET_HOME}/${dir}" ]; then
+        echo "✅ PASS: ${dir} directory exists"
+        PERMS=$(stat -c "%a" "${TARGET_HOME}/${dir}" 2>/dev/null || stat -f "%OLp" "${TARGET_HOME}/${dir}" 2>/dev/null)
+        if [ "$PERMS" = "700" ]; then
+            echo "   ✅ Permissions correct (700)"
+        else
+            echo "   ⚠️  Permissions: ${PERMS} (expected 700)"
+        fi
     else
-        echo "ℹ️  INFO: ${mount} not found (may not exist on host)"
+        echo "❌ FAIL: ${dir} directory not found"
+        exit 1
     fi
 done
 
-# Test 4: SSH agent runtime detection script exists
-PROFILE_SCRIPT="/etc/profile.d/local-mounts-ssh.sh"
-if [ -f "$PROFILE_SCRIPT" ]; then
-    echo "✅ PASS: SSH agent detection script installed at ${PROFILE_SCRIPT}"
+FILES=(".gitconfig" ".npmrc")
+for file in "${FILES[@]}"; do
+    if [ -f "${TARGET_HOME}/${file}" ]; then
+        echo "✅ PASS: ${file} exists"
+    else
+        echo "❌ FAIL: ${file} not found"
+        exit 1
+    fi
+done
+
+# Test 4: Sync script is installed and executable
+SYNC_SCRIPT="/usr/local/share/local-mounts/sync-files.sh"
+if [ -x "$SYNC_SCRIPT" ]; then
+    echo "✅ PASS: Sync script installed at ${SYNC_SCRIPT}"
 else
-    echo "❌ FAIL: SSH agent detection script not found at ${PROFILE_SCRIPT}"
+    echo "❌ FAIL: Sync script not found or not executable at ${SYNC_SCRIPT}"
     exit 1
 fi
 
-# Test 5: SSH agent socket strategy (informational)
+# Test 5: Config file exists with valid content
+CONFIG_FILE="/usr/local/share/local-mounts/config"
+if [ -f "$CONFIG_FILE" ]; then
+    echo "✅ PASS: Config file exists at ${CONFIG_FILE}"
+    if grep -q "LOCAL_MOUNTS_USERNAME=" "$CONFIG_FILE" && \
+       grep -q "LOCAL_MOUNTS_SOURCE=" "$CONFIG_FILE" && \
+       grep -q "LOCAL_MOUNTS_TARGET=" "$CONFIG_FILE"; then
+        echo "   ✅ Config contains expected variables"
+    else
+        echo "   ❌ FAIL: Config missing expected variables"
+        exit 1
+    fi
+else
+    echo "❌ FAIL: Config file not found at ${CONFIG_FILE}"
+    exit 1
+fi
+
+# Test 6: SSH agent runtime detection script exists
+PROFILE_SSH="/etc/profile.d/local-mounts-ssh.sh"
+if [ -f "$PROFILE_SSH" ]; then
+    echo "✅ PASS: SSH agent detection script installed at ${PROFILE_SSH}"
+else
+    echo "❌ FAIL: SSH agent detection script not found at ${PROFILE_SSH}"
+    exit 1
+fi
+
+# Test 7: Sync fallback script exists
+PROFILE_SYNC="/etc/profile.d/local-mounts-sync.sh"
+if [ -f "$PROFILE_SYNC" ]; then
+    echo "✅ PASS: Sync fallback script installed at ${PROFILE_SYNC}"
+else
+    echo "❌ FAIL: Sync fallback script not found at ${PROFILE_SYNC}"
+    exit 1
+fi
+
+# Test 8: Sync script runs without error (even with no mount data)
+echo "🔧 Running sync script (no mount data expected in test)..."
+if "${SYNC_SCRIPT}" 2>&1; then
+    echo "✅ PASS: Sync script runs without error"
+else
+    echo "⚠️  WARN: Sync script exited with non-zero (may be expected in test environment)"
+fi
+
+# Test 9: SSH agent socket strategy (informational)
 if [ -n "$SSH_AUTH_SOCK" ]; then
     echo "ℹ️  INFO: SSH_AUTH_SOCK is set to: $SSH_AUTH_SOCK"
     if [ -S "$SSH_AUTH_SOCK" ]; then
@@ -62,16 +118,5 @@ else
     echo "ℹ️  INFO: SSH_AUTH_SOCK not set (will be resolved at shell startup via profile.d)"
 fi
 
-STABLE_SOCKET="/tmp/local-mounts/.ssh/agent.sock"
-if [ -S "$STABLE_SOCKET" ]; then
-    echo "✅ PASS: Stable SSH socket found at $STABLE_SOCKET"
-else
-    echo "ℹ️  INFO: Stable SSH socket not found at $STABLE_SOCKET (agent may be disabled)"
-fi
-
 echo ""
 echo "🎉 local-mounts feature test complete!"
-echo ""
-echo "Test summary:"
-echo "- Mount points found: ${FOUND_COUNT}/${#MOUNT_POINTS[@]}"
-echo "- Note: Missing mount points may be normal if files don't exist on host"

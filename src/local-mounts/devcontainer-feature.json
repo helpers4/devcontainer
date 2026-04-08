@@ -1,8 +1,8 @@
 {
   "id": "local-mounts",
-  "version": "1.0.8",
+  "version": "1.0.9",
   "name": "Local Development Files Mount",
-  "description": "Mounts local Git, SSH, GPG, and npm configuration files into the devcontainer with support for custom usernames. Uses runtime SSH agent detection with fallback to VS Code native forwarding.",
+  "description": "Mounts local Git, SSH, GPG, and npm configuration files into the devcontainer with support for custom usernames. Syncs files at container start via postStartCommand. Uses runtime SSH agent detection with fallback to VS Code native forwarding.",
   "documentationURL": "https://github.com/helpers4/devcontainer/tree/main/features/local-mounts",
   "options": {
     "username": {
@@ -36,6 +36,7 @@
   "containerEnv": {
     "GPG_TTY": "/dev/pts/0"
   },
+  "postStartCommand": "/usr/local/share/local-mounts/sync-files.sh",
   "installsAfter": [
     "ghcr.io/devcontainers/features/common-utils"
   ]
