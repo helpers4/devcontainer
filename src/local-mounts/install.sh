@@ -10,7 +10,7 @@
 
 set -e
 
-USERNAME="${USERNAME:-"${_BUILD_ARG_USERNAME:-"node"}"}"
+USERNAME="${_BUILD_ARG_USERNAME:-"${USERNAME:-"node"}"}"
 SOURCE_HOME="/tmp/local-mounts"
 
 # Resolve target home robustly
