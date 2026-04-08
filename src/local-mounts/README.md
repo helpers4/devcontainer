@@ -9,7 +9,7 @@ Mounts local Git, SSH, GPG, and npm configuration files into the devcontainer fo
 - **SSH agent forwarding**: Runtime detection with fallback chain (stable socket → VS Code native → legacy)
 - **GPG keys**: Sign commits with your GPG keys
 - **npm authentication**: Your `.npmrc` for private registry access
-- **Post-start verification**: Validates mounted content and reports issues
+- **Runtime sync**: Files synced at container start when bind mounts are available
 
 ## Usage
 
@@ -132,12 +132,12 @@ The feature automatically configures these environment variables:
 
 ## How It Works
 
-1. **Docker mounts** your local configuration files based on the `mounts` specification
-2. **Verification script** (`install.sh`) runs inside the container to sync from staging mounts into `/home/<username>`
-3. **Fallback mechanism** creates placeholders after startup when possible
-4. **Logging** shows what was mounted and what might need attention
+1. **Build time** (`install.sh`): Creates directory structure (`~/.ssh/`, `~/.gnupg/`, etc.) and installs sync scripts
+2. **Container start** (`postStartCommand`): Syncs files from staging bind mounts (`/tmp/local-mounts/`) to the user's home directory
+3. **Shell startup** (`/etc/profile.d/`): Detects SSH agent socket with fallback chain + one-time sync fallback if `postStartCommand` hasn't run
+4. **Logging**: Reports what was synced and warns about missing or empty files
 
-> Important: bind mounts are resolved before the feature script runs. Missing host sources can block container startup.
+> Important: bind mounts are resolved at **container start**, not during build. Missing host source paths can block container startup.
 
 ## Troubleshooting
 
@@ -217,15 +217,18 @@ If `git fetch` or `ssh -T git@github.com` fails with `Permission denied (publick
 
 This feature includes a **robust fallback mechanism**:
 
-1. ✅ If mount succeeded → Uses mounted files
+1. ✅ If mount succeeded → `postStartCommand` syncs files to user's home
 2. ✅ If mounted file content is empty → warns with troubleshooting hints
-3. ✅ If startup succeeded but target path is missing → creates placeholder where possible
-4. ⚠️ If host bind source is missing before startup → Docker can fail before script execution
+3. ✅ If `postStartCommand` missed → first shell triggers sync via `profile.d` fallback
+4. ✅ If startup succeeded but target path is missing → created at build time with correct permissions
+5. ⚠️ If host bind source is missing before startup → Docker can fail before script execution
 
-The `install.sh` script verifies all mounts and provides clear feedback on what's available.
+The sync script (`/usr/local/share/local-mounts/sync-files.sh`) runs at container start and provides clear feedback on what was synced.
 
 ## Version History
 
+- **v1.0.9**: **Architecture fix** — moved file sync from build-time (`install.sh`) to runtime (`postStartCommand`). Build-time sync was a no-op because bind mounts aren't available during `docker build`. Added `profile.d` fallback sync.
+- **v1.0.8**: Fixed `ssh-add -l` exit code handling (accept exit 1 = no keys, reject only exit 2 = no agent). Fixed SSH workaround to copy all files (not just `id_*`).
 - **v1.0.7**: Replaced static `containerEnv` SSH_AUTH_SOCK with runtime detection via `/etc/profile.d/` — preserves VS Code native forwarding as fallback
 - **v1.0.6**: Added `username` option with mount staging (`/tmp/local-mounts`) and sync to `/home/<username>`
 - **v1.0.5**: Removed fragile direct `$SSH_AUTH_SOCK` bind mount and switched to stable `~/.ssh/agent.sock` strategy
