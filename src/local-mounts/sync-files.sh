@@ -11,12 +11,24 @@
 # No set -e: sync as much as possible even if one part fails.
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+CONFIG_FILE="${SCRIPT_DIR}/config"
+
+if [ ! -r "${CONFIG_FILE}" ]; then
+    echo "❌ local-mounts: config file ${CONFIG_FILE} not found or not readable, aborting sync"
+    exit 1
+fi
+
 # shellcheck source=/dev/null
-. "${SCRIPT_DIR}/config"
+. "${CONFIG_FILE}"
 
 USERNAME="${LOCAL_MOUNTS_USERNAME}"
 SOURCE_HOME="${LOCAL_MOUNTS_SOURCE}"
 TARGET_HOME="${LOCAL_MOUNTS_TARGET}"
+
+if [ -z "${USERNAME}" ] || [ -z "${SOURCE_HOME}" ] || [ -z "${TARGET_HOME}" ]; then
+    echo "❌ local-mounts: config is missing required values, aborting sync"
+    exit 1
+fi
 
 # Check staging directory exists (bind mounts active?)
 if [ ! -d "${SOURCE_HOME}" ]; then
@@ -28,8 +40,11 @@ echo "🔧 local-mounts: syncing files from ${SOURCE_HOME} to ${TARGET_HOME}..."
 
 # ── Sync .gitconfig ──────────────────────────────────────────────────────────
 
-if [ -f "${SOURCE_HOME}/.gitconfig" ] && [ -s "${SOURCE_HOME}/.gitconfig" ]; then
+if [ -L "${SOURCE_HOME}/.gitconfig" ]; then
+    echo "   ⚠️  .gitconfig is a symlink, skipping for security"
+elif [ -f "${SOURCE_HOME}/.gitconfig" ] && [ -s "${SOURCE_HOME}/.gitconfig" ]; then
     cp -f "${SOURCE_HOME}/.gitconfig" "${TARGET_HOME}/.gitconfig"
+    chmod 600 "${TARGET_HOME}/.gitconfig"
     echo "   ✅ .gitconfig"
 elif [ -f "${SOURCE_HOME}/.gitconfig" ]; then
     echo "   ⚠️  .gitconfig exists but is empty"
@@ -39,8 +54,11 @@ fi
 
 # ── Sync .npmrc ──────────────────────────────────────────────────────────────
 
-if [ -f "${SOURCE_HOME}/.npmrc" ] && [ -s "${SOURCE_HOME}/.npmrc" ]; then
+if [ -L "${SOURCE_HOME}/.npmrc" ]; then
+    echo "   ⚠️  .npmrc is a symlink, skipping for security"
+elif [ -f "${SOURCE_HOME}/.npmrc" ] && [ -s "${SOURCE_HOME}/.npmrc" ]; then
     cp -f "${SOURCE_HOME}/.npmrc" "${TARGET_HOME}/.npmrc"
+    chmod 600 "${TARGET_HOME}/.npmrc"
     echo "   ✅ .npmrc"
 elif [ -f "${SOURCE_HOME}/.npmrc" ]; then
     echo "   ⚠️  .npmrc exists but is empty"
@@ -53,8 +71,8 @@ fi
 if [ -d "${SOURCE_HOME}/.ssh" ]; then
     mkdir -p "${TARGET_HOME}/.ssh"
 
-    # Copy all regular files (keys, config, known_hosts, etc.)
-    find "${SOURCE_HOME}/.ssh" -maxdepth 1 -type f -exec cp -f {} "${TARGET_HOME}/.ssh/" \;
+    # Copy all regular files, skip symlinks for security
+    find "${SOURCE_HOME}/.ssh" -maxdepth 1 -type f ! -type l -exec cp -f {} "${TARGET_HOME}/.ssh/" \;
 
     # Fix permissions
     chmod 700 "${TARGET_HOME}/.ssh"
@@ -75,30 +93,16 @@ fi
 if [ -d "${SOURCE_HOME}/.gnupg" ]; then
     mkdir -p "${TARGET_HOME}/.gnupg"
 
-    # Copy top-level files (pubring, trustdb, gpg.conf, etc.)
-    find "${SOURCE_HOME}/.gnupg" -maxdepth 1 -type f -exec cp -f {} "${TARGET_HOME}/.gnupg/" \;
+    # Recursively mirror directories and regular files, skip sockets/symlinks
+    (
+        cd "${SOURCE_HOME}/.gnupg" || exit 1
+        find . -type d -exec mkdir -p "${TARGET_HOME}/.gnupg/{}" \;
+        find . -type f ! -type l -exec cp -f "{}" "${TARGET_HOME}/.gnupg/{}" \;
+    )
 
-    # Copy private keys subdirectory
-    if [ -d "${SOURCE_HOME}/.gnupg/private-keys-v1.d" ]; then
-        mkdir -p "${TARGET_HOME}/.gnupg/private-keys-v1.d"
-        find "${SOURCE_HOME}/.gnupg/private-keys-v1.d" -maxdepth 1 -type f \
-            -exec cp -f {} "${TARGET_HOME}/.gnupg/private-keys-v1.d/" \;
-        chmod 700 "${TARGET_HOME}/.gnupg/private-keys-v1.d"
-        find "${TARGET_HOME}/.gnupg/private-keys-v1.d" -type f -exec chmod 600 {} \;
-    fi
-
-    # Copy openpgp-revocs subdirectory
-    if [ -d "${SOURCE_HOME}/.gnupg/openpgp-revocs.d" ]; then
-        mkdir -p "${TARGET_HOME}/.gnupg/openpgp-revocs.d"
-        find "${SOURCE_HOME}/.gnupg/openpgp-revocs.d" -maxdepth 1 -type f \
-            -exec cp -f {} "${TARGET_HOME}/.gnupg/openpgp-revocs.d/" \;
-        chmod 700 "${TARGET_HOME}/.gnupg/openpgp-revocs.d"
-        find "${TARGET_HOME}/.gnupg/openpgp-revocs.d" -type f -exec chmod 600 {} \;
-    fi
-
-    # Fix top-level permissions
-    chmod 700 "${TARGET_HOME}/.gnupg"
-    find "${TARGET_HOME}/.gnupg" -maxdepth 1 -type f -exec chmod 600 {} \;
+    # Fix permissions recursively
+    find "${TARGET_HOME}/.gnupg" -type d -exec chmod 700 {} \;
+    find "${TARGET_HOME}/.gnupg" -type f -exec chmod 600 {} \;
 
     echo "   ✅ .gnupg"
 else
