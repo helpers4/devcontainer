@@ -40,3 +40,21 @@ jobs:
 
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Get Trigganator token
+        id: trigganator
+        uses: actions/create-github-app-token@v3
+        with:
+          app-id: ${{ vars.TRIGGANATOR_ID }}
+          private-key: ${{ secrets.TRIGGANATOR_KEY }}
+          owner: helpers4
+          repositories: website
+
+      - name: Trigger website update
+        continue-on-error: true
+        uses: peter-evans/repository-dispatch@v4
+        with:
+          token: ${{ steps.trigganator.outputs.token }}
+          repository: helpers4/website
+          event-type: devcontainer-release
+          client-payload: '{"version": "${{ github.ref_name }}"}'
