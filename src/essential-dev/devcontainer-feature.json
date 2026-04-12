@@ -1,6 +1,6 @@
 {
   "id": "essential-dev",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "name": "Essential Development Environment",
   "description": "Core development environment with Git integration, GitHub Copilot, Markdown support, and essential editor enhancements. Perfect base for all development projects.",
   "documentationURL": "https://github.com/helpers4/devcontainer/tree/main/features/essential-dev",
@@ -35,6 +35,10 @@
         "ms-vscode.makefile-tools"
       ],
       "settings": {
+        // File Hygiene
+        "files.insertFinalNewline": true,
+        "files.trimFinalNewlines": true,
+        "files.trimTrailingWhitespace": true,
         // Editor Configuration
         "editor.formatOnSave": true,
         "editor.codeActionsOnSave": {
