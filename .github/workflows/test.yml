@@ -62,6 +62,12 @@ jobs:
           - features: peon-ping
             baseImage: mcr.microsoft.com/devcontainers/base:ubuntu
 
+          # dotfiles-sync - works on any base image
+          - features: dotfiles-sync
+            baseImage: debian:latest
+          - features: dotfiles-sync
+            baseImage: mcr.microsoft.com/devcontainers/base:ubuntu
+
     steps:
       - name: Checkout
         uses: actions/checkout@v6

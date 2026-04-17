@@ -1,0 +1,47 @@
+{
+  "id": "dotfiles-sync",
+  "version": "1.0.0",
+  "name": "Dotfiles Sync",
+  "description": "Syncs local Git, SSH, GPG, and npm config files into the devcontainer. Works on macOS, Linux, Windows (WSL), and GitHub Codespaces. Merges instead of overwriting — safe to use alongside Codespaces native auth.",
+  "documentationURL": "https://github.com/helpers4/devcontainer/tree/main/src/dotfiles-sync",
+  "options": {
+    "username": {
+      "type": "string",
+      "default": "node",
+      "description": "Username in the container that should receive synchronized local config files"
+    },
+    "gitconfigPath": {
+      "type": "string",
+      "default": "",
+      "description": "Override path to .gitconfig on the host (default: auto-detected from HOME / USERPROFILE)"
+    },
+    "sshPath": {
+      "type": "string",
+      "default": "",
+      "description": "Override path to .ssh directory on the host (default: auto-detected)"
+    },
+    "gnupgPath": {
+      "type": "string",
+      "default": "",
+      "description": "Override path to .gnupg directory on the host (default: auto-detected)"
+    },
+    "npmrcPath": {
+      "type": "string",
+      "default": "",
+      "description": "Override path to .npmrc on the host (default: auto-detected)"
+    }
+  },
+  "mounts": [
+    { "source": "${localEnv:HOME}/.gitconfig", "target": "/tmp/dotfiles-sync/.gitconfig", "type": "bind" },
+    { "source": "${localEnv:HOME}/.ssh",        "target": "/tmp/dotfiles-sync/.ssh",        "type": "bind" },
+    { "source": "${localEnv:HOME}/.gnupg",      "target": "/tmp/dotfiles-sync/.gnupg",      "type": "bind" },
+    { "source": "${localEnv:HOME}/.npmrc",      "target": "/tmp/dotfiles-sync/.npmrc",      "type": "bind" }
+  ],
+  "containerEnv": {
+    "GPG_TTY": "/dev/pts/0"
+  },
+  "postStartCommand": "/usr/local/share/dotfiles-sync/sync-files.sh",
+  "installsAfter": [
+    "ghcr.io/devcontainers/features/common-utils"
+  ]
+}
