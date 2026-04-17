@@ -25,7 +25,7 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 CONFIG_FILE="${SCRIPT_DIR}/config"
 
 if [ ! -r "${CONFIG_FILE}" ]; then
-    echo "local-mounts: config file ${CONFIG_FILE} not found or not readable, aborting sync"
+    echo "dotfiles-sync: config file ${CONFIG_FILE} not found or not readable, aborting sync"
     exit 1
 fi
 
@@ -159,7 +159,7 @@ elif [ -f "${SOURCE_HOME}/.npmrc" ] && [ -s "${SOURCE_HOME}/.npmrc" ]; then
         case "${line}" in '#'*|'') continue ;; esac
         KEY="${line%%=*}"
         [ -z "${KEY}" ] && continue
-        if ! grep -q "^${KEY}=" "${TARGET_NPMRC}" 2>/dev/null; then
+        if ! grep -Fq "${KEY}=" "${TARGET_NPMRC}" 2>/dev/null; then
             printf '%s\n' "${line}" >> "${TARGET_NPMRC}"
             MERGED=$((MERGED + 1))
         fi
@@ -194,7 +194,7 @@ if [ -d "${SOURCE_HOME}/.ssh" ]; then
             [ -z "${line}" ] && continue
             case "${line}" in '#'*) continue ;; esac
             host="${line%% *}"
-            if ! grep -q "^${host} " "${TARGET_HOME}/.ssh/known_hosts" 2>/dev/null; then
+            if ! grep -Fq "${host} " "${TARGET_HOME}/.ssh/known_hosts" 2>/dev/null; then
                 printf '%s\n' "${line}" >> "${TARGET_HOME}/.ssh/known_hosts"
             fi
         done < "${SOURCE_HOME}/.ssh/known_hosts"
@@ -209,7 +209,7 @@ if [ -d "${SOURCE_HOME}/.ssh" ]; then
             case "${line}" in
                 Host\ *|host\ *)
                     if [ -n "${CURRENT_HOST}" ]; then
-                        if ! grep -qi "^Host ${CURRENT_HOST}$\|^Host ${CURRENT_HOST} " \
+                        if ! grep -Fiq "Host ${CURRENT_HOST}" \
                                 "${TARGET_HOME}/.ssh/config" 2>/dev/null; then
                             printf '\n%s\n' "${CURRENT_BLOCK}" >> "${TARGET_HOME}/.ssh/config"
                         fi
@@ -226,7 +226,7 @@ ${line}"
             esac
         done < "${SOURCE_HOME}/.ssh/config"
         if [ -n "${CURRENT_HOST}" ]; then
-            if ! grep -qi "^Host ${CURRENT_HOST}$\|^Host ${CURRENT_HOST} " \
+            if ! grep -Fiq "Host ${CURRENT_HOST}" \
                     "${TARGET_HOME}/.ssh/config" 2>/dev/null; then
                 printf '\n%s\n' "${CURRENT_BLOCK}" >> "${TARGET_HOME}/.ssh/config"
             fi

@@ -75,5 +75,10 @@ jobs:
       - name: Install latest devcontainer CLI
         run: npm install -g @devcontainers/cli
 
+      - name: Create mount sources for dotfiles-sync
+        if: matrix.features == 'dotfiles-sync'
+        run: mkdir -p ~/.ssh ~/.gnupg && touch ~/.gitconfig ~/.npmrc
+
       - name: Test feature '${{ matrix.features }}' against '${{ matrix.baseImage }}'
-        run: devcontainer features test --features ${{ matrix.features }} --base-image ${{ matrix.baseImage }} .
+        run: devcontainer features test --features ${{ matrix.features }} --base-image
+          ${{ matrix.baseImage }} .

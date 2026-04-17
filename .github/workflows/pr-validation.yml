@@ -2,8 +2,8 @@ name: Pull Request Validation
 
 on:
   pull_request:
-    branches: [main]
-    types: [opened, synchronize, reopened, ready_for_review]
+    branches: [ main ]
+    types: [ opened, synchronize, reopened, ready_for_review ]
 
 permissions:
   contents: read
@@ -19,7 +19,9 @@ jobs:
         uses: helpers4/action/conventional-commits@main
         with:
           checkout: "true"
-          scopes: "angular-dev|auto-header|dotfiles-sync|essential-dev|git-absorb|package-auto-install|peon-ping|shell-history-per-project|typescript-dev|vite-plus|deps|CI-CD"
+          scopes: "angular-dev|auto-header|dotfiles-sync|essential-dev|git-absorb|package\
+            -auto-install|peon-ping|shell-history-per-project|typescript-dev|vi\
+            te-plus|deps|CI-CD"
           pr-comment: "error"
 
       - name: Set status
@@ -86,8 +88,13 @@ jobs:
       - name: Install latest devcontainer CLI
         run: npm install -g @devcontainers/cli
 
+      - name: Create mount sources for dotfiles-sync
+        if: matrix.features == 'dotfiles-sync'
+        run: mkdir -p ~/.ssh ~/.gnupg && touch ~/.gitconfig ~/.npmrc
+
       - name: "Test feature '${{ matrix.features }}' against '${{ matrix.baseImage }}'"
-        run: devcontainer features test --features ${{ matrix.features }} --base-image ${{ matrix.baseImage }} .
+        run: devcontainer features test --features ${{ matrix.features }} --base-image
+          ${{ matrix.baseImage }} .
 
   shellcheck:
     runs-on: ubuntu-latest
@@ -114,7 +121,7 @@ jobs:
 
   pr-comment:
     runs-on: ubuntu-latest
-    needs: [conventional-commits, test-features, shellcheck]
+    needs: [ conventional-commits, test-features, shellcheck ]
     if: always()
     steps:
       - name: Update PR comment
