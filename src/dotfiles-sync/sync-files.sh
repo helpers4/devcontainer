@@ -8,14 +8,15 @@
 # Runs at container start (postStartCommand) when bind mounts are available.
 # Also called by profile.d fallback on first shell if postStartCommand missed.
 #
-# Merge strategy (safe on local, WSL, macOS, and GitHub Codespaces):
+# Merge strategy (safe on local, WSL, macOS, Codespaces, Gitpod, DevPod):
 #   .gitconfig  -> merge via `git config`: source keys applied only when absent
-#                  in target; protected keys (credential.helper, user.*) never
-#                  overwritten on Codespaces (already managed by the platform).
+#                  in target; protected keys (credential.helper, user.*, gpg.*)
+#                  never overwritten on cloud environments (managed by platform).
 #   .npmrc      -> merge line-by-line (key=value): source entries appended only
 #                  when the key is absent from the target.
 #   .ssh/config -> merge Host blocks: source blocks appended when Host absent.
-#   .ssh keys / .gnupg -> copy only when destination file does not exist yet.
+#   .ssh keys   -> copy only when destination file does not exist yet.
+#   .gnupg      -> skipped on cloud environments (GPG handled natively there).
 #   known_hosts -> merge line-by-line (append missing host entries).
 
 # No set -e: sync as much as possible even if one part fails.
@@ -41,21 +42,29 @@ if [ -z "${USERNAME}" ] || [ -z "${SOURCE_HOME}" ] || [ -z "${TARGET_HOME}" ]; t
 fi
 
 # ── Environment detection ─────────────────────────────────────────────────────
+# IS_CLOUD_ENV=true means: the platform manages git auth and GPG signing.
+# In that case we use a stricter merge (more protected keys, skip .gnupg).
 
-IS_CODESPACES=false
+IS_CLOUD_ENV=false
 ENV_LABEL="local"
 
 if [ "${CODESPACES}" = "true" ] || [ -n "${CODESPACE_NAME}" ]; then
-    IS_CODESPACES=true
+    IS_CLOUD_ENV=true
     ENV_LABEL="GitHub Codespaces"
+elif [ -n "${GITPOD_WORKSPACE_ID}" ] || [ -n "${GITPOD_INSTANCE_ID}" ]; then
+    IS_CLOUD_ENV=true
+    ENV_LABEL="Gitpod"
+elif [ "${DEVPOD}" = "true" ] || [ -n "${DEVPOD_WORKSPACE_ID}" ]; then
+    IS_CLOUD_ENV=true
+    ENV_LABEL="DevPod"
 elif grep -qi "microsoft" /proc/version 2>/dev/null || grep -qi "wsl" /proc/version 2>/dev/null; then
     ENV_LABEL="WSL"
 fi
 
 echo "dotfiles-sync: environment detected: ${ENV_LABEL}"
 
-if [ "${IS_CODESPACES}" = "true" ]; then
-    echo "dotfiles-sync: merge mode active (protected keys preserved)"
+if [ "${IS_CLOUD_ENV}" = "true" ]; then
+    echo "dotfiles-sync: cloud env — protected keys preserved, .gnupg skipped"
 fi
 
 # ── Staging directory check ───────────────────────────────────────────────────
@@ -92,8 +101,11 @@ elif [ -f "${SOURCE_HOME}/.gitconfig" ] && [ -s "${SOURCE_HOME}/.gitconfig" ]; t
     touch "${TARGET_GIT}" 2>/dev/null || true
     chmod 600 "${TARGET_GIT}" 2>/dev/null || true
 
-    # Keys managed by Codespaces — never overwrite when already set
-    PROTECTED_KEYS="credential.helper user.name user.email user.signingkey"
+    # Keys managed by cloud platforms — never overwrite when already set.
+    # Covers: git auth (credential.helper), identity (user.*),
+    # and GPG signing config (gpg.*, commit.gpgsign) which platforms
+    # like Codespaces inject via their own signing proxy.
+    PROTECTED_KEYS="credential.helper user.name user.email user.signingkey gpg.program gpg.format commit.gpgsign tag.gpgsign"
 
     MERGED=0
     SKIPPED=0
@@ -102,8 +114,8 @@ elif [ -f "${SOURCE_HOME}/.gitconfig" ] && [ -s "${SOURCE_HOME}/.gitconfig" ]; t
         VAL="${line#*=}"
         [ -z "${KEY}" ] && continue
 
-        # On Codespaces: skip protected keys if already present
-        if [ "${IS_CODESPACES}" = "true" ]; then
+        # On cloud envs: skip protected keys if already present
+        if [ "${IS_CLOUD_ENV}" = "true" ]; then
             _protected=false
             for pkey in ${PROTECTED_KEYS}; do
                 if [ "${KEY}" = "${pkey}" ]; then
@@ -235,8 +247,14 @@ else
 fi
 
 # ── Sync .gnupg ───────────────────────────────────────────────────────────────
+# Skipped on cloud environments: Codespaces uses a GitHub-managed GPG proxy
+# (/.codespaces/bin/gh-gpgsign), Gitpod has its own signing mechanism.
+# Importing local GPG keys would conflict with the platform's native signing.
+# On local/WSL, keys are copied normally (non-destructive).
 
-if [ -d "${SOURCE_HOME}/.gnupg" ]; then
+if [ "${IS_CLOUD_ENV}" = "true" ]; then
+    echo "   .gnupg: skipped (cloud env — use platform native GPG signing)"
+elif [ -d "${SOURCE_HOME}/.gnupg" ]; then
     mkdir -p "${TARGET_HOME}/.gnupg"
 
     (
