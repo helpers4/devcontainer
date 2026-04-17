@@ -33,10 +33,6 @@ That's it. The feature auto-detects the environment and adapts its behavior.
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | `username` | string | `node` | Container username that receives synchronized config files |
-| `gitconfigPath` | string | *(auto)* | Override host path to `.gitconfig` |
-| `sshPath` | string | *(auto)* | Override host path to `.ssh` directory |
-| `gnupgPath` | string | *(auto)* | Override host path to `.gnupg` directory |
-| `npmrcPath` | string | *(auto)* | Override host path to `.npmrc` |
 
 ## What Gets Synced
 

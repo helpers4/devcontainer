@@ -9,33 +9,29 @@
       "type": "string",
       "default": "node",
       "description": "Username in the container that should receive synchronized local config files"
-    },
-    "gitconfigPath": {
-      "type": "string",
-      "default": "",
-      "description": "Override path to .gitconfig on the host (default: auto-detected from HOME / USERPROFILE)"
-    },
-    "sshPath": {
-      "type": "string",
-      "default": "",
-      "description": "Override path to .ssh directory on the host (default: auto-detected)"
-    },
-    "gnupgPath": {
-      "type": "string",
-      "default": "",
-      "description": "Override path to .gnupg directory on the host (default: auto-detected)"
-    },
-    "npmrcPath": {
-      "type": "string",
-      "default": "",
-      "description": "Override path to .npmrc on the host (default: auto-detected)"
     }
   },
   "mounts": [
-    { "source": "${localEnv:HOME}/.gitconfig", "target": "/tmp/dotfiles-sync/.gitconfig", "type": "bind" },
-    { "source": "${localEnv:HOME}/.ssh",        "target": "/tmp/dotfiles-sync/.ssh",        "type": "bind" },
-    { "source": "${localEnv:HOME}/.gnupg",      "target": "/tmp/dotfiles-sync/.gnupg",      "type": "bind" },
-    { "source": "${localEnv:HOME}/.npmrc",      "target": "/tmp/dotfiles-sync/.npmrc",      "type": "bind" }
+    {
+      "source": "${localEnv:HOME}/.gitconfig",
+      "target": "/tmp/dotfiles-sync/.gitconfig",
+      "type": "bind"
+    },
+    {
+      "source": "${localEnv:HOME}/.ssh",
+      "target": "/tmp/dotfiles-sync/.ssh",
+      "type": "bind"
+    },
+    {
+      "source": "${localEnv:HOME}/.gnupg",
+      "target": "/tmp/dotfiles-sync/.gnupg",
+      "type": "bind"
+    },
+    {
+      "source": "${localEnv:HOME}/.npmrc",
+      "target": "/tmp/dotfiles-sync/.npmrc",
+      "type": "bind"
+    }
   ],
   "containerEnv": {
     "GPG_TTY": "/dev/pts/0"
