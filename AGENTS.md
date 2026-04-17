@@ -16,7 +16,7 @@ Follow [Conventional Commits](https://www.conventionalcommits.org/) with a gitmo
 
 **Format:** `<type>(<scope>): <emoji> <description>`
 
-**Scopes:** angular-dev, auto-header, essential-dev, git-absorb, local-mounts, package-auto-install, peon-ping, shell-history-per-project, typescript-dev, vite-plus, CI-CD
+**Scopes:** angular-dev, auto-header, dotfiles-sync, essential-dev, git-absorb, package-auto-install, peon-ping, shell-history-per-project, typescript-dev, vite-plus, CI-CD
 
 | Emoji | Type | Description |
 |-------|------|-------------|
@@ -116,7 +116,7 @@ devcontainer features test .                             # Test all
 | package-auto-install | — | Auto-detect and install packages | — |
 | auto-header | — | LGPL-3.0 license headers | — |
 | git-absorb | 1.0.2 | git-absorb from GitHub releases | — |
-| local-mounts | 1.0.4 | Mount ~/.gitconfig, ~/.ssh, ~/.gnupg, ~/.npmrc | — |
+| dotfiles-sync | 1.0.0 | Sync local Git/SSH/GPG/npm config — macOS, Linux, WSL, Codespaces | — |
 | peon-ping | — | Health check endpoint | — |
 | shell-history-per-project | 1.0.2 | Persistent shell history (zsh/bash/fish) | — |
 

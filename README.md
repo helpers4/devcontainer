@@ -87,18 +87,22 @@ Installs git-absorb, a tool that automatically absorbs staged changes into their
 
 [📖 Documentation](./features/git-absorb/README.md)
 
-### local-mounts
+### dotfiles-sync
 
-Mounts local Git, SSH, GPG, and npm configuration files into the devcontainer for seamless development authentication. Now with proper SSH agent forwarding support.
+Syncs local Git, SSH, GPG, and npm configuration files into the devcontainer. Works on macOS, Linux, Windows (WSL), and GitHub Codespaces. Uses a merge strategy — never overwrites existing values.
 
 **Key benefits:**
-- Git configuration available inside container
-- SSH keys and SSH agent forwarding configured automatically
-- GPG keys for commit signing
-- npm authentication for private registries
-- Fixed SSH_AUTH_SOCK handling for devcontainer compatibility
+- Git configuration, SSH keys, GPG keys, and npm auth synced automatically
+- Merge strategy: safe to use alongside Codespaces native auth
+- Environment-aware: detects macOS, Linux, WSL, and Codespaces
+- SSH agent forwarding with runtime detection and fallback chain
+- Successor to `local-mounts`
 
-[📖 Documentation](./features/local-mounts/README.md)
+[📖 Documentation](./src/dotfiles-sync/README.md)
+
+### local-mounts *(removed)*
+
+> Replaced by `dotfiles-sync`. Use `ghcr.io/helpers4/devcontainer/dotfiles-sync:1` — options and behavior are fully compatible.
 
 ### essential-dev
 
@@ -171,7 +175,7 @@ Features from this repository are available via GitHub Container Registry. Refer
         "ghcr.io/helpers4/devcontainer/angular-dev:1": {},
         "ghcr.io/helpers4/devcontainer/shell-history-per-project:1": {},
         "ghcr.io/helpers4/devcontainer/git-absorb:1": {},
-        "ghcr.io/helpers4/devcontainer/local-mounts:1": {},
+        "ghcr.io/helpers4/devcontainer/dotfiles-sync:1": {},
         "ghcr.io/helpers4/devcontainer/peon-ping:1": {}
     }
 }
@@ -188,9 +192,9 @@ Features from this repository are available via GitHub Container Registry. Refer
 | [typescript-dev](./features/typescript-dev) | TypeScript/JavaScript dev with indexing and web tools (requires essential-dev) | [README](./features/typescript-dev/README.md) |
 | [angular-dev](./features/angular-dev) | Angular development environment with extensions and CLI autocompletion | [README](./features/angular-dev/README.md) |
 | [shell-history-per-project](./features/shell-history-per-project) | Per-project shell history persistence with multi-shell auto-detection | [README](./features/shell-history-per-project/README.md) |
-| [git-absorb](./features/git-absorb) | Automatic absorption of staged changes into logical commits | [README](./features/git-absorb/README.md) |
-| [local-mounts](./features/local-mounts) | Mount local Git, SSH, GPG, and npm config into devcontainer | [README](./features/local-mounts/README.md) |
-| [peon-ping](./features/peon-ping) | AI agent sound notifications with multi-IDE hooks and Peon Pet extension | [README](./features/peon-ping/README.md) |
+| [git-absorb](./src/git-absorb) | Automatic absorption of staged changes into logical commits | [README](./src/git-absorb/README.md) |
+| [dotfiles-sync](./src/dotfiles-sync) | Sync local Git, SSH, GPG, and npm config — works on macOS, Linux, WSL, Codespaces | [README](./src/dotfiles-sync/README.md) |
+| [peon-ping](./src/peon-ping) | AI agent sound notifications with multi-IDE hooks and Peon Pet extension | [README](./src/peon-ping/README.md) |
 
 ## Documentation
 
