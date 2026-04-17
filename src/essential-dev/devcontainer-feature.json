@@ -1,8 +1,8 @@
 {
   "id": "essential-dev",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "name": "Essential Development Environment",
-  "description": "Core development environment with Git integration, GitHub Copilot, Markdown support, and essential editor enhancements. Perfect base for all development projects.",
+  "description": "Core development environment with Git visualization, Markdown support, and essential editor enhancements. For GitHub tooling (gh CLI, Copilot, PR & Issues), use github-dev.",
   "documentationURL": "https://github.com/helpers4/devcontainer/tree/main/features/essential-dev",
   "customizations": {
     "vscode": {
@@ -11,12 +11,7 @@
         "eamodio.gitlens",
         "donjayamanne.githistory",
         "gxl.git-graph-3",
-        "github.vscode-pull-request-github",
-        "github.vscode-github-actions",
         "vivaxy.vscode-conventional-commits",
-        // AI Assistant
-        "github.copilot",
-        "github.copilot-chat",
         // Editor Enhancements
         "cardinal90.multi-cursor-case-preserve",
         "moshfeu.compare-folders",

@@ -16,7 +16,7 @@ Follow [Conventional Commits](https://www.conventionalcommits.org/) with a gitmo
 
 **Format:** `<type>(<scope>): <emoji> <description>`
 
-**Scopes:** angular-dev, auto-header, dotfiles-sync, essential-dev, git-absorb, package-auto-install, peon-ping, shell-history-per-project, typescript-dev, vite-plus, CI-CD
+**Scopes:** angular-dev, auto-header, dotfiles-sync, essential-dev, git-absorb, github-dev, package-auto-install, peon-ping, shell-history-per-project, typescript-dev, vite-plus, CI-CD
 
 | Emoji | Type | Description |
 |-------|------|-------------|
@@ -109,7 +109,8 @@ devcontainer features test .                             # Test all
 
 | Feature | Version | Description | Dependencies |
 |---------|---------|-------------|--------------|
-| essential-dev | 1.0.0 | Git, Copilot, Markdown, editor enhancements | — |
+| essential-dev | 1.1.0 | Git visualization, editor enhancements, Markdown | — |
+| github-dev | 1.0.0 | GitHub CLI (gh), known_hosts, Copilot, PR & Issues, Actions, RemoteHub | — |
 | typescript-dev | 1.0.5 | TypeScript/JS dev with import management | essential-dev |
 | angular-dev | 1.0.2 | Angular dev, port 4200 forwarding | — |
 | vite-plus | — | Vite development setup | — |

@@ -106,17 +106,30 @@ Syncs local Git, SSH, GPG, and npm configuration files into the devcontainer. Wo
 
 ### essential-dev
 
-Core development environment with Git integration, GitHub Copilot, Markdown support, and essential editor enhancements. Perfect base for all development projects.
+Core development environment with Git visualization, Markdown support, and essential editor enhancements. For GitHub tooling (gh CLI, Copilot, PR & Issues), use `github-dev`.
 
 **Key benefits:**
-- Git integration with history, graph visualization, and PR support
-- GitHub Copilot for AI-powered code assistance
+- Git history, graph visualization, and conventional commits support
 - Complete Markdown support with preview and linting
 - Multi-cursor, code comparison, and local file history
 - File format support (YAML, JSON, CSV, XML, Makefile)
 - Works out-of-the-box with zero configuration
 
 [📖 Documentation](./src/essential-dev/README.md)
+
+### github-dev
+
+GitHub CLI (`gh`), `github.com` SSH known_hosts, and GitHub VS Code extensions (Copilot, Copilot Chat, Pull Requests & Issues, GitHub Actions, RemoteHub).
+
+**Key benefits:**
+- `gh` CLI for PRs, issues, releases, Actions runs from the terminal
+- `github.com` fingerprints pre-seeded — no first-clone SSH prompt
+- GitHub Copilot and Copilot Chat for AI assistance
+- Pull Requests & Issues panel inside VS Code
+- GitHub Actions workflow editor with validation
+- RemoteHub to browse remote repos without cloning
+
+[📖 Documentation](./src/github-dev/README.md)
 
 ### typescript-dev
 
@@ -166,6 +179,7 @@ Features from this repository are available via GitHub Container Registry. Refer
 {
     "features": {
         "ghcr.io/helpers4/devcontainer/essential-dev:1": {},
+        "ghcr.io/helpers4/devcontainer/github-dev:1": {},
         "ghcr.io/helpers4/devcontainer/vite-plus:1": {},
         "ghcr.io/helpers4/devcontainer/package-auto-install:1": {},
         "ghcr.io/helpers4/devcontainer/typescript-dev:1": {},
@@ -185,7 +199,8 @@ Features from this repository are available via GitHub Container Registry. Refer
 
 | Feature | Description | Documentation |
 |---------|-------------|---------------|
-| [essential-dev](./src/essential-dev) | Core dev environment with Git, Copilot, Markdown, and editor tools | [README](./src/essential-dev/README.md) |
+| [essential-dev](./src/essential-dev) | Core dev environment with Git visualization, editor tools, and Markdown | [README](./src/essential-dev/README.md) |
+| [github-dev](./src/github-dev) | gh CLI, github.com known_hosts, Copilot, PR & Issues, Actions, RemoteHub | [README](./src/github-dev/README.md) |
 | [auto-header](./src/auto-header) | Automatic file headers with customizable templates (simple or custom) | [README](./src/auto-header/README.md) |
 | [vite-plus](./src/vite-plus) | Complete Vite+ toolchain with Oxc, Vitest, and VS Code integration | [README](./src/vite-plus/README.md) |
 | [package-auto-install](./src/package-auto-install) | Automatic package installation with corepack support for Node 24+ | [README](./src/package-auto-install/README.md) |
