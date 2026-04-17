@@ -15,16 +15,22 @@ else
     echo "WARN: GPG_TTY environment variable not set"
 fi
 
-# Test 2: git is available
+# Test 2: git availability (informational — not required)
 if command -v git >/dev/null 2>&1; then
-    echo "PASS: Git is available"
+    echo "PASS: Git is available (smart gitconfig merge enabled)"
 else
-    echo "FAIL: Git is not available"
-    exit 1
+    echo "INFO: Git is not available (gitconfig merge will use copy fallback)"
 fi
 
 # Test 3: Directory structure was created at build time
-TARGET_HOME="${HOME:-/home/node}"
+# Read target from the config file written by install.sh (source of truth)
+CONFIG_FILE="/usr/local/share/dotfiles-sync/config"
+if [ -f "$CONFIG_FILE" ]; then
+    # shellcheck source=/dev/null
+    . "$CONFIG_FILE"
+    TARGET_HOME="${DOTFILES_SYNC_TARGET}"
+fi
+TARGET_HOME="${TARGET_HOME:-/home/node}"
 echo "Checking directory structure at ${TARGET_HOME}..."
 
 for dir in ".ssh" ".gnupg"; do

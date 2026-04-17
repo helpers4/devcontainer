@@ -77,6 +77,9 @@ fi
 echo "dotfiles-sync: syncing from ${SOURCE_HOME} -> ${TARGET_HOME}..."
 
 # ── Helper: run git config as target user ─────────────────────────────────────
+HAS_GIT=false
+command -v git >/dev/null 2>&1 && HAS_GIT=true
+
 _gitconfig_set() {
     local _file="$1" _key="$2" _val="$3"
     if [ "$(id -u)" -eq 0 ] && getent passwd "${USERNAME}" >/dev/null 2>&1; then
@@ -101,44 +104,51 @@ elif [ -f "${SOURCE_HOME}/.gitconfig" ] && [ -s "${SOURCE_HOME}/.gitconfig" ]; t
     touch "${TARGET_GIT}" 2>/dev/null || true
     chmod 600 "${TARGET_GIT}" 2>/dev/null || true
 
-    # Keys managed by cloud platforms — never overwrite when already set.
-    # Covers: git auth (credential.helper), identity (user.*),
-    # and GPG signing config (gpg.*, commit.gpgsign) which platforms
-    # like Codespaces inject via their own signing proxy.
-    PROTECTED_KEYS="credential.helper user.name user.email user.signingkey gpg.program gpg.format commit.gpgsign tag.gpgsign"
+    if [ "${HAS_GIT}" = "true" ]; then
+        # Smart merge via git config
+        PROTECTED_KEYS="credential.helper user.name user.email user.signingkey gpg.program gpg.format commit.gpgsign tag.gpgsign"
 
-    MERGED=0
-    SKIPPED=0
-    while IFS= read -r line; do
-        KEY="${line%%=*}"
-        VAL="${line#*=}"
-        [ -z "${KEY}" ] && continue
+        MERGED=0
+        SKIPPED=0
+        while IFS= read -r line; do
+            KEY="${line%%=*}"
+            VAL="${line#*=}"
+            [ -z "${KEY}" ] && continue
 
-        # On cloud envs: skip protected keys if already present
-        if [ "${IS_CLOUD_ENV}" = "true" ]; then
-            _protected=false
-            for pkey in ${PROTECTED_KEYS}; do
-                if [ "${KEY}" = "${pkey}" ]; then
-                    existing="$(_gitconfig_get "${TARGET_GIT}" "${KEY}")"
-                    if [ -n "${existing}" ]; then
-                        _protected=true
-                        SKIPPED=$((SKIPPED + 1))
+            # On cloud envs: skip protected keys if already present
+            if [ "${IS_CLOUD_ENV}" = "true" ]; then
+                _protected=false
+                for pkey in ${PROTECTED_KEYS}; do
+                    if [ "${KEY}" = "${pkey}" ]; then
+                        existing="$(_gitconfig_get "${TARGET_GIT}" "${KEY}")"
+                        if [ -n "${existing}" ]; then
+                            _protected=true
+                            SKIPPED=$((SKIPPED + 1))
+                        fi
+                        break
                     fi
-                    break
-                fi
-            done
-            [ "${_protected}" = "true" ] && continue
-        fi
+                done
+                [ "${_protected}" = "true" ] && continue
+            fi
 
-        # Merge: only set if not already present
-        existing="$(_gitconfig_get "${TARGET_GIT}" "${KEY}")"
-        if [ -z "${existing}" ]; then
-            _gitconfig_set "${TARGET_GIT}" "${KEY}" "${VAL}"
-            MERGED=$((MERGED + 1))
-        fi
-    done < <(git config --file "${SOURCE_HOME}/.gitconfig" --list 2>/dev/null)
+            # Merge: only set if not already present
+            existing="$(_gitconfig_get "${TARGET_GIT}" "${KEY}")"
+            if [ -z "${existing}" ]; then
+                _gitconfig_set "${TARGET_GIT}" "${KEY}" "${VAL}"
+                MERGED=$((MERGED + 1))
+            fi
+        done < <(git config --file "${SOURCE_HOME}/.gitconfig" --list 2>/dev/null)
 
-    echo "   .gitconfig: merged (${MERGED} added, ${SKIPPED} protected)"
+        echo "   .gitconfig: merged (${MERGED} added, ${SKIPPED} protected)"
+    else
+        # Fallback without git: copy source if target is empty
+        if [ ! -s "${TARGET_GIT}" ]; then
+            cp -f "${SOURCE_HOME}/.gitconfig" "${TARGET_GIT}"
+            echo "   .gitconfig: copied (git not available for merge)"
+        else
+            echo "   .gitconfig: skipped (target not empty, git not available for merge)"
+        fi
+    fi
 elif [ -f "${SOURCE_HOME}/.gitconfig" ]; then
     echo "   .gitconfig: empty, skipping"
 else
