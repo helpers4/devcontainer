@@ -34,7 +34,7 @@ Complete Vite+ toolchain setup with VS Code extensions (Oxc, Vitest), optimized 
 - Project setup helper command
 - Supports all Vite-compatible frameworks
 
-[📖 Documentation](./features/vite-plus/README.md)
+[📖 Documentation](./src/vite-plus/README.md)
 
 ### package-auto-install
 
@@ -47,7 +47,7 @@ Automatically detects and runs npm/yarn/pnpm install in non-interactive mode aft
 - Smart command selection (npm ci, pnpm --frozen-lockfile, yarn --immutable)
 - Eliminates need for manual postCreateCommand
 
-[📖 Documentation](./features/package-auto-install/README.md)
+[📖 Documentation](./src/package-auto-install/README.md)
 
 ### angular-dev
 
@@ -59,7 +59,7 @@ Angular-specific development environment with VS Code extensions and CLI autocom
 - Optional Angular CLI installation
 - Ready-to-use Angular development setup
 
-[📖 Documentation](./features/angular-dev/README.md)
+[📖 Documentation](./src/angular-dev/README.md)
 
 ### shell-history-per-project
 
@@ -72,7 +72,7 @@ Persist shell history per project by automatically detecting and configuring all
 - Team collaboration friendly
 - Clean separation between personal and project commands
 
-[📖 Documentation](./features/shell-history-per-project/README.md)
+[📖 Documentation](./src/shell-history-per-project/README.md)
 
 ### git-absorb
 
@@ -85,7 +85,7 @@ Installs git-absorb, a tool that automatically absorbs staged changes into their
 - Lightweight single binary installation
 - Perfect for cleaning up commit history
 
-[📖 Documentation](./features/git-absorb/README.md)
+[📖 Documentation](./src/git-absorb/README.md)
 
 ### dotfiles-sync
 
@@ -116,7 +116,7 @@ Core development environment with Git integration, GitHub Copilot, Markdown supp
 - File format support (YAML, JSON, CSV, XML, Makefile)
 - Works out-of-the-box with zero configuration
 
-[📖 Documentation](./features/essential-dev/README.md)
+[📖 Documentation](./src/essential-dev/README.md)
 
 ### typescript-dev
 
@@ -129,7 +129,7 @@ TypeScript/JavaScript development setup with indexing, import management, HTML/C
 - Web development ready with code generation utilities
 - Requires `essential-dev` for core tools
 
-[📖 Documentation](./features/typescript-dev/README.md)
+[📖 Documentation](./src/typescript-dev/README.md)
 
 ### auto-header
 
@@ -143,7 +143,7 @@ Automatically configures file headers with customizable templates based on proje
 - Works in VS Code with zero configuration needed after setup
 - Perfect for maintaining consistent file headers across team projects
 
-[📖 Documentation](./features/auto-header/README.md)
+[📖 Documentation](./src/auto-header/README.md)
 
 ### peon-ping
 
@@ -156,7 +156,7 @@ Installs [peon-ping](https://peonping.com/) for game character voice notificatio
 - Devcontainer-aware audio relay to host machine
 - Non-interactive, idempotent installation
 
-[📖 Documentation](./features/peon-ping/README.md)
+[📖 Documentation](./src/peon-ping/README.md)
 
 ## Usage
 
@@ -185,13 +185,13 @@ Features from this repository are available via GitHub Container Registry. Refer
 
 | Feature | Description | Documentation |
 |---------|-------------|---------------|
-| [essential-dev](./features/essential-dev) | Core dev environment with Git, Copilot, Markdown, and editor tools | [README](./features/essential-dev/README.md) |
-| [vuto-header](./features/auto-header) | Automatic file headers with customizable templates (simple or custom) | [README](./features/auto-header/README.md) |
-| [aite-plus](./features/vite-plus) | Complete Vite+ toolchain with Oxc, Vitest, and VS Code integration | [README](./features/vite-plus/README.md) |
-| [package-auto-install](./features/package-auto-install) | Automatic package installation with corepack support for Node 24+ | [README](./features/package-auto-install/README.md) |
-| [typescript-dev](./features/typescript-dev) | TypeScript/JavaScript dev with indexing and web tools (requires essential-dev) | [README](./features/typescript-dev/README.md) |
-| [angular-dev](./features/angular-dev) | Angular development environment with extensions and CLI autocompletion | [README](./features/angular-dev/README.md) |
-| [shell-history-per-project](./features/shell-history-per-project) | Per-project shell history persistence with multi-shell auto-detection | [README](./features/shell-history-per-project/README.md) |
+| [essential-dev](./src/essential-dev) | Core dev environment with Git, Copilot, Markdown, and editor tools | [README](./src/essential-dev/README.md) |
+| [auto-header](./src/auto-header) | Automatic file headers with customizable templates (simple or custom) | [README](./src/auto-header/README.md) |
+| [vite-plus](./src/vite-plus) | Complete Vite+ toolchain with Oxc, Vitest, and VS Code integration | [README](./src/vite-plus/README.md) |
+| [package-auto-install](./src/package-auto-install) | Automatic package installation with corepack support for Node 24+ | [README](./src/package-auto-install/README.md) |
+| [typescript-dev](./src/typescript-dev) | TypeScript/JavaScript dev with indexing and web tools (requires essential-dev) | [README](./src/typescript-dev/README.md) |
+| [angular-dev](./src/angular-dev) | Angular development environment with extensions and CLI autocompletion | [README](./src/angular-dev/README.md) |
+| [shell-history-per-project](./src/shell-history-per-project) | Per-project shell history persistence with multi-shell auto-detection | [README](./src/shell-history-per-project/README.md) |
 | [git-absorb](./src/git-absorb) | Automatic absorption of staged changes into logical commits | [README](./src/git-absorb/README.md) |
 | [dotfiles-sync](./src/dotfiles-sync) | Sync local Git, SSH, GPG, and npm config — works on macOS, Linux, WSL, Codespaces | [README](./src/dotfiles-sync/README.md) |
 | [peon-ping](./src/peon-ping) | AI agent sound notifications with multi-IDE hooks and Peon Pet extension | [README](./src/peon-ping/README.md) |
