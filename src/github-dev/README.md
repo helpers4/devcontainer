@@ -33,7 +33,7 @@ Combine with `essential-dev` for a complete development environment:
 
 ### GitHub CLI (`gh`)
 
-Installed from [GitHub Releases](https://github.com/cli/cli/releases). Supports `x86_64` and `aarch64`.
+Installed from [GitHub Releases](https://github.com/cli/cli/releases). Supports `x86_64`, `aarch64`, and `armv7l`.
 
 Common uses inside the devcontainer:
 

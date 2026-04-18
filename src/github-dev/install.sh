@@ -5,7 +5,7 @@
 # SPDX-License-Identifier: LGPL-3.0-or-later
 #
 # Installs github-dev devcontainer feature.
-# - GitHub CLI (gh) from GitHub Releases (skipped if already installed)
+# - GitHub CLI (gh) from GitHub Releases
 
 set -e
 
@@ -16,30 +16,29 @@ echo "   gh version requested: ${GH_VERSION}"
 echo ""
 
 # ============================================================================
-# 1. Check if gh is already installed
+# 2. Check if gh is already installed at the expected location
 # ============================================================================
+
+GH_INSTALLED=false
 
 if command -v gh >/dev/null 2>&1; then
     EXISTING_VER="$(gh --version | head -1)"
     if [ "${GH_VERSION}" = "latest" ]; then
-        echo "gh already installed (${EXISTING_VER}), skipping installation"
+        echo "gh already installed (${EXISTING_VER}), skipping download"
         GH_INSTALLED=true
     else
         EXISTING_VER_NUM="$(gh --version | head -1 | awk '{print $3}')"
         if [ "${EXISTING_VER_NUM}" = "${GH_VERSION}" ]; then
-            echo "gh ${GH_VERSION} already installed, skipping installation"
+            echo "gh ${GH_VERSION} already installed, skipping download"
             GH_INSTALLED=true
         else
             echo "gh ${EXISTING_VER_NUM} installed but ${GH_VERSION} requested, upgrading..."
-            GH_INSTALLED=false
         fi
     fi
-else
-    GH_INSTALLED=false
 fi
 
 # ============================================================================
-# 2. Install GitHub CLI (gh) if needed
+# 3. Install GitHub CLI (gh) if needed
 # ============================================================================
 
 if [ "${GH_INSTALLED}" = "false" ]; then
@@ -83,9 +82,15 @@ if [ "${GH_INSTALLED}" = "false" ]; then
     install -m 0755 "${GH_TMP}/gh_${GH_VERSION}_linux_${GH_ARCH}/bin/gh" /usr/local/bin/gh
 fi
 
+# Ensure gh is available at /usr/local/bin even if pre-installed elsewhere
+if [ ! -x /usr/local/bin/gh ] && command -v gh >/dev/null 2>&1; then
+    ln -sf "$(command -v gh)" /usr/local/bin/gh
+    echo "Symlinked $(command -v gh) -> /usr/local/bin/gh"
+fi
+
 # Verify
-if gh --version >/dev/null 2>&1; then
-    echo "gh ready: $(gh --version | head -1)"
+if /usr/local/bin/gh --version >/dev/null 2>&1; then
+    echo "gh ready: $(/usr/local/bin/gh --version | head -1)"
 else
     echo "gh verification failed"
     exit 1
