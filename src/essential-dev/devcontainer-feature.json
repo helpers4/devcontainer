@@ -2,8 +2,8 @@
   "id": "essential-dev",
   "version": "1.0.2",
   "name": "Essential Development Environment",
-  "description": "Core development environment with Git visualization, Markdown support, and essential editor enhancements. For GitHub tooling (gh CLI, Copilot, PR & Issues), use github-dev.",
-  "documentationURL": "https://github.com/helpers4/devcontainer/tree/main/features/essential-dev",
+  "description": "Core development environment with Git visualization, Markdown support, and essential editor enhancements.",
+  "documentationURL": "https://github.com/helpers4/devcontainer/tree/main/src/essential-dev",
   "customizations": {
     "vscode": {
       "extensions": [
