@@ -109,8 +109,8 @@ devcontainer features test .                             # Test all
 
 | Feature | Version | Description | Dependencies |
 |---------|---------|-------------|--------------|
-| essential-dev | 1.1.0 | Git visualization, editor enhancements, Markdown | — |
-| github-dev | 1.0.0 | GitHub CLI (gh), known_hosts, Copilot, PR & Issues, Actions, RemoteHub | — |
+| essential-dev | 1.0.2 | Git visualization, editor enhancements, Markdown | — |
+| github-dev | 1.0.0 | GitHub CLI (gh), Copilot, PR & Issues, Actions, RemoteHub | — |
 | typescript-dev | 1.0.5 | TypeScript/JS dev with import management | essential-dev |
 | angular-dev | 1.0.2 | Angular dev, port 4200 forwarding | — |
 | vite-plus | — | Vite development setup | — |
