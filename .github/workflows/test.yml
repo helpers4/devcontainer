@@ -62,9 +62,9 @@ jobs:
           - features: peon-ping
             baseImage: mcr.microsoft.com/devcontainers/base:ubuntu
 
-          # github-dev - works on any base image
+          # github-dev - requires common-utils (curl, ca-certificates)
           - features: github-dev
-            baseImage: debian:latest
+            baseImage: mcr.microsoft.com/devcontainers/base:debian
           - features: github-dev
             baseImage: mcr.microsoft.com/devcontainers/base:ubuntu
 

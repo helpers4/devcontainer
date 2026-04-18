@@ -19,7 +19,9 @@ jobs:
         uses: helpers4/action/conventional-commits@main
         with:
           checkout: "true"
-          scopes: "angular-dev|auto-header|dotfiles-sync|essential-dev|git-absorb|github-dev|package-auto-install|peon-ping|shell-history-per-project|typescript-dev|vite-plus|deps|CI-CD"
+          scopes: "angular-dev|auto-header|dotfiles-sync|essential-dev|git-absorb|github-\
+            dev|package-auto-install|peon-ping|shell-history-per-project|typesc\
+            ript-dev|vite-plus|deps|CI-CD"
           pr-comment: "error"
 
       - name: Set status
@@ -76,7 +78,7 @@ jobs:
           - features: dotfiles-sync
             baseImage: mcr.microsoft.com/devcontainers/base:ubuntu
           - features: github-dev
-            baseImage: debian:latest
+            baseImage: mcr.microsoft.com/devcontainers/base:debian
           - features: github-dev
             baseImage: mcr.microsoft.com/devcontainers/base:ubuntu
 
