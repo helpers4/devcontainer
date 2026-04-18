@@ -1,6 +1,6 @@
 {
   "id": "essential-dev",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "name": "Essential Development Environment",
   "description": "Core development environment with Git visualization, Markdown support, and essential editor enhancements.",
   "documentationURL": "https://github.com/helpers4/devcontainer/tree/main/src/essential-dev",
@@ -60,6 +60,7 @@
         "markdown.extension.toc.levels": "2..6",
         "markdown.extension.preview.autoShowPreviewToSide": true,
         "[markdown]": {
+          "files.trimTrailingWhitespace": false,
           "editor.wordWrap": "on",
           "editor.rulers": [
             80,
