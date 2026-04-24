@@ -45,7 +45,7 @@ jobs:
         id: trigganator
         uses: actions/create-github-app-token@v3
         with:
-          app-id: ${{ vars.TRIGGANATOR_ID }}
+          client-id: ${{ vars.TRIGGANATOR_ID }}
           private-key: ${{ secrets.TRIGGANATOR_KEY }}
           owner: helpers4
           repositories: website
