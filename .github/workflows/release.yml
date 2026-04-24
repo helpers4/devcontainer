@@ -57,4 +57,4 @@ jobs:
           token: ${{ steps.trigganator.outputs.token }}
           repository: helpers4/website
           event-type: devcontainer-release
-          client-payload: '{"version": "${{ github.ref_name }}"}'
+          client-payload: "{\"version\": \"${{ github.ref_name }}\"}"
