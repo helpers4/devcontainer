@@ -49,6 +49,7 @@ jobs:
           private-key: ${{ secrets.TRIGGANATOR_KEY }}
           owner: helpers4
           repositories: website
+          permission-contents: write
 
       - name: Trigger website update
         continue-on-error: true
