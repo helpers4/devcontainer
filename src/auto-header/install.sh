@@ -77,11 +77,38 @@ else
     COPYRIGHT_ENTITY="$PROJECT_NAME"
 fi
 
-TEMPLATE_LINES=$(jq -n \
-    --arg p "This file is part of $PROJECT_NAME." \
-    --arg c "Copyright (C) $COPYRIGHT_YEARS $COPYRIGHT_ENTITY" \
-    --arg s "SPDX-License-Identifier: $LICENSE" \
-    '[$p,$c,$s]')
+if [ "$HEADER_TYPE" = "custom" ]; then
+    # Custom mode: user provides the literal header lines (separated by '\n').
+    # Placeholders are substituted before injection: {{projectName}}, {{license}},
+    # {{company}}, {{contributors}}, {{sinceYear}}, {{currentYear}},
+    # {{copyrightYears}}, {{author}}.
+    EXPANDED="$CUSTOM_HEADER_LINES"
+    EXPANDED="${EXPANDED//\{\{projectName\}\}/$PROJECT_NAME}"
+    EXPANDED="${EXPANDED//\{\{license\}\}/$LICENSE}"
+    EXPANDED="${EXPANDED//\{\{company\}\}/${COMPANY:-}}"
+    EXPANDED="${EXPANDED//\{\{contributors\}\}/${CONTRIBUTORS:-}}"
+    EXPANDED="${EXPANDED//\{\{sinceYear\}\}/$SINCE_YEAR}"
+    EXPANDED="${EXPANDED//\{\{currentYear\}\}/$CURRENT_YEAR}"
+    EXPANDED="${EXPANDED//\{\{copyrightYears\}\}/$COPYRIGHT_YEARS}"
+    EXPANDED="${EXPANDED//\{\{author\}\}/$COPYRIGHT_ENTITY}"
+    # Split on the two-character sequence "\n" into a JSON string array.
+    TEMPLATE_LINES=$(jq -Rn --arg s "$EXPANDED" '$s | split("\\n")' 2>/dev/null || echo '')
+    # Validate the resulting JSON; fall back to simple template on any error.
+    if ! printf '%s' "$TEMPLATE_LINES" | jq -e 'type == "array"' >/dev/null 2>&1; then
+        echo "⚠️  customHeaderLines could not be parsed, falling back to simple header"
+        TEMPLATE_LINES=$(jq -n \
+            --arg p "This file is part of $PROJECT_NAME." \
+            --arg c "Copyright (C) $COPYRIGHT_YEARS $COPYRIGHT_ENTITY" \
+            --arg s "SPDX-License-Identifier: $LICENSE" \
+            '[$p,$c,$s]')
+    fi
+else
+    TEMPLATE_LINES=$(jq -n \
+        --arg p "This file is part of $PROJECT_NAME." \
+        --arg c "Copyright (C) $COPYRIGHT_YEARS $COPYRIGHT_ENTITY" \
+        --arg s "SPDX-License-Identifier: $LICENSE" \
+        '[$p,$c,$s]')
+fi
 
 mk_template() {
     jq -n --arg lang "$1" --argjson lines "$TEMPLATE_LINES" \
@@ -150,12 +177,22 @@ if [ ! -f "$MACHINE_FILE" ]; then
     echo "{}" > "$MACHINE_FILE"
 fi
 
-# Strip JSONC comments before merging (VS Code tolerates them, jq doesn't).
+# Strip JSONC line comments before merging (VS Code tolerates them, jq doesn't).
+# If the existing settings.json is unparseable AFTER stripping comments, we
+# refuse to silently overwrite it: a backup is always produced, and the user
+# is asked to fix the file manually. This avoids data-loss when the user has
+# hand-edited their Machine settings with a syntax error.
 TMP_EXISTING=$(mktemp)
 sed -E 's://[^"]*$::g' "$MACHINE_FILE" > "$TMP_EXISTING" || cp "$MACHINE_FILE" "$TMP_EXISTING"
 if ! jq -e . "$TMP_EXISTING" >/dev/null 2>&1; then
-    echo "⚠️  $MACHINE_FILE was not valid JSON, recreating from scratch."
-    echo "{}" > "$TMP_EXISTING"
+    BACKUP="$MACHINE_FILE.bak.$(date +%Y%m%d-%H%M%S)"
+    cp -f "$MACHINE_FILE" "$BACKUP" 2>/dev/null || true
+    echo "❌ $MACHINE_FILE is not valid JSON (even after stripping // comments)."
+    echo "   A backup has been written to: $BACKUP"
+    echo "   Refusing to overwrite to avoid losing your settings."
+    echo "   Fix the file manually and rebuild the container, or delete it to start fresh."
+    rm -f "$TMP_EXISTING"
+    exit 1
 fi
 
 jq -s '.[0] * .[1]' "$TMP_EXISTING" <(echo "$PSI") > "$MACHINE_FILE"
