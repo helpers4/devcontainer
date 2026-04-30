@@ -113,7 +113,7 @@ devcontainer features test .                             # Test all
 | github-dev | 1.0.1 | GitHub CLI (gh), Copilot Chat, PR & Issues, Actions, RemoteHub | — |
 | typescript-dev | 1.0.5 | TypeScript/JS dev with import management | essential-dev |
 | angular-dev | 1.0.2 | Angular dev, port 4200 forwarding | — |
-| vite-plus | — | Vite development setup | — |
+| vite-plus | 1.0.3 | Vite+ unified CLI (vp), Oxlint/Oxfmt, Vitest, optional system-wide symlink | — |
 | package-auto-install | — | Auto-detect and install packages | — |
 | auto-header | — | LGPL-3.0 license headers | — |
 | git-absorb | 1.0.2 | git-absorb from GitHub releases | — |
