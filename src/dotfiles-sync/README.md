@@ -33,7 +33,6 @@ That's it. The feature auto-detects the environment and adapts its behavior.
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | `username` | string | `node` | Container username that receives synchronized config files |
-| `syncGhAuth` | boolean | `false` | Sync `~/.config/gh/hosts.yml` (contains GitHub OAuth token). Prefer using the `github-dev` feature with `GH_TOKEN` env. Skipped on cloud environments. |
 | `syncAwsConfig` | boolean | `false` | Sync `~/.aws/config` (profiles only — `~/.aws/credentials` is **never** synced). |
 | `syncKubeConfig` | boolean | `false` | Sync `~/.kube/config` (cluster credentials and tokens). Skipped on cloud environments. |
 | `syncDockerConfig` | boolean | `false` | Sync `~/.docker/config.json` (registry auth tokens). Skipped on cloud environments. |
@@ -62,13 +61,13 @@ That's it. The feature auto-detects the environment and adapts its behavior.
 
 | Local Path | Option | Notes |
 |------------|--------|-------|
-| `~/.config/gh/hosts.yml` | `syncGhAuth` | Contains GitHub OAuth token. Skipped on Codespaces/Gitpod/DevPod (platform injects its own). Prefer the `github-dev` feature with `GH_TOKEN` env variable. |
 | `~/.aws/config` | `syncAwsConfig` | AWS profiles. `~/.aws/credentials` (long-lived access keys) is **not bind-mounted** and never synced. |
 | `~/.kube/config` | `syncKubeConfig` | Kubernetes cluster credentials. Skipped on cloud environments. |
 | `~/.docker/config.json` | `syncDockerConfig` | Docker registry auth tokens. Skipped on cloud environments. |
 
 ### Never synced
 
+- `~/.config/gh/hosts.yml` — GitHub OAuth tokens are **never** bind-mounted (security). Use the `github-dev` feature with the `GH_TOKEN` env variable, or run `gh auth login` once in the container.
 - `~/.aws/credentials` — never bind-mounted, long-lived access keys are too risky to copy into a container.
 - Shell rc files (`~/.bashrc`, `~/.zshrc`, `~/.profile`) — would conflict with the container's own shell setup. Use VS Code's native [`dotfiles.repository`](https://code.visualstudio.com/docs/devcontainers/containers#_personalizing-with-dotfile-repositories) for that.
 
@@ -217,5 +216,6 @@ ssh-add -l
 
 ## Version History
 
+- **v1.2.0** — **breaking**: removed `syncGhAuth` option and dropped the `~/.config/gh` directory bind-mount. Only `~/.config/gh/config.yml` is mounted now (single-file). `hosts.yml` (GitHub OAuth token) is never bind-mounted into the container; use the `github-dev` feature with `GH_TOKEN`, or run `gh auth login` inside the container.
 - **v1.1.0**: Added many low-risk dotfiles (gitignore_global, git/ignore, git/attributes, yarnrc.yml, pnpm/rc, gh/config.yml, cargo/config.toml, pip/pip.conf) with copy-if-absent strategy. Added 4 opt-in booleans for sensitive files: `syncGhAuth` (gh OAuth token), `syncAwsConfig` (AWS profiles), `syncKubeConfig` (kube credentials), `syncDockerConfig` (Docker registry auth). All opt-ins default to `false` and are skipped on cloud environments. `~/.aws/credentials` is never bind-mounted.
 - **v1.0.0**: Initial release — successor to `local-mounts`. Added multi-environment detection (macOS, Linux, WSL, Codespaces, Gitpod, DevPod), merge strategy for all config files, GPG skip on cloud environments, configurable source paths.

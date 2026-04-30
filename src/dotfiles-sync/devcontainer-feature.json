@@ -1,19 +1,14 @@
 {
   "id": "dotfiles-sync",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "name": "Dotfiles Sync",
-  "description": "Syncs local Git, SSH, GPG, npm, gh, cargo, pip, pnpm/yarn config files into the devcontainer. Optionally syncs cloud credentials (AWS, kube, Docker, gh OAuth token) — opt-in only. Works on macOS, Linux, Windows (WSL), Codespaces, Gitpod, DevPod. Merges instead of overwriting.",
+  "description": "Syncs local Git, SSH, GPG, npm, gh CLI prefs, cargo, pip, pnpm/yarn config files into the devcontainer. Optionally syncs cloud credentials (AWS, kube, Docker) — opt-in only. Works on macOS, Linux, Windows (WSL), Codespaces, Gitpod, DevPod. Merges instead of overwriting.",
   "documentationURL": "https://github.com/helpers4/devcontainer/tree/main/src/dotfiles-sync",
   "options": {
     "username": {
       "type": "string",
       "default": "node",
       "description": "Username in the container that should receive synchronized local config files"
-    },
-    "syncGhAuth": {
-      "type": "boolean",
-      "default": false,
-      "description": "Sync ~/.config/gh/hosts.yml (contains GitHub OAuth token). Prefer using the github-dev feature with GH_TOKEN env. Skipped on cloud environments (Codespaces/Gitpod inject their own token)."
     },
     "syncAwsConfig": {
       "type": "boolean",
@@ -73,8 +68,8 @@
       "type": "bind"
     },
     {
-      "source": "${localEnv:HOME}/.config/gh",
-      "target": "/tmp/dotfiles-sync/.config/gh",
+      "source": "${localEnv:HOME}/.config/gh/config.yml",
+      "target": "/tmp/dotfiles-sync/.config/gh/config.yml",
       "type": "bind"
     },
     {
