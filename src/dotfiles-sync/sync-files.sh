@@ -18,6 +18,14 @@
 #   .ssh keys   -> copy only when destination file does not exist yet.
 #   .gnupg      -> skipped on cloud environments (GPG handled natively there).
 #   known_hosts -> merge line-by-line (append missing host entries).
+#   ── extra files (v1.1.0+) — copy-if-absent strategy:
+#   .gitignore_global, .config/git/{ignore,attributes,config-*}
+#   .yarnrc.yml, .config/pnpm/rc, .cargo/config.toml, .config/pip/pip.conf
+#   .config/gh/config.yml      -> always synced
+#   .config/gh/hosts.yml       -> opt-in (DOTFILES_SYNC_GH_AUTH), GitHub OAuth token
+#   .aws/config                -> opt-in (DOTFILES_SYNC_AWS_CONFIG)
+#   .kube/config               -> opt-in (DOTFILES_SYNC_KUBE_CONFIG)
+#   .docker/config.json        -> opt-in (DOTFILES_SYNC_DOCKER_CONFIG)
 
 # No set -e: sync as much as possible even if one part fails.
 
@@ -35,6 +43,10 @@ fi
 USERNAME="${DOTFILES_SYNC_USERNAME}"
 SOURCE_HOME="${DOTFILES_SYNC_SOURCE}"
 TARGET_HOME="${DOTFILES_SYNC_TARGET}"
+SYNC_GH_AUTH="${DOTFILES_SYNC_GH_AUTH:-false}"
+SYNC_AWS_CONFIG="${DOTFILES_SYNC_AWS_CONFIG:-false}"
+SYNC_KUBE_CONFIG="${DOTFILES_SYNC_KUBE_CONFIG:-false}"
+SYNC_DOCKER_CONFIG="${DOTFILES_SYNC_DOCKER_CONFIG:-false}"
 
 if [ -z "${USERNAME}" ] || [ -z "${SOURCE_HOME}" ] || [ -z "${TARGET_HOME}" ]; then
     echo "dotfiles-sync: config is missing required values, aborting sync"
@@ -284,6 +296,117 @@ else
     echo "   .gnupg: not found in staging"
 fi
 
+# ── Helper: copy-if-absent ────────────────────────────────────────────────────
+# Copies a single source file to target only if target does not already exist.
+# Skips symlinks (security), empty files, and missing sources.
+# Args: <relative_path> <label> [optional_chmod]
+_copy_if_absent() {
+    local _rel="$1" _label="$2" _mode="${3:-}"
+    local _src="${SOURCE_HOME}/${_rel}"
+    local _dst="${TARGET_HOME}/${_rel}"
+
+    if [ -L "${_src}" ]; then
+        echo "   ${_label}: symlink in staging, skipping for security"
+        return 0
+    fi
+    if [ ! -f "${_src}" ] || [ ! -s "${_src}" ]; then
+        echo "   ${_label}: not found or empty in staging"
+        return 0
+    fi
+    if [ -e "${_dst}" ]; then
+        echo "   ${_label}: target already exists, skipping (no overwrite)"
+        return 0
+    fi
+
+    mkdir -p "$(dirname "${_dst}")" 2>/dev/null || true
+    if cp -f "${_src}" "${_dst}" 2>/dev/null; then
+        [ -n "${_mode}" ] && chmod "${_mode}" "${_dst}" 2>/dev/null || true
+        echo "   ${_label}: copied"
+    else
+        echo "   ${_label}: copy failed"
+    fi
+}
+
+# ── Sync .gitignore_global ────────────────────────────────────────────────────
+_copy_if_absent ".gitignore_global" ".gitignore_global" "644"
+
+# ── Sync ~/.config/git/{ignore,attributes,config-*} ───────────────────────────
+if [ -d "${SOURCE_HOME}/.config/git" ]; then
+    mkdir -p "${TARGET_HOME}/.config/git"
+    _copy_if_absent ".config/git/ignore"     ".config/git/ignore"     "644"
+    _copy_if_absent ".config/git/attributes" ".config/git/attributes" "644"
+    # Optional modular includes (config-*, e.g. config-work, config-perso)
+    find "${SOURCE_HOME}/.config/git" -maxdepth 1 -type f -name 'config-*' \
+        2>/dev/null | while IFS= read -r _src; do
+        _name="$(basename "${_src}")"
+        _copy_if_absent ".config/git/${_name}" ".config/git/${_name}" "644"
+    done
+else
+    echo "   .config/git: not found in staging"
+fi
+
+# ── Sync ~/.yarnrc.yml ────────────────────────────────────────────────────────
+_copy_if_absent ".yarnrc.yml" ".yarnrc.yml" "644"
+
+# ── Sync ~/.config/pnpm/rc ────────────────────────────────────────────────────
+_copy_if_absent ".config/pnpm/rc" ".config/pnpm/rc" "644"
+
+# ── Sync ~/.cargo/config.toml ─────────────────────────────────────────────────
+_copy_if_absent ".cargo/config.toml" ".cargo/config.toml" "644"
+
+# ── Sync ~/.config/pip/pip.conf ───────────────────────────────────────────────
+_copy_if_absent ".config/pip/pip.conf" ".config/pip/pip.conf" "644"
+
+# ── Sync ~/.config/gh/config.yml (always) and hosts.yml (opt-in) ──────────────
+if [ -d "${SOURCE_HOME}/.config/gh" ]; then
+    mkdir -p "${TARGET_HOME}/.config/gh"
+    _copy_if_absent ".config/gh/config.yml" ".config/gh/config.yml" "600"
+
+    if [ "${SYNC_GH_AUTH}" = "true" ]; then
+        if [ "${IS_CLOUD_ENV}" = "true" ]; then
+            echo "   .config/gh/hosts.yml: skipped (cloud env — platform manages gh auth)"
+        else
+            _copy_if_absent ".config/gh/hosts.yml" ".config/gh/hosts.yml [OAuth token]" "600"
+        fi
+    else
+        echo "   .config/gh/hosts.yml: skipped (opt-in: set 'syncGhAuth' to enable)"
+    fi
+else
+    echo "   .config/gh: not found in staging"
+fi
+
+# ── Sync ~/.aws/config (opt-in) ───────────────────────────────────────────────
+if [ "${SYNC_AWS_CONFIG}" = "true" ]; then
+    mkdir -p "${TARGET_HOME}/.aws"
+    _copy_if_absent ".aws/config" ".aws/config" "600"
+else
+    echo "   .aws/config: skipped (opt-in: set 'syncAwsConfig' to enable)"
+fi
+
+# ── Sync ~/.kube/config (opt-in) ──────────────────────────────────────────────
+if [ "${SYNC_KUBE_CONFIG}" = "true" ]; then
+    if [ "${IS_CLOUD_ENV}" = "true" ]; then
+        echo "   .kube/config: skipped (cloud env — use platform-native cluster access)"
+    else
+        mkdir -p "${TARGET_HOME}/.kube"
+        _copy_if_absent ".kube/config" ".kube/config [cluster credentials]" "600"
+    fi
+else
+    echo "   .kube/config: skipped (opt-in: set 'syncKubeConfig' to enable)"
+fi
+
+# ── Sync ~/.docker/config.json (opt-in) ───────────────────────────────────────
+if [ "${SYNC_DOCKER_CONFIG}" = "true" ]; then
+    if [ "${IS_CLOUD_ENV}" = "true" ]; then
+        echo "   .docker/config.json: skipped (cloud env — platform manages registry auth)"
+    else
+        mkdir -p "${TARGET_HOME}/.docker"
+        _copy_if_absent ".docker/config.json" ".docker/config.json [registry tokens]" "600"
+    fi
+else
+    echo "   .docker/config.json: skipped (opt-in: set 'syncDockerConfig' to enable)"
+fi
+
 # ── Fix ownership ─────────────────────────────────────────────────────────────
 
 if [ "$(id -u)" -eq 0 ] && getent passwd "${USERNAME}" >/dev/null 2>&1; then
@@ -291,7 +414,14 @@ if [ "$(id -u)" -eq 0 ] && getent passwd "${USERNAME}" >/dev/null 2>&1; then
         "${TARGET_HOME}/.ssh" \
         "${TARGET_HOME}/.gnupg" \
         "${TARGET_HOME}/.gitconfig" \
-        "${TARGET_HOME}/.npmrc" 2>/dev/null || true
+        "${TARGET_HOME}/.npmrc" \
+        "${TARGET_HOME}/.gitignore_global" \
+        "${TARGET_HOME}/.yarnrc.yml" \
+        "${TARGET_HOME}/.config" \
+        "${TARGET_HOME}/.cargo" \
+        "${TARGET_HOME}/.aws" \
+        "${TARGET_HOME}/.kube" \
+        "${TARGET_HOME}/.docker" 2>/dev/null || true
 fi
 
 # Signal sync completed (used by profile.d fallback)
