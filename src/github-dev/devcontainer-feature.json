@@ -1,8 +1,8 @@
 {
   "id": "github-dev",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "name": "GitHub Development Environment",
-  "description": "GitHub CLI (gh) and GitHub VS Code extensions (Copilot Chat, Pull Requests & Issues, GitHub Actions, RemoteHub). Centralizes all GitHub tooling in one feature.",
+  "description": "GitHub CLI (gh) and GitHub VS Code extensions (Copilot Chat, Pull Requests & Issues, GitHub Actions, RemoteHub). Centralizes all GitHub tooling in one feature, including a shared Copilot Chat commit-message instruction (Conventional Commits + gitmoji).",
   "documentationURL": "https://github.com/helpers4/devcontainer/tree/main/src/github-dev",
   "options": {
     "ghVersion": {
@@ -26,7 +26,17 @@
         // GitHub Copilot
         "github.copilot.enable": {
           "*": true
-        }
+        },
+        // Shared Copilot Chat commit-message guidance for the helpers4 organization.
+        // The list of allowed scopes is intentionally NOT hardcoded here — each repo
+        // declares its own scopes via `conventionalCommits.scopes` in its workspace
+        // settings, and Copilot Chat reads that list from the workspace at generation
+        // time. End users can override or extend this array in their own settings.
+        "github.copilot.chat.commitMessageGeneration.instructions": [
+          {
+            "text": "Generate commit messages in English only. Use Conventional Commits format with a gitmoji between the scope and the description: `<type>(<scope>): <emoji> <description>`. The scope is optional; when used, it MUST be one of the values listed in the workspace setting `conventionalCommits.scopes` (defined in `.vscode/settings.json` for the active repository) — never invent a scope. Pick the most specific gitmoji from https://gitmoji.dev that matches the change. Common mapping (non-exhaustive): feat → ✨ (new feature), 🚸 (UX), ♿️ (a11y), 🌐 (i18n), 💬 (text/literals); fix → 🐛 (bug), 🚑️ (hotfix), 🔒️ (security), 🩹 (simple), 🥅 (errors), 🚨 (warnings), ✏️ (typo); docs → 📝 (general), 💡 (source comments), 📄 (license); refactor → ♻️ (refactor), 🎨 (structure), 🔥 (remove code), ⚰️ (dead code), 🚚 (move/rename); test → ✅ (add/update), 🧪 (failing test), 💚 (fix CI); chore → 🔧 (config), 🙈 (gitignore), 🔖 (tag/release), 📌 (pin deps), 🩺 (healthcheck); perf → ⚡️; style → 💄 (UI), 🎨 (code style); ci → 👷 (CI build), 💚 (fix CI); build → 📦️ (artefacts), ➕ (add dep), ➖ (remove dep), ⬆️ (upgrade dep), ⬇️ (downgrade dep); revert → ⏪️. Always include exactly ONE emoji. Keep the description short (≤72 chars), lowercase, imperative mood, no period at the end. If there are multiple logical changes, use a bullet list in the body. Generic shape examples (replace `<scope>` with a value from `conventionalCommits.scopes`): `feat(<scope>): ✨ add <thing>`, `fix(<scope>): 🐛 handle <case>`, `docs(<scope>): 📝 update <topic>`, `refactor(<scope>): ♻️ simplify <thing>`, `chore(<scope>): ⬆️ bump <dep>`."
+          }
+        ]
       }
     }
   },
