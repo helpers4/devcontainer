@@ -1,6 +1,6 @@
 # Dotfiles Sync (dotfiles-sync)
 
-Syncs local Git, SSH, GPG, and npm configuration files into the devcontainer. Works on macOS, Linux, Windows (WSL and native), GitHub Codespaces, Gitpod, and DevPod. Uses a **merge strategy** — never overwrites existing values, safe alongside cloud platform native auth and GPG signing.
+Syncs local Git, SSH, GPG, npm, gh, cargo, pip, yarn/pnpm config files into the devcontainer. Optionally syncs cloud credentials (AWS, kube, Docker, gh OAuth token) — opt-in only. Works on macOS, Linux, Windows (WSL and native), GitHub Codespaces, Gitpod, and DevPod. Uses a **merge strategy** for established files and a **copy-if-absent** strategy for new ones — never overwrites existing values, safe alongside cloud platform native auth and GPG signing.
 
 ## Usage
 
@@ -33,19 +33,46 @@ That's it. The feature auto-detects the environment and adapts its behavior.
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | `username` | string | `node` | Container username that receives synchronized config files |
+| `syncGhAuth` | boolean | `false` | Sync `~/.config/gh/hosts.yml` (contains GitHub OAuth token). Prefer using the `github-dev` feature with `GH_TOKEN` env. Skipped on cloud environments. |
+| `syncAwsConfig` | boolean | `false` | Sync `~/.aws/config` (profiles only — `~/.aws/credentials` is **never** synced). |
+| `syncKubeConfig` | boolean | `false` | Sync `~/.kube/config` (cluster credentials and tokens). Skipped on cloud environments. |
+| `syncDockerConfig` | boolean | `false` | Sync `~/.docker/config.json` (registry auth tokens). Skipped on cloud environments. |
 
 ## What Gets Synced
 
-| Local Path | Container Mount (staging) | Final Target | Purpose |
-|------------|--------------------------|--------------|---------|
-| `~/.gitconfig` | `/tmp/dotfiles-sync/.gitconfig` | `/home/<user>/.gitconfig` | Git user configuration |
-| `~/.ssh` | `/tmp/dotfiles-sync/.ssh` | `/home/<user>/.ssh` | SSH keys and config |
-| `~/.gnupg` | `/tmp/dotfiles-sync/.gnupg` | `/home/<user>/.gnupg` | GPG keys for commit signing |
-| `~/.npmrc` | `/tmp/dotfiles-sync/.npmrc` | `/home/<user>/.npmrc` | npm registry authentication |
+### Always synced
+
+| Local Path | Final Target | Strategy | Purpose |
+|------------|--------------|----------|---------|
+| `~/.gitconfig` | `~/.gitconfig` | Merge via `git config` | Git user configuration |
+| `~/.gitignore_global` | `~/.gitignore_global` | Copy-if-absent | Personal global gitignore |
+| `~/.config/git/ignore` | `~/.config/git/ignore` | Copy-if-absent | XDG global gitignore |
+| `~/.config/git/attributes` | `~/.config/git/attributes` | Copy-if-absent | XDG global gitattributes |
+| `~/.config/git/config-*` | `~/.config/git/config-*` | Copy-if-absent | Modular git includes |
+| `~/.ssh` | `~/.ssh` | Per-file merge | SSH keys, config, known_hosts |
+| `~/.gnupg` | `~/.gnupg` | Copy-if-absent (skipped on cloud) | GPG keys for commit signing |
+| `~/.npmrc` | `~/.npmrc` | Merge line-by-line | npm registry auth |
+| `~/.yarnrc.yml` | `~/.yarnrc.yml` | Copy-if-absent | yarn registries / settings |
+| `~/.config/pnpm/rc` | `~/.config/pnpm/rc` | Copy-if-absent | pnpm settings |
+| `~/.config/gh/config.yml` | `~/.config/gh/config.yml` | Copy-if-absent | gh CLI preferences (no token) |
+| `~/.cargo/config.toml` | `~/.cargo/config.toml` | Copy-if-absent | Cargo registries / profiles |
+| `~/.config/pip/pip.conf` | `~/.config/pip/pip.conf` | Copy-if-absent | pip index URLs |
+
+### Opt-in (sensitive)
+
+| Local Path | Option | Notes |
+|------------|--------|-------|
+| `~/.config/gh/hosts.yml` | `syncGhAuth` | Contains GitHub OAuth token. Skipped on Codespaces/Gitpod/DevPod (platform injects its own). Prefer the `github-dev` feature with `GH_TOKEN` env variable. |
+| `~/.aws/config` | `syncAwsConfig` | AWS profiles. `~/.aws/credentials` (long-lived access keys) is **not bind-mounted** and never synced. |
+| `~/.kube/config` | `syncKubeConfig` | Kubernetes cluster credentials. Skipped on cloud environments. |
+| `~/.docker/config.json` | `syncDockerConfig` | Docker registry auth tokens. Skipped on cloud environments. |
+
+### Never synced
+
+- `~/.aws/credentials` — never bind-mounted, long-lived access keys are too risky to copy into a container.
+- Shell rc files (`~/.bashrc`, `~/.zshrc`, `~/.profile`) — would conflict with the container's own shell setup. Use VS Code's native [`dotfiles.repository`](https://code.visualstudio.com/docs/devcontainers/containers#_personalizing-with-dotfile-repositories) for that.
 
 ## Merge Strategy
-
-Rather than overwriting, the feature **merges** configuration:
 
 | File | Strategy |
 |------|----------|
@@ -55,6 +82,7 @@ Rather than overwriting, the feature **merges** configuration:
 | `.ssh/known_hosts` | Appends host entries not already present |
 | `.ssh` keys | Copies files only if destination does not exist |
 | `.gnupg` | Copied on local/WSL; **skipped on cloud environments** (see below) |
+| All other files (gitignore_global, gh/config.yml, cargo, pip, yarn, pnpm, …) | **Copy-if-absent** — never overwrites an existing target |
 
 ### Cloud environment protection
 
@@ -189,4 +217,5 @@ ssh-add -l
 
 ## Version History
 
+- **v1.1.0**: Added many low-risk dotfiles (gitignore_global, git/ignore, git/attributes, yarnrc.yml, pnpm/rc, gh/config.yml, cargo/config.toml, pip/pip.conf) with copy-if-absent strategy. Added 4 opt-in booleans for sensitive files: `syncGhAuth` (gh OAuth token), `syncAwsConfig` (AWS profiles), `syncKubeConfig` (kube credentials), `syncDockerConfig` (Docker registry auth). All opt-ins default to `false` and are skipped on cloud environments. `~/.aws/credentials` is never bind-mounted.
 - **v1.0.0**: Initial release — successor to `local-mounts`. Added multi-environment detection (macOS, Linux, WSL, Codespaces, Gitpod, DevPod), merge strategy for all config files, GPG skip on cloud environments, configurable source paths.

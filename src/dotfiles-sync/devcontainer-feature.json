@@ -1,20 +1,50 @@
 {
   "id": "dotfiles-sync",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "name": "Dotfiles Sync",
-  "description": "Syncs local Git, SSH, GPG, and npm config files into the devcontainer. Works on macOS, Linux, Windows (WSL), and GitHub Codespaces. Merges instead of overwriting — safe to use alongside Codespaces native auth.",
+  "description": "Syncs local Git, SSH, GPG, npm, gh, cargo, pip, pnpm/yarn config files into the devcontainer. Optionally syncs cloud credentials (AWS, kube, Docker, gh OAuth token) — opt-in only. Works on macOS, Linux, Windows (WSL), Codespaces, Gitpod, DevPod. Merges instead of overwriting.",
   "documentationURL": "https://github.com/helpers4/devcontainer/tree/main/src/dotfiles-sync",
   "options": {
     "username": {
       "type": "string",
       "default": "node",
       "description": "Username in the container that should receive synchronized local config files"
+    },
+    "syncGhAuth": {
+      "type": "boolean",
+      "default": false,
+      "description": "Sync ~/.config/gh/hosts.yml (contains GitHub OAuth token). Prefer using the github-dev feature with GH_TOKEN env. Skipped on cloud environments (Codespaces/Gitpod inject their own token)."
+    },
+    "syncAwsConfig": {
+      "type": "boolean",
+      "default": false,
+      "description": "Sync ~/.aws/config (profiles only, NOT ~/.aws/credentials which contains long-lived access keys)."
+    },
+    "syncKubeConfig": {
+      "type": "boolean",
+      "default": false,
+      "description": "Sync ~/.kube/config (cluster credentials and tokens). Skipped on cloud environments."
+    },
+    "syncDockerConfig": {
+      "type": "boolean",
+      "default": false,
+      "description": "Sync ~/.docker/config.json (registry auth tokens). Skipped on cloud environments."
     }
   },
   "mounts": [
     {
       "source": "${localEnv:HOME}/.gitconfig",
       "target": "/tmp/dotfiles-sync/.gitconfig",
+      "type": "bind"
+    },
+    {
+      "source": "${localEnv:HOME}/.gitignore_global",
+      "target": "/tmp/dotfiles-sync/.gitignore_global",
+      "type": "bind"
+    },
+    {
+      "source": "${localEnv:HOME}/.config/git",
+      "target": "/tmp/dotfiles-sync/.config/git",
       "type": "bind"
     },
     {
@@ -30,6 +60,46 @@
     {
       "source": "${localEnv:HOME}/.npmrc",
       "target": "/tmp/dotfiles-sync/.npmrc",
+      "type": "bind"
+    },
+    {
+      "source": "${localEnv:HOME}/.yarnrc.yml",
+      "target": "/tmp/dotfiles-sync/.yarnrc.yml",
+      "type": "bind"
+    },
+    {
+      "source": "${localEnv:HOME}/.config/pnpm/rc",
+      "target": "/tmp/dotfiles-sync/.config/pnpm/rc",
+      "type": "bind"
+    },
+    {
+      "source": "${localEnv:HOME}/.config/gh",
+      "target": "/tmp/dotfiles-sync/.config/gh",
+      "type": "bind"
+    },
+    {
+      "source": "${localEnv:HOME}/.cargo/config.toml",
+      "target": "/tmp/dotfiles-sync/.cargo/config.toml",
+      "type": "bind"
+    },
+    {
+      "source": "${localEnv:HOME}/.config/pip/pip.conf",
+      "target": "/tmp/dotfiles-sync/.config/pip/pip.conf",
+      "type": "bind"
+    },
+    {
+      "source": "${localEnv:HOME}/.aws/config",
+      "target": "/tmp/dotfiles-sync/.aws/config",
+      "type": "bind"
+    },
+    {
+      "source": "${localEnv:HOME}/.kube/config",
+      "target": "/tmp/dotfiles-sync/.kube/config",
+      "type": "bind"
+    },
+    {
+      "source": "${localEnv:HOME}/.docker/config.json",
+      "target": "/tmp/dotfiles-sync/.docker/config.json",
       "type": "bind"
     }
   ],
