@@ -81,7 +81,7 @@ This command:
 | `company` | string | *optional* | Company or organization name |
 | `contributors` | string | *optional* | Comma-separated contributor names |
 | `sinceYear` | string | *current year* | Copyright start year |
-| `customHeaderLines` | string | *required for custom* | Custom header lines (linefeed separated) |
+| `customHeaderLines` | string | *required for custom* | Custom header lines (separated by literal `\n`). Supports placeholders: `{{projectName}}`, `{{license}}`, `{{company}}`, `{{contributors}}`, `{{sinceYear}}`, `{{currentYear}}`, `{{copyrightYears}}`, `{{author}}` (= company or projectName). |
 
 ## Examples
 
@@ -124,7 +124,10 @@ This command:
     "ghcr.io/helpers4/devcontainer/auto-header:latest": {
       "headerType": "custom",
       "projectName": "my-lib",
-      "customHeaderLines": "/*!\n * @file\n * @description Custom file header\n * @version 1.0.0\n */"
+      "license": "LGPL-3.0-or-later",
+      "company": "ACME",
+      "sinceYear": "2024",
+      "customHeaderLines": "/*!\n * @file part of {{projectName}}\n * @copyright Copyright (C) {{copyrightYears}} {{author}}\n * @license SPDX-License-Identifier: {{license}}\n */"
     }
   }
 }
