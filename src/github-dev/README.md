@@ -57,6 +57,7 @@ gh repo clone org/repo      # Clone a repository
 | `github.vscode-pull-request-github` | PR and issue management inside VS Code |
 | `github.vscode-github-actions` | GitHub Actions workflow editor with validation |
 | `github.remotehub` | Browse remote GitHub repositories without cloning |
+| `ms-vscode.remote-repositories` | Open and work on remote repositories without cloning (companion to RemoteHub) |
 
 ## Authentication
 
@@ -92,5 +93,5 @@ gh auth login
 
 ## Version History
 
-- **v1.0.1**: Remove deprecated `github.copilot` extension (superseded by `github.copilot-chat`).
+- **v1.0.1**: Remove deprecated `github.copilot` extension (superseded by `github.copilot-chat`). Add `ms-vscode.remote-repositories` (companion to RemoteHub).
 - **v1.0.0**: Initial release. gh CLI, Copilot, Copilot Chat, Pull Requests & Issues, GitHub Actions, RemoteHub extensions. Auto-auth via `GH_TOKEN`/`GITHUB_TOKEN`. Extracted from `essential-dev`.
