@@ -94,7 +94,16 @@ jobs:
 
       - name: Create mount sources for dotfiles-sync
         if: matrix.features == 'dotfiles-sync'
-        run: mkdir -p ~/.ssh ~/.gnupg && touch ~/.gitconfig ~/.npmrc
+        # All bind sources declared in src/dotfiles-sync/devcontainer-feature.json
+        # must exist on the host or `docker run` aborts before the test runs.
+        run: |
+          mkdir -p ~/.ssh ~/.gnupg \
+                   ~/.config/git ~/.config/gh ~/.config/pnpm ~/.config/pip \
+                   ~/.cargo ~/.aws ~/.kube ~/.docker
+          touch ~/.gitconfig ~/.gitignore_global ~/.npmrc ~/.yarnrc.yml \
+                ~/.config/pnpm/rc ~/.config/gh/config.yml \
+                ~/.cargo/config.toml ~/.config/pip/pip.conf \
+                ~/.aws/config ~/.kube/config ~/.docker/config.json
 
       - name: "Test feature '${{ matrix.features }}' against '${{ matrix.baseImage }}'"
         run: devcontainer features test --features ${{ matrix.features }} --base-image

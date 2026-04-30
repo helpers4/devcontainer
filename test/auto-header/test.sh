@@ -35,12 +35,18 @@ echo "✅ Configuration file present and valid"
 # ---------------------------------------------------------------------------
 # 2. Machine settings written by the installer
 # ---------------------------------------------------------------------------
-TARGET_USER="${_REMOTE_USER:-${REMOTE_USER:-node}}"
-if PASSWD_ENTRY=$(getent passwd "$TARGET_USER" 2>/dev/null); then
-    TARGET_HOME=$(printf '%s\n' "$PASSWD_ENTRY" | cut -d: -f6)
+# Source of truth: the installer persists the actual path it wrote to.
+# This avoids re-resolving $TARGET_USER differently between build (where
+# `_REMOTE_USER` is set by the devcontainer CLI) and test (where it's not).
+MACHINE_FILE=$(jq -r '.machineSettingsFile // empty' "$CONFIG_FILE")
+if [ -z "$MACHINE_FILE" ]; then
+    TARGET_USER="${_REMOTE_USER:-${REMOTE_USER:-node}}"
+    if PASSWD_ENTRY=$(getent passwd "$TARGET_USER" 2>/dev/null); then
+        TARGET_HOME=$(printf '%s\n' "$PASSWD_ENTRY" | cut -d: -f6)
+    fi
+    [ -z "${TARGET_HOME:-}" ] && TARGET_HOME="/home/$TARGET_USER"
+    MACHINE_FILE="$TARGET_HOME/.vscode-server/data/Machine/settings.json"
 fi
-[ -z "${TARGET_HOME:-}" ] && TARGET_HOME="/home/$TARGET_USER"
-MACHINE_FILE="$TARGET_HOME/.vscode-server/data/Machine/settings.json"
 
 echo ""
 echo "Test 2: Machine settings.json"

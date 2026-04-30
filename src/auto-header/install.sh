@@ -47,9 +47,20 @@ if [ "$HEADER_TYPE" = "custom" ] && [ -z "$CUSTOM_HEADER_LINES" ]; then
 fi
 
 # Persist the raw config (informational; not strictly needed once Machine
-# settings are written, but useful for debugging / inspection).
+# settings are written, but useful for debugging / inspection / tests).
 CONFIG_DIR="/etc/h4-auto-header"
 mkdir -p "$CONFIG_DIR"
+
+# Resolve the remote user's home up-front so we can persist the path the
+# installer actually writes to (build-time and runtime may resolve users
+# differently — `_REMOTE_USER` is set during build but not when tests run).
+TARGET_USER="${_REMOTE_USER:-${REMOTE_USER:-node}}"
+if PASSWD_ENTRY=$(getent passwd "$TARGET_USER" 2>/dev/null); then
+    TARGET_HOME=$(printf '%s\n' "$PASSWD_ENTRY" | cut -d: -f6)
+fi
+[ -z "${TARGET_HOME:-}" ] && TARGET_HOME="/home/$TARGET_USER"
+MACHINE_FILE="$TARGET_HOME/.vscode-server/data/Machine/settings.json"
+
 jq -n \
     --arg headerType "$HEADER_TYPE" \
     --arg projectName "$PROJECT_NAME" \
@@ -58,7 +69,10 @@ jq -n \
     --arg contributors "$CONTRIBUTORS" \
     --arg sinceYear "$SINCE_YEAR" \
     --arg customHeaderLines "$CUSTOM_HEADER_LINES" \
-    '{headerType:$headerType,projectName:$projectName,license:$license,company:$company,contributors:$contributors,sinceYear:$sinceYear,customHeaderLines:$customHeaderLines}' \
+    --arg targetUser "$TARGET_USER" \
+    --arg targetHome "$TARGET_HOME" \
+    --arg machineSettingsFile "$MACHINE_FILE" \
+    '{headerType:$headerType,projectName:$projectName,license:$license,company:$company,contributors:$contributors,sinceYear:$sinceYear,customHeaderLines:$customHeaderLines,targetUser:$targetUser,targetHome:$targetHome,machineSettingsFile:$machineSettingsFile}' \
     > "$CONFIG_DIR/config.json"
 
 # ---------------------------------------------------------------------------
@@ -162,15 +176,9 @@ PSI=$(jq -n \
 # Machine settings live at:
 #   ~/.vscode-server/data/Machine/settings.json
 # They are loaded by VS Code for any workspace opened in this container.
+# ($TARGET_USER / $TARGET_HOME / $MACHINE_FILE were resolved above.)
 # ---------------------------------------------------------------------------
-TARGET_USER="${_REMOTE_USER:-${REMOTE_USER:-node}}"
-if PASSWD_ENTRY=$(getent passwd "$TARGET_USER" 2>/dev/null); then
-    TARGET_HOME=$(printf '%s\n' "$PASSWD_ENTRY" | cut -d: -f6)
-fi
-[ -z "${TARGET_HOME:-}" ] && TARGET_HOME="/home/$TARGET_USER"
-
 MACHINE_DIR="$TARGET_HOME/.vscode-server/data/Machine"
-MACHINE_FILE="$MACHINE_DIR/settings.json"
 
 mkdir -p "$MACHINE_DIR"
 if [ ! -f "$MACHINE_FILE" ]; then
