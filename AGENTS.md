@@ -16,7 +16,7 @@ Follow [Conventional Commits](https://www.conventionalcommits.org/) with a gitmo
 
 **Format:** `<type>(<scope>): <emoji> <description>`
 
-**Scopes:** angular-dev, auto-header, dotfiles-sync, essential-dev, git-absorb, github-dev, package-auto-install, peon-ping, shell-history-per-project, typescript-dev, vite-plus, CI-CD
+**Scopes:** angular-dev, auto-header, dotfiles-sync, essential-dev, git-absorb, github-dev, local-mounts, package-auto-install, peon-ping, shell-history-per-project, typescript-dev, vite-plus, CI-CD
 
 | Emoji | Type | Description |
 |-------|------|-------------|
@@ -56,7 +56,7 @@ devcontainer/
 │   ├── package-auto-install/         # Automatic package installation
 │   ├── auto-header/                  # Automatic LGPL-3.0 file headers
 │   ├── git-absorb/                   # git-absorb tool installation
-│   ├── local-mounts/                 # Mount local Git/SSH/GPG/npm config
+│   ├── local-mounts/                 # DEPRECATED — shim redirecting to dotfiles-sync
 │   ├── peon-ping/                    # Health check endpoint
 │   └── shell-history-per-project/    # Persistent shell history per project
 ├── test/                             # One test.sh per feature
@@ -155,7 +155,7 @@ devcontainer features test .                             # Test all
     "ghcr.io/helpers4/devcontainer/vite-plus:1": {},
     "ghcr.io/helpers4/devcontainer/package-auto-install:1": {},
     "ghcr.io/helpers4/devcontainer/git-absorb:1": {},
-    "ghcr.io/helpers4/devcontainer/local-mounts:1": {},
+    "ghcr.io/helpers4/devcontainer/dotfiles-sync:1": {},
     "ghcr.io/helpers4/devcontainer/shell-history-per-project:1": {}
   }
 }
