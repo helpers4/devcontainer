@@ -357,7 +357,7 @@ _copy_if_absent ".cargo/config.toml" ".cargo/config.toml" "644"
 # ── Sync ~/.config/pip/pip.conf ───────────────────────────────────────────────
 _copy_if_absent ".config/pip/pip.conf" ".config/pip/pip.conf" "644"
 
-# ── Sync ~/.config/gh/config.yml (always) and hosts.yml (opt-in) ──────────────
+# ── Sync ~/.config/gh/config.yml (copy-if-absent) and hosts.yml (opt-in) ──────
 if [ -d "${SOURCE_HOME}/.config/gh" ]; then
     mkdir -p "${TARGET_HOME}/.config/gh"
     _copy_if_absent ".config/gh/config.yml" ".config/gh/config.yml" "600"
