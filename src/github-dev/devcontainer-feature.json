@@ -18,6 +18,7 @@
         "github.vscode-pull-request-github",
         "github.vscode-github-actions",
         "github.remotehub",
+        "ms-vscode.remote-repositories",
         // AI Assistant
         "github.copilot-chat"
       ],
