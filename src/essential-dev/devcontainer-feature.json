@@ -1,6 +1,6 @@
 {
   "id": "essential-dev",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "name": "Essential Development Environment",
   "description": "Core development environment with Git visualization, Markdown support, and essential editor enhancements.",
   "documentationURL": "https://github.com/helpers4/devcontainer/tree/main/src/essential-dev",
@@ -34,7 +34,10 @@
         "files.insertFinalNewline": true,
         "files.trimFinalNewlines": true,
         "files.trimTrailingWhitespace": true,
+        "files.eol": "\n",
         // Editor Configuration
+        "editor.insertSpaces": true,
+        "editor.detectIndentation": true,
         "editor.formatOnSave": true,
         "editor.codeActionsOnSave": {
           "source.fixAll": "explicit"
