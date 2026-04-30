@@ -1,23 +1,88 @@
 name: "Release"
 
+# Auto-release: when a PR is merged into main, detect every feature whose
+# `version` field changed in `src/<feature>/devcontainer-feature.json`, publish
+# only those features to GHCR, create per-feature git tags `<feature>-v<version>`,
+# and dispatch the website rebuild for each one.
+
 on:
   workflow_dispatch:
+    inputs:
+      force-all:
+        description: "Republish ALL features regardless of version diff (recovery only)"
+        type: boolean
+        default: false
   push:
-    tags:
-      - "v*"
+    branches:
+      - main
+    paths:
+      - "src/*/devcontainer-feature.json"
 
 jobs:
-  deploy:
-    if: ${{ github.ref_type == 'tag'}}
+  detect:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write # Need write permission to create feature tags
-      packages: write
-
+    outputs:
+      changed: ${{ steps.diff.outputs.changed }}
+      count: ${{ steps.diff.outputs.count }}
     steps:
       - uses: actions/checkout@v6
         with:
-          fetch-depth: 0 # Fetch full history for proper git operations
+          fetch-depth: 2 # need previous commit for diff (push) — workflow_dispatch falls back to "all"
+
+      - name: Detect features with bumped version
+        id: diff
+        shell: bash
+        env:
+          FORCE_ALL: ${{ github.event_name == 'workflow_dispatch' && inputs.force-all }}
+        run: |
+          set -euo pipefail
+          changed_json='[]'
+
+          if [ "${FORCE_ALL}" = "true" ]; then
+            echo "::notice::workflow_dispatch with force-all=true → republishing every feature"
+            mapfile -t files < <(ls src/*/devcontainer-feature.json 2>/dev/null || true)
+          else
+            # All feature manifests touched by the merge commit.
+            mapfile -t files < <(git diff --name-only HEAD~1..HEAD -- 'src/*/devcontainer-feature.json' || true)
+          fi
+
+          for f in "${files[@]}"; do
+            [ -f "$f" ] || continue
+            name=$(jq -r '.id' "$f")
+            new_version=$(jq -r '.version' "$f")
+
+            if [ "${FORCE_ALL}" = "true" ]; then
+              old_version="<forced>"
+            else
+              # Best-effort previous version (file may not exist on previous commit → new feature)
+              old_version=$(git show "HEAD~1:$f" 2>/dev/null | jq -r '.version' 2>/dev/null || echo "")
+            fi
+
+            if [ "${FORCE_ALL}" != "true" ] && [ "$old_version" = "$new_version" ]; then
+              echo "→ $name unchanged ($new_version), skipping"
+              continue
+            fi
+
+            echo "→ $name: ${old_version:-<new>} → $new_version"
+            changed_json=$(jq -c --arg n "$name" --arg v "$new_version" '. + [{name:$n, version:$v}]' <<< "$changed_json")
+          done
+
+          count=$(jq 'length' <<< "$changed_json")
+          echo "count=$count" >> "$GITHUB_OUTPUT"
+          echo "changed=$changed_json" >> "$GITHUB_OUTPUT"
+          echo "Detected $count feature(s) to publish."
+
+  release:
+    needs: detect
+    if: ${{ needs.detect.outputs.count != '0' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # tags
+      packages: write # GHCR
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
 
       - name: Configure Git
         run: |
@@ -31,15 +96,32 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Publish Features
+      - name: Publish features
         uses: devcontainers/action@v1
         with:
           publish-features: "true"
           base-path-to-features: "./src"
           generate-docs: "true"
-
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create per-feature git tags
+        env:
+          CHANGED: ${{ needs.detect.outputs.changed }}
+        run: |
+          set -euo pipefail
+          echo "$CHANGED" | jq -c '.[]' | while read -r row; do
+            name=$(jq -r '.name' <<< "$row")
+            version=$(jq -r '.version' <<< "$row")
+            tag="${name}-v${version}"
+            if git rev-parse -q --verify "refs/tags/${tag}" > /dev/null; then
+              echo "→ tag ${tag} already exists, skipping"
+              continue
+            fi
+            git tag -a "${tag}" -m "Release ${name} v${version}"
+            git push origin "${tag}"
+            echo "→ created tag ${tag}"
+          done
 
       - name: Get Trigganator token
         id: trigganator
@@ -53,9 +135,22 @@ jobs:
 
       - name: Trigger website update
         continue-on-error: true
-        uses: peter-evans/repository-dispatch@v4
-        with:
-          token: ${{ steps.trigganator.outputs.token }}
-          repository: helpers4/website
-          event-type: devcontainer-release
-          client-payload: "{\"version\": \"${{ github.ref_name }}\"}"
+        env:
+          CHANGED: ${{ needs.detect.outputs.changed }}
+          GH_TOKEN: ${{ steps.trigganator.outputs.token }}
+        run: |
+          set -euo pipefail
+          # One dispatch per feature so the website workflow can react per-feature.
+          echo "$CHANGED" | jq -c '.[]' | while read -r row; do
+            name=$(jq -r '.name' <<< "$row")
+            version=$(jq -r '.version' <<< "$row")
+            payload=$(jq -nc --arg n "$name" --arg v "$version" --arg sha "${{ github.sha }}" \
+              '{feature:$n, version:$v, sha:$sha, source:"devcontainer-release"}')
+            echo "→ dispatch website: $name v$version"
+            gh api \
+              -X POST \
+              -H "Accept: application/vnd.github+json" \
+              "/repos/helpers4/website/dispatches" \
+              -f event_type=devcontainer-release \
+              --raw-field "client_payload=$payload" || echo "⚠️  dispatch failed for $name"
+          done
