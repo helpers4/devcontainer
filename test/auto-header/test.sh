@@ -1,143 +1,99 @@
 #!/usr/bin/env bash
-
-# Test script for auto-header feature
+# This file is part of helpers4.
+# Copyright (C) 2025 baxyz
+# SPDX-License-Identifier: LGPL-3.0-or-later
+#
+# Test the auto-header feature: it should write valid psi-header.* settings
+# directly into the remote user's Machine settings.json.
 
 set -e
 
 echo "🧪 Testing auto-header feature..."
 
-# Test 1: Check if header configuration is available
-echo ""
-echo "Test 1: Checking if header configuration exists..."
-if [ -d "/root/.vscode-server/extensions" ]; then
-    if ls /root/.vscode-server/extensions | grep -q "psioniq.*psi-header"; then
-        echo "✅ Header extension support found"
-    else
-        echo "⚠️  Header extension not yet installed (will install on VS Code first launch)"
-    fi
-fi
-
-# Test 2: Check if h4-init-headers script exists and is executable
-echo ""
-echo "Test 2: Checking if helper script is installed..."
-if [ -x /usr/local/bin/h4-init-headers ]; then
-    echo "✅ h4-init-headers script found and executable"
-else
-    echo "❌ h4-init-headers script not found or not executable"
-    exit 1
-fi
-
-# Test 3: Check configuration file
-echo ""
-echo "Test 3: Checking configuration file..."
+# ---------------------------------------------------------------------------
+# 1. Raw config persisted by the installer
+# ---------------------------------------------------------------------------
 CONFIG_FILE="/etc/h4-auto-header/config.json"
-if [ -f "$CONFIG_FILE" ]; then
-    echo "✅ Configuration file found: $CONFIG_FILE"
-    echo "   Content:"
-    cat "$CONFIG_FILE"
-    
-    # Verify it's valid JSON using jq
-    if jq empty "$CONFIG_FILE" 2>/dev/null; then
-        echo "✅ Configuration is valid JSON"
-    else
-        echo "❌ Configuration is not valid JSON"
-        exit 1
-    fi
-else
-    echo "❌ Configuration file not found"
+echo ""
+echo "Test 1: configuration file"
+if [ ! -f "$CONFIG_FILE" ]; then
+    echo "❌ $CONFIG_FILE not found"
     exit 1
 fi
-
-# Test 4: Verify configuration contains expected keys
-echo ""
-echo "Test 4: Verifying configuration contains required keys..."
-for key in "headerType" "projectName" "license" "sinceYear"; do
-    if grep -q "\"$key\"" "$CONFIG_FILE"; then
-        echo "✅ Key '$key' found in configuration"
-    else
-        echo "❌ Key '$key' missing from configuration"
+if ! jq empty "$CONFIG_FILE" 2>/dev/null; then
+    echo "❌ $CONFIG_FILE is not valid JSON"
+    exit 1
+fi
+for key in headerType projectName license sinceYear; do
+    if ! jq -e ".$key" "$CONFIG_FILE" >/dev/null; then
+        echo "❌ Key '$key' missing from $CONFIG_FILE"
         exit 1
     fi
 done
+echo "✅ Configuration file present and valid"
 
-# Test 5: Check if script is readable and contains expected patterns
+# ---------------------------------------------------------------------------
+# 2. Machine settings written by the installer
+# ---------------------------------------------------------------------------
+TARGET_USER="${_REMOTE_USER:-${REMOTE_USER:-node}}"
+TARGET_HOME=$(getent passwd "$TARGET_USER" | cut -d: -f6)
+[ -z "$TARGET_HOME" ] && TARGET_HOME="/home/$TARGET_USER"
+MACHINE_FILE="$TARGET_HOME/.vscode-server/data/Machine/settings.json"
+
 echo ""
-echo "Test 5: Verifying helper script contains expected patterns..."
-if grep -q "h4-auto-header" /usr/local/bin/h4-init-headers; then
-    echo "✅ Helper script contains auto-header references"
-else
-    echo "❌ Helper script missing auto-header references"
+echo "Test 2: Machine settings.json"
+if [ ! -f "$MACHINE_FILE" ]; then
+    echo "❌ $MACHINE_FILE not created by installer"
     exit 1
 fi
+if ! jq empty "$MACHINE_FILE" 2>/dev/null; then
+    echo "❌ $MACHINE_FILE is not valid JSON"
+    cat "$MACHINE_FILE"
+    exit 1
+fi
+echo "✅ Machine settings file is valid JSON"
 
-# Test 6: Generate actual settings.json and verify real values (no << >> variables)
+# ---------------------------------------------------------------------------
+# 3. psi-header.* keys present and substituted with real values
+# ---------------------------------------------------------------------------
 echo ""
-echo "Test 6: Testing settings.json generation with real values..."
-TEST_DIR=$(mktemp -d)
-cd "$TEST_DIR"
-mkdir -p .vscode
-
-# Run h4-init-headers to generate settings.json
-if /usr/local/bin/h4-init-headers > /dev/null 2>&1; then
-    echo "✅ h4-init-headers executed successfully"
-else
-    echo "⚠️  h4-init-headers execution failed (expected in test environment)"
-    # Continue anyway as this might fail in isolated test container
-fi
-
-# If settings.json was created, validate it
-if [ -f ".vscode/settings.json" ]; then
-    echo "✅ settings.json created"
-    
-    # Verify it's valid JSON
-    if jq empty .vscode/settings.json 2>/dev/null; then
-        echo "✅ Generated JSON is valid"
-    else
-        echo "❌ Generated JSON is invalid"
-        cat .vscode/settings.json
+echo "Test 3: psi-header keys"
+for key in "psi-header.config" "psi-header.templates" "psi-header.changes-tracking" "psi-header.lang-config"; do
+    if ! jq -e ".[\"$key\"]" "$MACHINE_FILE" >/dev/null; then
+        echo "❌ Missing key: $key"
         exit 1
     fi
-    
-    # CRITICAL: Check for << >> variables (should NOT exist)
-    if grep -q '<<' .vscode/settings.json; then
-        echo "❌ CRITICAL: Variables << >> found in generated file (should be real values)!"
-        grep '<<' .vscode/settings.json
-        exit 1
-    else
-        echo "✅ No << >> variables found - using real values"
-    fi
-    
-    # Verify real values are present
-    PROJECT_NAME=$(jq -r '.["psi-header.config"].author' .vscode/settings.json 2>/dev/null || echo "")
-    if [ -n "$PROJECT_NAME" ]; then
-        echo "✅ Real author value found: $PROJECT_NAME"
-    fi
-    
-    # Check for Copyright pattern with years
-    if grep -q "Copyright (C) [0-9]" .vscode/settings.json; then
-        echo "✅ Real copyright years found in templates"
-    fi
-    
-    # Check for SPDX license identifier
-    if grep -q "SPDX-License-Identifier: [A-Z]" .vscode/settings.json; then
-        echo "✅ Real SPDX license identifier found"
-    fi
-else
-    echo "⚠️  settings.json not created (may require full container environment)"
-fi
+done
+echo "✅ All psi-header.* keys present"
 
-# Cleanup
-cd /
-rm -rf "$TEST_DIR"
+if grep -q '<<' "$MACHINE_FILE"; then
+    echo "❌ Found '<<' placeholders in generated file (should be real values):"
+    grep '<<' "$MACHINE_FILE"
+    exit 1
+fi
+echo "✅ No '<<' placeholders — real values used"
+
+AUTHOR=$(jq -r '.["psi-header.config"].author' "$MACHINE_FILE")
+[ -n "$AUTHOR" ] && [ "$AUTHOR" != "null" ] || { echo "❌ author missing"; exit 1; }
+echo "✅ Real author value: $AUTHOR"
+
+if ! jq -e '.["psi-header.templates"][0].template[1] | test("Copyright \\(C\\) [0-9]")' "$MACHINE_FILE" >/dev/null; then
+    echo "❌ Copyright line in templates does not contain a year"
+    exit 1
+fi
+echo "✅ Copyright year present in templates"
+
+if ! jq -e '.["psi-header.templates"][0].template[2] | test("SPDX-License-Identifier: [A-Za-z0-9.+-]+")' "$MACHINE_FILE" >/dev/null; then
+    echo "❌ SPDX license identifier missing"
+    exit 1
+fi
+echo "✅ SPDX license identifier present"
 
 echo ""
 echo "✅ All tests passed!"
 echo ""
 echo "📋 Summary:"
-echo "   - Header configuration feature installed successfully"
-echo "   - h4-init-headers helper script is executable"
-echo "   - Configuration file is valid and complete"
-echo "   - Helper script is properly configured"
-echo "   - Generated settings.json uses REAL VALUES (not << >> variables)"
-echo ""
-echo "💡 Next: Users can run 'h4-init-headers' in their project to initialize headers"
+echo "   - Config persisted at $CONFIG_FILE"
+echo "   - psi-header.* settings written to $MACHINE_FILE"
+echo "   - Real values used (no '<<' placeholders)"
+echo "   - Settings active for any workspace opened in this container"
