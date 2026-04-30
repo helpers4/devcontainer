@@ -1,8 +1,8 @@
 {
   "id": "github-dev",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "name": "GitHub Development Environment",
-  "description": "GitHub CLI (gh) and GitHub VS Code extensions (Copilot, Copilot Chat, Pull Requests & Issues, GitHub Actions, RemoteHub). Centralizes all GitHub tooling in one feature.",
+  "description": "GitHub CLI (gh) and GitHub VS Code extensions (Copilot Chat, Pull Requests & Issues, GitHub Actions, RemoteHub). Centralizes all GitHub tooling in one feature.",
   "documentationURL": "https://github.com/helpers4/devcontainer/tree/main/src/github-dev",
   "options": {
     "ghVersion": {
@@ -19,7 +19,6 @@
         "github.vscode-github-actions",
         "github.remotehub",
         // AI Assistant
-        "github.copilot",
         "github.copilot-chat"
       ],
       "settings": {
