@@ -1,9 +1,13 @@
 name: "Release"
 
 # Auto-release: when a PR is merged into main, detect every feature whose
-# `version` field changed in `src/<feature>/devcontainer-feature.json`, publish
-# only those features to GHCR, create per-feature git tags `<feature>-v<version>`,
-# and dispatch the website rebuild for each one.
+# `version` field changed in `src/<feature>/devcontainer-feature.json`. The
+# `devcontainers/action` step always scans the full `./src` tree, but GHCR
+# publishing is idempotent: only versions not already present on GHCR are
+# pushed, so unchanged features are effectively skipped at the registry level.
+# This workflow uses the diff to (1) skip the whole job when nothing was
+# bumped, (2) create per-feature git tags `<feature>-v<version>` for the
+# bumped ones, and (3) dispatch one website rebuild event per bumped feature.
 
 on:
   workflow_dispatch:
