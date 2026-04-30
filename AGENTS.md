@@ -56,7 +56,7 @@ devcontainer/
 │   ├── package-auto-install/         # Automatic package installation
 │   ├── auto-header/                  # Automatic LGPL-3.0 file headers
 │   ├── git-absorb/                   # git-absorb tool installation
-│   ├── local-mounts/                 # DEPRECATED — shim redirecting to dotfiles-sync
+│   ├── local-mounts/                 # REMOVED — README-only redirect to dotfiles-sync
 │   ├── peon-ping/                    # Health check endpoint
 │   └── shell-history-per-project/    # Persistent shell history per project
 ├── test/                             # One test.sh per feature
@@ -110,7 +110,7 @@ devcontainer features test .                             # Test all
 | Feature | Version | Description | Dependencies |
 |---------|---------|-------------|--------------|
 | essential-dev | 1.0.2 | Git visualization, editor enhancements, Markdown | — |
-| github-dev | 1.0.1 | GitHub CLI (gh), Copilot Chat, PR & Issues, Actions, RemoteHub | — |
+| github-dev | 1.0.2 | GitHub CLI (gh), Copilot Chat, PR & Issues, Actions, RemoteHub, shared Copilot Chat commit-message instruction (reads `conventionalCommits.scopes` per repo) | — |
 | typescript-dev | 1.0.5 | TypeScript/JS dev with import management | essential-dev |
 | angular-dev | 1.0.2 | Angular dev, port 4200 forwarding | — |
 | vite-plus | 1.0.3 | Vite+ unified CLI (vp), Oxlint/Oxfmt, Vitest, optional system-wide symlink | — |
