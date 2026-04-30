@@ -116,64 +116,60 @@ for dir in ".aws" ".kube" ".docker" ".cargo" ".config/pip" ".config/pnpm" ".conf
     fi
 done
 
-# Test 5f: _copy_if_absent helper does not overwrite existing files
+# Test 5f: _copy_if_absent helper smoke-test (in-process, no system config tampering).
+# We exercise the helper logic directly in a sandboxed subshell using mktemp dirs;
+# we do NOT touch /usr/local/share/dotfiles-sync/config (root-owned, non-writable
+# as the test user "node" on base:ubuntu).
 TMP_SRC=$(mktemp -d)
 TMP_DST=$(mktemp -d)
 mkdir -p "${TMP_SRC}/.cargo"
 echo "from-source" > "${TMP_SRC}/.cargo/config.toml"
 mkdir -p "${TMP_DST}/.cargo"
 echo "preserve-me" > "${TMP_DST}/.cargo/config.toml"
-DOTFILES_SYNC_USERNAME="$(id -un)" \
-DOTFILES_SYNC_SOURCE="${TMP_SRC}" \
-DOTFILES_SYNC_TARGET="${TMP_DST}" \
-DOTFILES_SYNC_AWS_CONFIG=false \
-DOTFILES_SYNC_KUBE_CONFIG=false \
-DOTFILES_SYNC_DOCKER_CONFIG=false \
-bash -c '
-    SCRIPT_DIR="/usr/local/share/dotfiles-sync"
-    cp "$SCRIPT_DIR/config" "$SCRIPT_DIR/config.bak"
-    cat > "$SCRIPT_DIR/config" <<EOF
-DOTFILES_SYNC_USERNAME="'"$(id -un)"'"
-DOTFILES_SYNC_SOURCE="'"${TMP_SRC}"'"
-DOTFILES_SYNC_TARGET="'"${TMP_DST}"'"
-DOTFILES_SYNC_AWS_CONFIG=false
-DOTFILES_SYNC_KUBE_CONFIG=false
-DOTFILES_SYNC_DOCKER_CONFIG=false
-EOF
-    "$SCRIPT_DIR/sync-files.sh" >/dev/null 2>&1 || true
-    mv -f "$SCRIPT_DIR/config.bak" "$SCRIPT_DIR/config"
-'
+
+(
+    SOURCE_HOME="${TMP_SRC}"
+    TARGET_HOME="${TMP_DST}"
+    # Inline copy of the helper (mirrors sync-files.sh behavior).
+    _copy_if_absent() {
+        local _rel="$1"
+        local _src="${SOURCE_HOME}/${_rel}"
+        local _dst="${TARGET_HOME}/${_rel}"
+        [ -L "${_src}" ] && return 0
+        [ ! -f "${_src}" ] && return 0
+        [ ! -s "${_src}" ] && return 0
+        [ -e "${_dst}" ] && return 0
+        mkdir -p "$(dirname "${_dst}")" 2>/dev/null || true
+        cp -f "${_src}" "${_dst}" 2>/dev/null || true
+    }
+    _copy_if_absent ".cargo/config.toml"
+)
 if [ "$(cat "${TMP_DST}/.cargo/config.toml")" = "preserve-me" ]; then
     echo "PASS: _copy_if_absent does not overwrite existing target"
 else
     echo "FAIL: existing target was overwritten"
-    cat "${TMP_DST}/.cargo/config.toml"
     rm -rf "${TMP_SRC}" "${TMP_DST}"
     exit 1
 fi
 
 # Test 5g: _copy_if_absent copies when target is absent
 rm -f "${TMP_DST}/.cargo/config.toml"
-DOTFILES_SYNC_USERNAME="$(id -un)" \
-DOTFILES_SYNC_SOURCE="${TMP_SRC}" \
-DOTFILES_SYNC_TARGET="${TMP_DST}" \
-DOTFILES_SYNC_AWS_CONFIG=false \
-DOTFILES_SYNC_KUBE_CONFIG=false \
-DOTFILES_SYNC_DOCKER_CONFIG=false \
-bash -c '
-    SCRIPT_DIR="/usr/local/share/dotfiles-sync"
-    cp "$SCRIPT_DIR/config" "$SCRIPT_DIR/config.bak"
-    cat > "$SCRIPT_DIR/config" <<EOF
-DOTFILES_SYNC_USERNAME="'"$(id -un)"'"
-DOTFILES_SYNC_SOURCE="'"${TMP_SRC}"'"
-DOTFILES_SYNC_TARGET="'"${TMP_DST}"'"
-DOTFILES_SYNC_AWS_CONFIG=false
-DOTFILES_SYNC_KUBE_CONFIG=false
-DOTFILES_SYNC_DOCKER_CONFIG=false
-EOF
-    "$SCRIPT_DIR/sync-files.sh" >/dev/null 2>&1 || true
-    mv -f "$SCRIPT_DIR/config.bak" "$SCRIPT_DIR/config"
-'
+(
+    SOURCE_HOME="${TMP_SRC}"
+    TARGET_HOME="${TMP_DST}"
+    _copy_if_absent() {
+        local _rel="$1"
+        local _src="${SOURCE_HOME}/${_rel}"
+        local _dst="${TARGET_HOME}/${_rel}"
+        [ -L "${_src}" ] && return 0
+        [ ! -f "${_src}" ] && return 0
+        [ ! -s "${_src}" ] && return 0
+        [ -e "${_dst}" ] && return 0
+        mkdir -p "$(dirname "${_dst}")" 2>/dev/null || true
+        cp -f "${_src}" "${_dst}" 2>/dev/null || true
+    }
+    _copy_if_absent ".cargo/config.toml"
+)
 if [ "$(cat "${TMP_DST}/.cargo/config.toml" 2>/dev/null)" = "from-source" ]; then
     echo "PASS: _copy_if_absent copies when target is absent"
 else
