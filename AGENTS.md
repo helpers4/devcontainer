@@ -18,19 +18,21 @@ Follow [Conventional Commits](https://www.conventionalcommits.org/) with a gitmo
 
 **Scopes:** angular-dev, auto-header, dotfiles-sync, essential-dev, git-absorb, github-dev, local-mounts, package-auto-install, peon-ping, shell-history-per-project, typescript-dev, vite-plus, CI-CD
 
-| Emoji | Type | Description |
-|-------|------|-------------|
-| ✨ | feat | New feature |
-| 🐛 | fix | Bug fix |
-| 📝 | docs | Documentation |
-| ♻️ | refactor | Code refactoring |
-| ✅ | test | Tests |
-| 🔧 | chore | Maintenance |
-| 🚀 | perf | Performance |
-| 💄 | style | Code style |
-| 👷 | ci | CI/CD |
-| 📦 | build | Build system |
-| ⏪ | revert | Revert |
+| Type | Primary | Alternatives (gitmoji.dev) | When to use |
+|------|---------|---------------------------|-------------|
+| feat | ✨ | 🚸 UX, ♿️ a11y, 🌐 i18n, 💬 text/literals | New feature |
+| fix | 🐛 | 🚑️ hotfix, 🔒️ security, 🩹 trivial, 🥅 errors, 🚨 warnings, ✏️ typo | Bug fix |
+| docs | 📝 | 💡 source comments, 📄 license | Documentation |
+| refactor | ♻️ | 🎨 structure, 🔥 remove code, ⚰️ dead code, 🚚 move/rename | Code refactoring |
+| test | ✅ | 🧪 failing test, 💚 fix CI test | Tests |
+| chore | 🔧 | 🙈 gitignore, 🔖 tag/release, 📌 pin deps, 🩺 healthcheck | Maintenance |
+| perf | ⚡️ | — | Performance |
+| style | 💄 | 🎨 code style | Code style / UI |
+| ci | 👷 | 💚 fix CI | CI/CD |
+| build | 📦️ | ➕ add dep, ➖ remove dep, ⬆️ upgrade dep, ⬇️ downgrade dep | Build system |
+| revert | ⏪️ | — | Revert |
+
+> Pick the **most specific** gitmoji that matches the change. The primary is the safe default; reach for an alternative when it adds real signal. Full list: https://gitmoji.dev
 
 **Examples:**
 - `feat(git-absorb): ✨ add version selection option`
