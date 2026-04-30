@@ -77,6 +77,7 @@ If you prefer standalone tools instead of or alongside `vp`:
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | `installVitePlus` | boolean | `true` | Install Vite+ unified CLI (`vp`) for the devcontainer user (`~/.vite-plus/bin`) |
+| `installGlobally` | boolean | `true` | Symlink `vp` into `/usr/local/bin` so it is available system-wide (all users, root, sudo, scripts that don't source the user's profile). Requires `installVitePlus`. |
 | `installVite` | boolean | `false` | Install standalone Vite CLI via npm (not needed with `vp`) |
 | `installVitest` | boolean | `false` | Install standalone Vitest CLI via npm (not needed with `vp`) |
 | `installOxc` | boolean | `false` | Install Oxc language server via npm (not needed with `vp`) |

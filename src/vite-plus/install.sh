@@ -13,6 +13,7 @@ echo "🔧 Setting up vite-plus devcontainer feature..."
 
 # Get options
 INSTALL_VITE_PLUS="${INSTALLVITEPLUS:-true}"
+INSTALL_GLOBALLY="${INSTALLGLOBALLY:-true}"
 INSTALL_VITE="${INSTALLVITE:-false}"
 INSTALL_VITEST="${INSTALLVITEST:-false}"
 INSTALL_OXC="${INSTALLOXC:-false}"
@@ -92,6 +93,18 @@ if [ "$INSTALL_VITE_PLUS" = "true" ]; then
             else
                 echo "   vp installed, will be available in new shell sessions for ${USERNAME}"
             fi
+
+            # Optionally symlink into /usr/local/bin so vp is available system-wide
+            # (root, sudo, other users, scripts that don't source the user's profile).
+            # vp resolves its own location at runtime, so a symlink is enough — no
+            # need to copy the install or duplicate node_modules.
+            if [ "$INSTALL_GLOBALLY" = "true" ] && [ -x "${USER_VP_HOME}/bin/vp" ]; then
+                if ln -sfn "${USER_VP_HOME}/bin/vp" /usr/local/bin/vp; then
+                    echo "✅ vp symlinked to /usr/local/bin/vp (available system-wide)"
+                else
+                    echo "⚠️  Failed to create /usr/local/bin/vp symlink"
+                fi
+            fi
         else
             echo "❌ Failed to install Vite+ CLI via official installer."
             exit 1
@@ -107,6 +120,15 @@ if [ "$INSTALL_VITE_PLUS" = "true" ]; then
             if command -v vp >/dev/null 2>&1; then
                 VP_VERSION=$(vp --version 2>/dev/null || echo "unknown")
                 echo "   Version: ${VP_VERSION}"
+            fi
+
+            # Symlink for system-wide availability when running as root only
+            if [ "$INSTALL_GLOBALLY" = "true" ] && [ -x "${VP_HOME}/bin/vp" ]; then
+                if ln -sfn "${VP_HOME}/bin/vp" /usr/local/bin/vp; then
+                    echo "✅ vp symlinked to /usr/local/bin/vp (available system-wide)"
+                else
+                    echo "⚠️  Failed to create /usr/local/bin/vp symlink"
+                fi
             fi
         else
             echo "❌ Failed to install Vite+ CLI via official installer."

@@ -1,6 +1,6 @@
 {
   "id": "vite-plus",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "name": "Vite+ Development Environment",
   "description": "Complete Vite+ unified toolchain setup (vp) with Vite, Vitest, Oxlint, Oxfmt, Rolldown, tsdown, and VS Code integration.",
   "documentationURL": "https://github.com/helpers4/devcontainer/tree/main/features/vite-plus",
@@ -9,6 +9,11 @@
       "type": "boolean",
       "default": true,
       "description": "Install Vite+ unified CLI (vp) for the devcontainer user (~/.vite-plus/bin)"
+    },
+    "installGlobally": {
+      "type": "boolean",
+      "default": true,
+      "description": "Symlink vp into /usr/local/bin so it is available system-wide (all users, root, sudo) without relying on the user's PATH. Requires installVitePlus."
     },
     "installVite": {
       "type": "boolean",
