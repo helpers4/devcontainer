@@ -110,7 +110,7 @@ devcontainer features test .                             # Test all
 | Feature | Version | Description | Dependencies |
 |---------|---------|-------------|--------------|
 | essential-dev | 1.0.2 | Git visualization, editor enhancements, Markdown | — |
-| github-dev | 1.0.2 | GitHub CLI (gh), Copilot Chat, PR & Issues, Actions, RemoteHub, shared Copilot Chat commit-message instruction (reads `conventionalCommits.scopes` per repo) | — |
+| github-dev | 1.0.3 | GitHub CLI (gh), Copilot Chat, PR & Issues, Actions, RemoteHub, shared Copilot Chat instructions for commit messages and PR titles/descriptions (reads `conventionalCommits.scopes` per repo, follows the active repo's own PR template) | — |
 | typescript-dev | 1.0.5 | TypeScript/JS dev with import management | essential-dev |
 | angular-dev | 1.0.2 | Angular dev, port 4200 forwarding | — |
 | vite-plus | 1.0.3 | Vite+ unified CLI (vp), Oxlint/Oxfmt, Vitest, optional system-wide symlink | — |
