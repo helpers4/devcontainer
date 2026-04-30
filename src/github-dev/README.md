@@ -1,6 +1,6 @@
 # GitHub Development Environment (github-dev)
 
-Installs the **GitHub CLI (`gh`)** and adds the essential GitHub VS Code extensions (Copilot, Copilot Chat, Pull Requests & Issues, GitHub Actions, RemoteHub). Automatically authenticates `gh` if a token is available in the environment.
+Installs the **GitHub CLI (`gh`)** and adds the essential GitHub VS Code extensions (Copilot Chat, Pull Requests & Issues, GitHub Actions, RemoteHub). Automatically authenticates `gh` if a token is available in the environment.
 
 ## Usage
 
@@ -53,8 +53,7 @@ gh repo clone org/repo      # Clone a repository
 
 | Extension | Purpose |
 |-----------|---------|
-| `github.copilot` | AI code completions |
-| `github.copilot-chat` | AI chat assistant |
+| `github.copilot-chat` | AI chat assistant and code completions (replaces the deprecated `github.copilot` extension) |
 | `github.vscode-pull-request-github` | PR and issue management inside VS Code |
 | `github.vscode-github-actions` | GitHub Actions workflow editor with validation |
 | `github.remotehub` | Browse remote GitHub repositories without cloning |
@@ -93,4 +92,5 @@ gh auth login
 
 ## Version History
 
+- **v1.0.1**: Remove deprecated `github.copilot` extension (superseded by `github.copilot-chat`).
 - **v1.0.0**: Initial release. gh CLI, Copilot, Copilot Chat, Pull Requests & Issues, GitHub Actions, RemoteHub extensions. Auto-auth via `GH_TOKEN`/`GITHUB_TOKEN`. Extracted from `essential-dev`.
