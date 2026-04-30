@@ -36,8 +36,10 @@ echo "✅ Configuration file present and valid"
 # 2. Machine settings written by the installer
 # ---------------------------------------------------------------------------
 TARGET_USER="${_REMOTE_USER:-${REMOTE_USER:-node}}"
-TARGET_HOME=$(getent passwd "$TARGET_USER" | cut -d: -f6)
-[ -z "$TARGET_HOME" ] && TARGET_HOME="/home/$TARGET_USER"
+if PASSWD_ENTRY=$(getent passwd "$TARGET_USER" 2>/dev/null); then
+    TARGET_HOME=$(printf '%s\n' "$PASSWD_ENTRY" | cut -d: -f6)
+fi
+[ -z "${TARGET_HOME:-}" ] && TARGET_HOME="/home/$TARGET_USER"
 MACHINE_FILE="$TARGET_HOME/.vscode-server/data/Machine/settings.json"
 
 echo ""

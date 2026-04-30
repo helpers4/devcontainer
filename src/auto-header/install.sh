@@ -137,8 +137,10 @@ PSI=$(jq -n \
 # They are loaded by VS Code for any workspace opened in this container.
 # ---------------------------------------------------------------------------
 TARGET_USER="${_REMOTE_USER:-${REMOTE_USER:-node}}"
-TARGET_HOME=$(getent passwd "$TARGET_USER" | cut -d: -f6)
-[ -z "$TARGET_HOME" ] && TARGET_HOME="/home/$TARGET_USER"
+if PASSWD_ENTRY=$(getent passwd "$TARGET_USER" 2>/dev/null); then
+    TARGET_HOME=$(printf '%s\n' "$PASSWD_ENTRY" | cut -d: -f6)
+fi
+[ -z "${TARGET_HOME:-}" ] && TARGET_HOME="/home/$TARGET_USER"
 
 MACHINE_DIR="$TARGET_HOME/.vscode-server/data/Machine"
 MACHINE_FILE="$MACHINE_DIR/settings.json"
