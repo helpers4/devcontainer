@@ -58,7 +58,6 @@ devcontainer/
 │   ├── package-auto-install/         # Automatic package installation
 │   ├── auto-header/                  # Automatic LGPL-3.0 file headers
 │   ├── git-absorb/                   # git-absorb tool installation
-│   ├── local-mounts/                 # REMOVED — README-only redirect to dotfiles-sync
 │   ├── peon-ping/                    # Health check endpoint
 │   └── shell-history-per-project/    # Persistent shell history per project
 ├── test/                             # One test.sh per feature
