@@ -21,14 +21,16 @@
 #   ── extra files (v1.1.0+) — copy-if-absent strategy:
 #   .gitignore_global, .config/git/{ignore,attributes,config-*}
 #   .yarnrc.yml, .config/pnpm/rc, .cargo/config.toml, .config/pip/pip.conf
-#   .config/gh/config.yml      -> copy-if-absent (CLI preferences only, NEVER hosts.yml)
+#   .config/gh/config.yml      -> copy-if-absent (CLI preferences only)
+#   .config/gh/hosts.yml       -> opt-in (DOTFILES_SYNC_GH_AUTH), skipped on cloud env
 #   .aws/config                -> opt-in (DOTFILES_SYNC_AWS_CONFIG)
 #   .kube/config               -> opt-in (DOTFILES_SYNC_KUBE_CONFIG)
 #   .docker/config.json        -> opt-in (DOTFILES_SYNC_DOCKER_CONFIG)
 #
-# NOTE: ~/.config/gh/hosts.yml (GitHub OAuth token) is intentionally NOT mounted.
-# Use the github-dev feature with GH_TOKEN env, or run `gh auth login` once in
-# the container.
+# NOTE: ~/.config/gh/hosts.yml (GitHub OAuth token) is NOT synced by default.
+# Enable `syncGhAuth: true` to opt in (skipped on Codespaces/Gitpod/DevPod
+# which inject their own token). For fine-grained PATs, prefer the github-dev
+# feature with GH_TOKEN, or run `gh auth login` once in the container.
 
 # No set -e: sync as much as possible even if one part fails.
 
@@ -46,6 +48,7 @@ fi
 USERNAME="${DOTFILES_SYNC_USERNAME}"
 SOURCE_HOME="${DOTFILES_SYNC_SOURCE}"
 TARGET_HOME="${DOTFILES_SYNC_TARGET}"
+SYNC_GH_AUTH="${DOTFILES_SYNC_GH_AUTH:-false}"
 SYNC_AWS_CONFIG="${DOTFILES_SYNC_AWS_CONFIG:-false}"
 SYNC_KUBE_CONFIG="${DOTFILES_SYNC_KUBE_CONFIG:-false}"
 SYNC_DOCKER_CONFIG="${DOTFILES_SYNC_DOCKER_CONFIG:-false}"
@@ -359,12 +362,24 @@ _copy_if_absent ".cargo/config.toml" ".cargo/config.toml" "644"
 # ── Sync ~/.config/pip/pip.conf ───────────────────────────────────────────────
 _copy_if_absent ".config/pip/pip.conf" ".config/pip/pip.conf" "644"
 
-# ── Sync ~/.config/gh/config.yml (CLI preferences only, NEVER hosts.yml) ──────
+# ── Sync ~/.config/gh/config.yml (CLI preferences only) ───────────────────
 if [ -e "${SOURCE_HOME}/.config/gh/config.yml" ]; then
     mkdir -p "${TARGET_HOME}/.config/gh"
     _copy_if_absent ".config/gh/config.yml" ".config/gh/config.yml" "600"
 else
     echo "   .config/gh/config.yml: not found in staging"
+fi
+
+# ── Sync ~/.config/gh/hosts.yml (opt-in: GitHub OAuth token) ───────────────
+if [ "${SYNC_GH_AUTH}" = "true" ]; then
+    if [ "${IS_CLOUD_ENV}" = "true" ]; then
+        echo "   .config/gh/hosts.yml: skipped (cloud env — platform manages GitHub auth)"
+    else
+        mkdir -p "${TARGET_HOME}/.config/gh"
+        _copy_if_absent ".config/gh/hosts.yml" ".config/gh/hosts.yml [GitHub OAuth token]" "600"
+    fi
+else
+    echo "   .config/gh/hosts.yml: skipped (opt-in: set 'syncGhAuth' to enable)"
 fi
 
 # ── Sync ~/.aws/config (opt-in) ───────────────────────────────────────────────

@@ -118,7 +118,7 @@ devcontainer features test .                             # Test all
 | package-auto-install | — | Auto-detect and install packages | — |
 | auto-header | — | LGPL-3.0 license headers | — |
 | git-absorb | 1.0.2 | git-absorb from GitHub releases | — |
-| dotfiles-sync | 1.1.0 | Sync local Git/SSH/GPG/npm/gh/cargo/pip/yarn/pnpm config — opt-in cloud creds (AWS, kube, Docker, gh OAuth) — macOS, Linux, WSL, Codespaces | — |
+| dotfiles-sync | 1.0.2 | Sync local Git/SSH/GPG/npm/gh/cargo/pip/yarn/pnpm config — opt-in cloud creds (AWS, kube, Docker, gh OAuth) — macOS, Linux, WSL, Codespaces | — |
 | peon-ping | — | Health check endpoint | — |
 | shell-history-per-project | 1.0.2 | Persistent shell history (zsh/bash/fish) | — |
 

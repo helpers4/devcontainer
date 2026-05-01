@@ -101,7 +101,7 @@ jobs:
                    ~/.config/git ~/.config/gh ~/.config/pnpm ~/.config/pip \
                    ~/.cargo ~/.aws ~/.kube ~/.docker
           touch ~/.gitconfig ~/.gitignore_global ~/.npmrc ~/.yarnrc.yml \
-                ~/.config/pnpm/rc ~/.config/gh/config.yml \
+                ~/.config/pnpm/rc ~/.config/gh/config.yml ~/.config/gh/hosts.yml \
                 ~/.cargo/config.toml ~/.config/pip/pip.conf \
                 ~/.aws/config ~/.kube/config ~/.docker/config.json
 
