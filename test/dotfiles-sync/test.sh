@@ -79,7 +79,7 @@ if [ -f "$CONFIG_FILE" ]; then
         exit 1
     fi
     # Test 5b: Opt-in flags persisted in config
-    for flag in DOTFILES_SYNC_AWS_CONFIG DOTFILES_SYNC_KUBE_CONFIG DOTFILES_SYNC_DOCKER_CONFIG; do
+    for flag in DOTFILES_SYNC_GH_AUTH DOTFILES_SYNC_AWS_CONFIG DOTFILES_SYNC_KUBE_CONFIG DOTFILES_SYNC_DOCKER_CONFIG; do
         if grep -q "^${flag}=" "$CONFIG_FILE"; then
             echo "   PASS: ${flag} present in config"
         else
@@ -87,24 +87,32 @@ if [ -f "$CONFIG_FILE" ]; then
             exit 1
         fi
     done
-    # Test 5c: removed option must NOT be present anymore (security regression guard)
-    if grep -q "^DOTFILES_SYNC_GH_AUTH=" "$CONFIG_FILE"; then
-        echo "FAIL: DOTFILES_SYNC_GH_AUTH must not be in config (option removed in 1.2.0)"
-        exit 1
-    fi
-    echo "   PASS: removed DOTFILES_SYNC_GH_AUTH not present"
 else
     echo "FAIL: Config file not found at ${CONFIG_FILE}"
     exit 1
 fi
 
-# Test 5d: feature.json must NOT mount the gh directory or hosts.yml
-FEATURE_JSON_GLOB="/tmp/dotfiles-sync"
-if [ -e "${FEATURE_JSON_GLOB}/.config/gh/hosts.yml" ]; then
-    echo "FAIL: hosts.yml should never be mounted (security: contains OAuth token)"
-    exit 1
+# Test 5d: hosts.yml is mounted now (opt-in syncGhAuth) but only at the file
+# level — must NEVER be mounted as a whole `~/.config/gh` directory because
+# that would also expose state.yml and other gh internals.
+GH_STAGE="/tmp/dotfiles-sync/.config/gh"
+if [ -d "${GH_STAGE}" ] && [ ! -L "${GH_STAGE}" ]; then
+    # The directory exists because individual files (config.yml, hosts.yml) are
+    # mounted into it, which is fine. We just check there is no extra file
+    # bind-mounted that we don't expect.
+    for f in "${GH_STAGE}"/*; do
+        [ -e "$f" ] || continue
+        name=$(basename "$f")
+        case "$name" in
+            config.yml|hosts.yml) ;;
+            *)
+                echo "FAIL: unexpected mount in ${GH_STAGE}: ${name}"
+                exit 1
+                ;;
+        esac
+    done
 fi
-echo "PASS: hosts.yml not mounted in /tmp/dotfiles-sync"
+echo "PASS: only config.yml and hosts.yml may be mounted under /tmp/dotfiles-sync/.config/gh"
 
 # Test 5e: opt-in directories created at build time
 for dir in ".aws" ".kube" ".docker" ".cargo" ".config/pip" ".config/pnpm" ".config/gh" ".config/git"; do
