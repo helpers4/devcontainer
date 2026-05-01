@@ -33,6 +33,7 @@ That's it. The feature auto-detects the environment and adapts its behavior.
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | `username` | string | `node` | Container username that receives synchronized config files |
+| `syncGhAuth` | boolean | `false` | Sync `~/.config/gh/hosts.yml` (GitHub OAuth token used by `gh` CLI). Skipped on cloud environments. Prefer the [`github-dev`](../github-dev/README.md) feature with `GH_TOKEN` for fine-grained PATs. |
 | `syncAwsConfig` | boolean | `false` | Sync `~/.aws/config` (profiles only — `~/.aws/credentials` is **never** synced). |
 | `syncKubeConfig` | boolean | `false` | Sync `~/.kube/config` (cluster credentials and tokens). Skipped on cloud environments. |
 | `syncDockerConfig` | boolean | `false` | Sync `~/.docker/config.json` (registry auth tokens). Skipped on cloud environments. |
@@ -65,11 +66,53 @@ That's it. The feature auto-detects the environment and adapts its behavior.
 | `~/.kube/config` | `syncKubeConfig` | Kubernetes cluster credentials. Skipped on cloud environments. |
 | `~/.docker/config.json` | `syncDockerConfig` | Docker registry auth tokens. Skipped on cloud environments. |
 
+### Opt-in (sensitive)
+
+| Local Path | Option | Notes |
+|------------|--------|-------|
+| `~/.config/gh/hosts.yml` | `syncGhAuth` | GitHub OAuth token used by `gh`. Skipped on cloud environments (which inject their own token). For fine-grained PATs, prefer [`github-dev`](../github-dev/README.md) + `GH_TOKEN`. |
+| `~/.aws/config` | `syncAwsConfig` | AWS profiles. `~/.aws/credentials` (long-lived access keys) is **not bind-mounted** and never synced. |
+| `~/.kube/config` | `syncKubeConfig` | Kubernetes cluster credentials. Skipped on cloud environments. |
+| `~/.docker/config.json` | `syncDockerConfig` | Docker registry auth tokens. Skipped on cloud environments. |
+
 ### Never synced
 
-- `~/.config/gh/hosts.yml` — GitHub OAuth tokens are **never** bind-mounted (security). Use the `github-dev` feature with the `GH_TOKEN` env variable, or run `gh auth login` once in the container.
 - `~/.aws/credentials` — never bind-mounted, long-lived access keys are too risky to copy into a container.
 - Shell rc files (`~/.bashrc`, `~/.zshrc`, `~/.profile`) — would conflict with the container's own shell setup. Use VS Code's native [`dotfiles.repository`](https://code.visualstudio.com/docs/devcontainers/containers#_personalizing-with-dotfile-repositories) for that.
+
+## GitHub authentication
+
+`gh` CLI authentication is **off by default**. Pick whichever fits your workflow:
+
+1. **`github-dev` feature + `GH_TOKEN`** (recommended for fine-grained scope):
+
+   ```jsonc
+   {
+     "features": {
+       "ghcr.io/helpers4/devcontainer/dotfiles-sync:1": {},
+       "ghcr.io/helpers4/devcontainer/github-dev:1": {}
+     },
+     "containerEnv": {
+       "GH_TOKEN": "${localEnv:GH_TOKEN}"
+     }
+   }
+   ```
+
+2. **Sync your local `gh auth login` token** (`syncGhAuth: true`):
+
+   ```jsonc
+   {
+     "features": {
+       "ghcr.io/helpers4/devcontainer/dotfiles-sync:1": {
+         "syncGhAuth": true
+       }
+     }
+   }
+   ```
+
+   The token is copied with `chmod 600` and only if `~/.config/gh/hosts.yml` does not already exist in the container. Skipped on Codespaces / Gitpod / DevPod (the platform injects its own token).
+
+3. **`gh auth login` inside the container** — token stays in the container only.
 
 ## Merge Strategy
 
@@ -216,6 +259,6 @@ ssh-add -l
 
 ## Version History
 
-- **v1.2.0** — **breaking**: removed `syncGhAuth` option and dropped the `~/.config/gh` directory bind-mount. Only `~/.config/gh/config.yml` is mounted now (single-file). `hosts.yml` (GitHub OAuth token) is never bind-mounted into the container; use the `github-dev` feature with `GH_TOKEN`, or run `gh auth login` inside the container.
-- **v1.1.0**: Added many low-risk dotfiles (gitignore_global, git/ignore, git/attributes, yarnrc.yml, pnpm/rc, gh/config.yml, cargo/config.toml, pip/pip.conf) with copy-if-absent strategy. Added 4 opt-in booleans for sensitive files: `syncGhAuth` (gh OAuth token), `syncAwsConfig` (AWS profiles), `syncKubeConfig` (kube credentials), `syncDockerConfig` (Docker registry auth). All opt-ins default to `false` and are skipped on cloud environments. `~/.aws/credentials` is never bind-mounted.
-- **v1.0.0**: Initial release — successor to `local-mounts`. Added multi-environment detection (macOS, Linux, WSL, Codespaces, Gitpod, DevPod), merge strategy for all config files, GPG skip on cloud environments, configurable source paths.
+- **v1.0.2**: Added `syncGhAuth` opt-in to sync `~/.config/gh/hosts.yml` (GitHub OAuth token used by `gh` CLI). Default `false`, skipped on cloud environments. For fine-grained PATs prefer the `github-dev` feature with `GH_TOKEN`.
+- **v1.0.1**: Stop bind-mounting the `~/.config/gh` directory. Only `~/.config/gh/config.yml` (CLI preferences) is mounted. Added 3 opt-in booleans for sensitive files: `syncAwsConfig`, `syncKubeConfig`, `syncDockerConfig` — all default `false` and skipped on cloud environments. Added low-risk dotfiles (gitignore_global, git/ignore, git/attributes, yarnrc.yml, pnpm/rc, cargo/config.toml, pip/pip.conf) with copy-if-absent strategy. `~/.aws/credentials` is never bind-mounted.
+- **v1.0.0**: Initial release — successor to `local-mounts`. Multi-environment detection (macOS, Linux, WSL, Codespaces, Gitpod, DevPod), merge strategy for all config files, GPG skip on cloud environments, configurable source paths.
