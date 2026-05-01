@@ -31,35 +31,60 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with:
-          fetch-depth: 2 # need previous commit for diff (push) — workflow_dispatch falls back to "all"
+          fetch-depth: 0 # need the full push range (github.event.before .. HEAD) for diff
 
       - name: Detect features with bumped version
         id: diff
         shell: bash
         env:
           FORCE_ALL: ${{ github.event_name == 'workflow_dispatch' && inputs.force-all }}
+          # `before` is the SHA prior to the push; for workflow_dispatch it is empty.
+          BEFORE_SHA: ${{ github.event.before }}
         run: |
           set -euo pipefail
           changed_json='[]'
+
+          # Manifests use JSONC (line comments) — devcontainers/action tolerates
+          # them at publish time, so we do the same here: strip leading `//`
+          # comment lines before parsing with jq.
+          read_field() {
+            local file="$1" filter="$2"
+            sed -E 's@^[[:space:]]*//.*$@@' "$file" | jq -r "$filter"
+          }
+
+          # Resolve the base ref against which we diff. A push can contain
+          # several commits, so HEAD~1..HEAD is unsafe (it only sees the very
+          # last commit and would miss manifest bumps pushed earlier in the
+          # same batch — see release run #35). We use `github.event.before`
+          # which spans the entire push range. Fallbacks cover the
+          # workflow_dispatch and initial-push cases.
+          ZERO_SHA="0000000000000000000000000000000000000000"
+          if [ -n "${BEFORE_SHA:-}" ] && [ "${BEFORE_SHA}" != "${ZERO_SHA}" ] \
+             && git cat-file -e "${BEFORE_SHA}^{commit}" 2>/dev/null; then
+            BASE_REF="${BEFORE_SHA}"
+          else
+            BASE_REF="HEAD~1"
+          fi
+          echo "::notice::Diff base = ${BASE_REF} → HEAD ($(git rev-parse HEAD))"
 
           if [ "${FORCE_ALL}" = "true" ]; then
             echo "::notice::workflow_dispatch with force-all=true → republishing every feature"
             mapfile -t files < <(ls src/*/devcontainer-feature.json 2>/dev/null || true)
           else
-            # All feature manifests touched by the merge commit.
-            mapfile -t files < <(git diff --name-only HEAD~1..HEAD -- 'src/*/devcontainer-feature.json' || true)
+            # All feature manifests touched anywhere in the push range.
+            mapfile -t files < <(git diff --name-only "${BASE_REF}..HEAD" -- 'src/*/devcontainer-feature.json' || true)
           fi
 
           for f in "${files[@]}"; do
             [ -f "$f" ] || continue
-            name=$(jq -r '.id' "$f")
-            new_version=$(jq -r '.version' "$f")
+            name=$(read_field "$f" '.id')
+            new_version=$(read_field "$f" '.version')
 
             if [ "${FORCE_ALL}" = "true" ]; then
               old_version="<forced>"
             else
-              # Best-effort previous version (file may not exist on previous commit → new feature)
-              old_version=$(git show "HEAD~1:$f" 2>/dev/null | jq -r '.version' 2>/dev/null || echo "")
+              # Best-effort previous version (file may not exist on the base ref → new feature)
+              old_version=$(git show "${BASE_REF}:$f" 2>/dev/null | sed -E 's@^[[:space:]]*//.*$@@' | jq -r '.version' 2>/dev/null || echo "")
             fi
 
             if [ "${FORCE_ALL}" != "true" ] && [ "$old_version" = "$new_version" ]; then
