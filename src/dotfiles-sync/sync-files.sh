@@ -18,7 +18,7 @@
 #   .ssh keys   -> copy only when destination file does not exist yet.
 #   .gnupg      -> skipped on cloud environments (GPG handled natively there).
 #   known_hosts -> merge line-by-line (append missing host entries).
-#   ── extra files (v1.1.0+) — copy-if-absent strategy:
+#   ── extra files (v1.0.1+) — copy-if-absent strategy:
 #   .gitignore_global, .config/git/{ignore,attributes,config-*}
 #   .yarnrc.yml, .config/pnpm/rc, .cargo/config.toml, .config/pip/pip.conf
 #   .config/gh/config.yml      -> copy-if-absent (CLI preferences only)
