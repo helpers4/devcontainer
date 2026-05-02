@@ -138,13 +138,27 @@ TEMPLATES=$(jq -s '.' \
     <(mk_template typescript) \
     <(mk_template javascript) \
     <(mk_template python) \
-    <(mk_template shell))
+    <(mk_template shell) \
+    <(mk_template shellscript) \
+    <(mk_template yaml) \
+    <(mk_template markdown) \
+    <(mk_template html) \
+    <(mk_template css) \
+    <(mk_template jsonc) \
+    <(mk_template dockerfile))
 
 LANG_CONFIG=$(jq -s '.' \
     <(mk_lang_block typescript "/**" " * " " */") \
     <(mk_lang_block javascript "/**" " * " " */") \
     <(mk_lang_block python "###" "# " "###") \
-    <(mk_lang_block shell "" "# " ""))
+    <(mk_lang_block shell "" "# " "") \
+    <(mk_lang_block shellscript "" "# " "") \
+    <(mk_lang_block yaml "" "# " "") \
+    <(mk_lang_block markdown "<!--" "" "-->") \
+    <(mk_lang_block html "<!--" "" "-->") \
+    <(mk_lang_block css "/*" " * " " */") \
+    <(mk_lang_block jsonc "" "// " "") \
+    <(mk_lang_block dockerfile "" "# " ""))
 
 PSI=$(jq -n \
     --arg author "$COPYRIGHT_ENTITY" \
@@ -165,7 +179,7 @@ PSI=$(jq -n \
             modAuthor: $author,
             modDate: " - modDate",
             modDateFormat: "dd/MM/yyyy",
-            include: ["typescript","javascript","python","shell"],
+            include: ["typescript","javascript","python","shell","shellscript","yaml","markdown","html","css","jsonc","dockerfile"],
             exclude: ["plaintext"]
         },
         "psi-header.lang-config": $langs
