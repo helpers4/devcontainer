@@ -19,9 +19,9 @@ jobs:
         uses: helpers4/action/conventional-commits@main
         with:
           checkout: "true"
-          scopes: "angular-dev|auto-header|dotfiles-sync|essential-dev|git-absorb|github-\
-            dev|package-auto-install|peon-ping|shell-history-per-project|typesc\
-            ript-dev|vite-plus|deps|CI-CD"
+          scopes: "angular-dev|auto-header|CI-CD|deprecated|dotfiles-sync|essential-dev|g\
+            it-absorb|github-dev|package-auto-install|peon-ping|shell-history-p\
+            er-project|typescript-dev|vite-plus"
           pr-comment: "error"
 
       - name: Set status
