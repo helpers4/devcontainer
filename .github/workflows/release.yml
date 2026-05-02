@@ -174,7 +174,7 @@ jobs:
             name=$(jq -r '.name' <<< "$row")
             version=$(jq -r '.version' <<< "$row")
             payload=$(jq -nc --arg n "$name" --arg v "$version" --arg sha "${{ github.sha }}" \
-              '{feature:$n, version:$v, sha:$sha, source:"devcontainer-release"}')
+              '{feature:$n, version:$v, ref:$sha, sha:$sha, source:"devcontainer-release"}')
             echo "→ dispatch website: $name v$version"
             gh api \
               -X POST \
