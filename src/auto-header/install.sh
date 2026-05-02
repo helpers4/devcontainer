@@ -144,8 +144,7 @@ TEMPLATES=$(jq -s '.' \
     <(mk_template markdown) \
     <(mk_template html) \
     <(mk_template css) \
-    <(mk_template jsonc) \
-    <(mk_template dockerfile))
+    <(mk_template jsonc))
 
 LANG_CONFIG=$(jq -s '.' \
     <(mk_lang_block typescript "/**" " * " " */") \
@@ -157,8 +156,7 @@ LANG_CONFIG=$(jq -s '.' \
     <(mk_lang_block markdown "<!--" "" "-->") \
     <(mk_lang_block html "<!--" "" "-->") \
     <(mk_lang_block css "/*" " * " " */") \
-    <(mk_lang_block jsonc "" "// " "") \
-    <(mk_lang_block dockerfile "" "# " ""))
+    <(mk_lang_block jsonc "" "// " ""))
 
 PSI=$(jq -n \
     --arg author "$COPYRIGHT_ENTITY" \
@@ -179,7 +177,7 @@ PSI=$(jq -n \
             modAuthor: $author,
             modDate: " - modDate",
             modDateFormat: "dd/MM/yyyy",
-            include: ["typescript","javascript","python","shell","shellscript","yaml","markdown","html","css","jsonc","dockerfile"],
+            include: ["typescript","javascript","python","shell","shellscript","yaml","markdown","html","css","jsonc"],
             exclude: ["plaintext"]
         },
         "psi-header.lang-config": $langs
