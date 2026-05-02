@@ -2,6 +2,8 @@
   "conventionalCommits.scopes": [
     "angular-dev",
     "auto-header",
+    "CI-CD",
+    "deprecated",
     "dotfiles-sync",
     "essential-dev",
     "git-absorb",
@@ -11,6 +13,5 @@
     "shell-history-per-project",
     "typescript-dev",
     "vite-plus",
-    "CI-CD"
   ]
 }
