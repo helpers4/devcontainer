@@ -14,7 +14,6 @@ Core development environment with Git integration, GitHub Copilot, Markdown supp
 ## What's Included
 
 ### Git & Version Control
-- `eamodio.gitlens` - Git blame, history, and more
 - `donjayamanne.githistory` - View and search git log
 - `gxl.git-graph-3` - Git graph visualization
 - `github.vscode-pull-request-github` - GitHub PR and issue management
