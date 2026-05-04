@@ -1,6 +1,6 @@
 {
   "id": "essential-dev",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "name": "Essential Development Environment",
   "description": "Core development environment with Git visualization, Markdown support, and essential editor enhancements.",
   "documentationURL": "https://github.com/helpers4/devcontainer/tree/main/src/essential-dev",
@@ -8,7 +8,6 @@
     "vscode": {
       "extensions": [
         // Git & Version Control
-        "eamodio.gitlens",
         "donjayamanne.githistory",
         "the0807.git-graph-plus",
         "vivaxy.vscode-conventional-commits",
