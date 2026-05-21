@@ -1,6 +1,6 @@
 {
   "id": "angular-dev",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "name": "Angular Development Environment",
   "description": "Angular-specific development environment with port forwarding, VS Code extensions, and CLI autocompletion.",
   "documentationURL": "https://github.com/helpers4/devcontainer/tree/main/src/angular-dev",
