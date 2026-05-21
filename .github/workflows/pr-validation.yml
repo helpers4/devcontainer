@@ -19,7 +19,7 @@ jobs:
         uses: helpers4/action/conventional-commits@main
         with:
           checkout: "true"
-          scopes: "angular-dev|auto-header|CI-CD|deprecated|dotfiles-sync|essential-dev|g\
+          scopes: "angular-dev|auto-header|CI-CD|deprecated|deps|deps-dev|dotfiles-sync|essential-dev|g\
             it-absorb|github-dev|package-auto-install|peon-ping|shell-history-p\
             er-project|typescript-dev|vite-plus"
           pr-comment: "error"
