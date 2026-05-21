@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # TypeScript Development Environment DevContainer Feature
-# Copyright (c) 2025 helpers4
+# Copyright (C) 2025 baxyz
 # Licensed under LGPL-3.0 - see LICENSE file for details
 #
 # Provides TypeScript/JavaScript development setup with indexing and web tools

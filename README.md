@@ -213,7 +213,7 @@ Features from this repository are available via GitHub Container Registry. Refer
 
 ## Documentation
 
-Full documentation is available at [**helpers4.dev/dev-container**](https://helpers4.dev/dev-container).
+Full documentation is available at [**helpers4.dev/devcontainer**](https://helpers4.dev/devcontainer).
 
 ## Development
 
