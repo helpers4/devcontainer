@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # Angular Development Environment DevContainer Feature
-# Copyright (c) 2025 helpers4
+# Copyright (C) 2025 baxyz
 # Licensed under LGPL-3.0 - see LICENSE file for details
 #
 # Configures Angular development environment with CLI autocompletion

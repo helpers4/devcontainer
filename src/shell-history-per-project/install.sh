@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Shell History Per Project DevContainer Feature
-# Copyright (c) 2025 helpers4
+# Copyright (C) 2025 baxyz
 # Licensed under LGPL-3.0 - see LICENSE file for details
 
 set -e

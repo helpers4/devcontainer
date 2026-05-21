@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # Essential Development Environment DevContainer Feature
-# Copyright (c) 2025 helpers4
+# Copyright (C) 2025 baxyz
 # Licensed under LGPL-3.0 - see LICENSE file for details
 #
 # Provides core development environment with Git, Copilot, and editor tools
