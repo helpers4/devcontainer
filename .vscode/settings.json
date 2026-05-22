@@ -15,5 +15,10 @@
     "shell-history-per-project",
     "typescript-dev",
     "vite-plus"
+  ],
+  "github.copilot.chat.commitMessageGeneration.instructions": [
+    {
+      "text": "Commit messages for this repository must use Conventional Commits + gitmoji: `<type>(<scope>): <emoji> <description>`. Scope is optional; when used, pick ONE of: angular-dev, auto-header, deps, deps-dev, CI-CD, deprecated, dotfiles-sync, essential-dev, git-absorb, github-dev, package-auto-install, peon-ping, shell-history-per-project, typescript-dev, vite-plus. Never invent a scope. Type\u2192emoji: feat\u2192\u2728, fix\u2192\uD83D\uDC1B, docs\u2192\uD83D\uDCDD, refactor\u2192\u267B\uFE0F, test\u2192\u2705, chore\u2192\uD83D\uDD27, perf\u2192\u26A1\uFE0F, style\u2192\uD83D\uDC84, ci\u2192\uD83D\uDC77, build\u2192\uD83D\uDCE6\uFE0F, revert\u2192\u23EA\uFE0F (pick the most specific: \uD83D\uDE91\uFE0F hotfix, \u2B06\uFE0F dep upgrade, \uD83E\uDE79 trivial, \uD83D\uDD25 remove code). Always include exactly ONE emoji. Description \u226472 chars, English, lowercase, imperative, no period. Multiple changes \u2192 bullet list in body."
+    }
   ]
 }

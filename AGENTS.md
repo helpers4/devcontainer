@@ -16,7 +16,7 @@ Follow [Conventional Commits](https://www.conventionalcommits.org/) with a gitmo
 
 **Format:** `<type>(<scope>): <emoji> <description>`
 
-**Scopes:** angular-dev, auto-header, dotfiles-sync, essential-dev, git-absorb, github-dev, package-auto-install, peon-ping, shell-history-per-project, typescript-dev, vite-plus, CI-CD
+**Scopes:** defined in `.vscode/settings.json` (`conventionalCommits.scopes`)
 
 | Type | Primary | Alternatives (gitmoji.dev) | When to use |
 |------|---------|---------------------------|-------------|
