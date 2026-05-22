@@ -9,9 +9,12 @@ echo "🔧 Setting up package-auto-install devcontainer feature..."
 
 # Ensure jq is available — required for reliable .code-workspace parsing
 if ! command -v jq >/dev/null 2>&1; then
-    apt-get update -y -q 2>/dev/null \
-        && apt-get install -y -q --no-install-recommends jq 2>/dev/null \
-        || echo "⚠️  Could not install jq; autoDiscover will use grep fallback"
+    if apt-get update -y -q 2>/dev/null \
+        && apt-get install -y -q --no-install-recommends jq 2>/dev/null; then
+        rm -rf /var/lib/apt/lists/*
+    else
+        echo "⚠️  Could not install jq; autoDiscover will use grep fallback"
+    fi
 fi
 
 # Get options
@@ -84,7 +87,8 @@ _parse_intellij_modules() {
     )
 }
 
-# Print all directories to process, one per line, deduplicated
+# Print all directories to process, one per line.
+# DIRECTORIES branch preserves user-specified order; autoDiscover branch deduplicates via sort -u.
 _discover_dirs() {
     # 1. Explicit comma-separated list (highest priority)
     if [ -n "$DIRECTORIES" ]; then
