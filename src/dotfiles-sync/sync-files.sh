@@ -432,6 +432,6 @@ if [ "$(id -u)" -eq 0 ] && getent passwd "${USERNAME}" >/dev/null 2>&1; then
 fi
 
 # Signal sync completed (used by profile.d fallback)
-touch /tmp/.dotfiles-sync-synced 2>/dev/null || true
+touch /mnt/h4dotfiles/.synced 2>/dev/null || true
 
 echo "dotfiles-sync: sync complete"
