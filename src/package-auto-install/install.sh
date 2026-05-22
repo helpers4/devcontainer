@@ -90,7 +90,7 @@ _discover_dirs() {
     if [ -n "$DIRECTORIES" ]; then
         echo "$DIRECTORIES" | tr ',' '\n' \
             | sed 's/^[[:space:]]*//;s/[[:space:]]*$//' \
-            | grep -v '^$'
+            | grep -v '^$' || true
         return
     fi
 
@@ -193,7 +193,7 @@ _install_in_dir() {
         return 0
     fi
     (
-        cd "$dir" || exit 0
+        cd "$dir" || exit 1
         if [ ! -f "package.json" ]; then
             echo "   ℹ️  No package.json in $dir — skipping"
             exit 0
