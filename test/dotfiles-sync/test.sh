@@ -92,13 +92,13 @@ else
     exit 1
 fi
 
-# Test 5d: hosts.yml is staged in /tmp/dotfiles-sync (always — the mount is
+# Test 5d: hosts.yml is staged in /mnt/h4dotfiles (always — the mount is
 # unconditional because Feature `mounts` cannot be gated on options). The
 # security boundary is the *copy* step in sync-files.sh, which only writes to
 # $HOME/.config/gh/hosts.yml when DOTFILES_SYNC_GH_AUTH=true and the env is
 # not a cloud platform. The staging path is internal to the feature and never
 # read otherwise.
-GH_STAGE="/tmp/dotfiles-sync/.config/gh"
+GH_STAGE="/mnt/h4dotfiles/.config/gh"
 if [ -d "${GH_STAGE}" ] && [ ! -L "${GH_STAGE}" ]; then
     for f in "${GH_STAGE}"/*; do
         [ -e "$f" ] || continue
@@ -112,7 +112,7 @@ if [ -d "${GH_STAGE}" ] && [ ! -L "${GH_STAGE}" ]; then
         esac
     done
 fi
-echo "PASS: only config.yml and hosts.yml may be staged under /tmp/dotfiles-sync/.config/gh"
+echo "PASS: only config.yml and hosts.yml may be staged under /mnt/h4dotfiles/.config/gh"
 
 # Test 5e: opt-in directories created at build time
 for dir in ".aws" ".kube" ".docker" ".cargo" ".config/pip" ".config/pnpm" ".config/gh" ".config/git"; do

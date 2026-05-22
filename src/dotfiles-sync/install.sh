@@ -15,7 +15,7 @@ SYNC_GH_AUTH="${_BUILD_ARG_DOTFILES_SYNC_SYNCGHAUTH:-"${SYNCGHAUTH:-"false"}"}"
 SYNC_AWS_CONFIG="${_BUILD_ARG_DOTFILES_SYNC_SYNCAWSCONFIG:-"${SYNCAWSCONFIG:-"false"}"}"
 SYNC_KUBE_CONFIG="${_BUILD_ARG_DOTFILES_SYNC_SYNCKUBECONFIG:-"${SYNCKUBECONFIG:-"false"}"}"
 SYNC_DOCKER_CONFIG="${_BUILD_ARG_DOTFILES_SYNC_SYNCDOCKERCONFIG:-"${SYNCDOCKERCONFIG:-"false"}"}"
-SOURCE_HOME="/tmp/dotfiles-sync"
+SOURCE_HOME="/mnt/h4dotfiles"
 
 # Resolve target home robustly
 if getent passwd "${USERNAME}" >/dev/null 2>&1; then
@@ -96,7 +96,7 @@ cat > /etc/profile.d/dotfiles-sync-ssh.sh << 'PROFILE_EOF'
 # dotfiles-sync: SSH agent socket detection (runtime)
 # ssh-add -l exits: 0 = keys loaded, 1 = no keys, 2 = cannot connect
 # Accept 0 and 1 (agent alive), reject only 2 (dead/missing agent)
-_DOTFILES_SYNC_SSH_SOCK="/tmp/dotfiles-sync/.ssh/agent.sock"
+_DOTFILES_SYNC_SSH_SOCK="/mnt/h4dotfiles/.ssh/agent.sock"
 
 _dotfiles_sync_ssh_responds() {
     local _rc=0
@@ -126,8 +126,8 @@ echo "SSH agent detection installed (/etc/profile.d/dotfiles-sync-ssh.sh)"
 cat > /etc/profile.d/dotfiles-sync-sync.sh << 'PROFILE_EOF'
 # dotfiles-sync: one-time file sync fallback
 # Runs sync on first shell if postStartCommand hasn't completed yet
-_DOTFILES_SYNC_MARKER="/tmp/.dotfiles-sync-synced"
-if [ ! -f "$_DOTFILES_SYNC_MARKER" ] && [ -d "/tmp/dotfiles-sync" ]; then
+_DOTFILES_SYNC_MARKER="/mnt/h4dotfiles/.synced"
+if [ ! -f "$_DOTFILES_SYNC_MARKER" ] && [ -d "/mnt/h4dotfiles" ]; then
     /usr/local/share/dotfiles-sync/sync-files.sh 2>/dev/null || true
 fi
 unset _DOTFILES_SYNC_MARKER

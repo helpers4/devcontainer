@@ -1,6 +1,6 @@
 {
   "id": "dotfiles-sync",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "name": "Dotfiles Sync",
   "description": "Syncs local Git, SSH, GPG, npm, gh CLI prefs, cargo, pip, pnpm/yarn config files into the devcontainer. Optionally syncs cloud credentials (AWS, kube, Docker, gh OAuth token) — opt-in only. Works on macOS, Linux, Windows (WSL), Codespaces, Gitpod, DevPod. Merges instead of overwriting.",
   "documentationURL": "https://github.com/helpers4/devcontainer/tree/main/src/dotfiles-sync",
@@ -34,77 +34,77 @@
   "mounts": [
     {
       "source": "${localEnv:HOME}/.gitconfig",
-      "target": "/tmp/dotfiles-sync/.gitconfig",
+      "target": "/mnt/h4dotfiles/.gitconfig",
       "type": "bind"
     },
     {
       "source": "${localEnv:HOME}/.gitignore_global",
-      "target": "/tmp/dotfiles-sync/.gitignore_global",
+      "target": "/mnt/h4dotfiles/.gitignore_global",
       "type": "bind"
     },
     {
       "source": "${localEnv:HOME}/.config/git",
-      "target": "/tmp/dotfiles-sync/.config/git",
+      "target": "/mnt/h4dotfiles/.config/git",
       "type": "bind"
     },
     {
       "source": "${localEnv:HOME}/.ssh",
-      "target": "/tmp/dotfiles-sync/.ssh",
+      "target": "/mnt/h4dotfiles/.ssh",
       "type": "bind"
     },
     {
       "source": "${localEnv:HOME}/.gnupg",
-      "target": "/tmp/dotfiles-sync/.gnupg",
+      "target": "/mnt/h4dotfiles/.gnupg",
       "type": "bind"
     },
     {
       "source": "${localEnv:HOME}/.npmrc",
-      "target": "/tmp/dotfiles-sync/.npmrc",
+      "target": "/mnt/h4dotfiles/.npmrc",
       "type": "bind"
     },
     {
       "source": "${localEnv:HOME}/.yarnrc.yml",
-      "target": "/tmp/dotfiles-sync/.yarnrc.yml",
+      "target": "/mnt/h4dotfiles/.yarnrc.yml",
       "type": "bind"
     },
     {
       "source": "${localEnv:HOME}/.config/pnpm/rc",
-      "target": "/tmp/dotfiles-sync/.config/pnpm/rc",
+      "target": "/mnt/h4dotfiles/.config/pnpm/rc",
       "type": "bind"
     },
     {
       "source": "${localEnv:HOME}/.config/gh/config.yml",
-      "target": "/tmp/dotfiles-sync/.config/gh/config.yml",
+      "target": "/mnt/h4dotfiles/.config/gh/config.yml",
       "type": "bind"
     },
     {
       "source": "${localEnv:HOME}/.config/gh/hosts.yml",
-      "target": "/tmp/dotfiles-sync/.config/gh/hosts.yml",
+      "target": "/mnt/h4dotfiles/.config/gh/hosts.yml",
       "type": "bind"
     },
     {
       "source": "${localEnv:HOME}/.cargo/config.toml",
-      "target": "/tmp/dotfiles-sync/.cargo/config.toml",
+      "target": "/mnt/h4dotfiles/.cargo/config.toml",
       "type": "bind"
     },
     {
       "source": "${localEnv:HOME}/.config/pip/pip.conf",
-      "target": "/tmp/dotfiles-sync/.config/pip/pip.conf",
+      "target": "/mnt/h4dotfiles/.config/pip/pip.conf",
       "type": "bind"
     },
     {
       "source": "${localEnv:HOME}/.aws/config",
-      "target": "/tmp/dotfiles-sync/.aws/config",
+      "target": "/mnt/h4dotfiles/.aws/config",
       "type": "bind"
     },
     {
       "source": "${localEnv:HOME}/.kube/config",
-      "target": "/tmp/dotfiles-sync/.kube/config",
+      "target": "/mnt/h4dotfiles/.kube/config",
       "type": "bind"
     },
     {
       "source": "${localEnv:HOME}/.docker/config.json",
-      "target": "/tmp/dotfiles-sync/.docker/config.json",
+      "target": "/mnt/h4dotfiles/.docker/config.json",
       "type": "bind"
     }
   ],
