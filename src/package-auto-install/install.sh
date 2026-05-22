@@ -1,12 +1,9 @@
 #!/usr/bin/env bash
-
-# Package Auto-Install DevContainer Feature
+# This file is part of helpers4.
 # Copyright (C) 2025 baxyz
-# Licensed under LGPL-3.0 - see LICENSE file for details
-#
-# Automatically detects and installs npm/yarn/pnpm packages
+# SPDX-License-Identifier: LGPL-3.0-or-later
 
-set -e
+set -euo pipefail
 
 echo "🔧 Setting up package-auto-install devcontainer feature..."
 
@@ -16,12 +13,13 @@ PACKAGE_MANAGER="${PACKAGEMANAGER:-auto}"
 WORKING_DIR="${WORKINGDIRECTORY:-/workspaces}"
 SKIP_IF_EXISTS="${SKIPIFNODEMODULESEXISTS:-false}"
 ADDITIONAL_ARGS="${ADDITIONALARGS:-}"
+DIRECTORIES="${DIRECTORIES:-}"
+AUTO_DISCOVER="${AUTODISCOVER:-false}"
 
 # Create the installation script
 cat > /usr/local/bin/devcontainer-package-install << 'EOFSCRIPT'
 #!/usr/bin/env bash
-
-set -e
+set -euo pipefail
 
 # Get configuration from environment or use defaults
 COMMAND="${COMMAND:-auto}"
@@ -29,140 +27,222 @@ PACKAGE_MANAGER="${PACKAGEMANAGER:-auto}"
 WORKING_DIR="${WORKINGDIRECTORY:-/workspaces}"
 SKIP_IF_EXISTS="${SKIPIFNODEMODULESEXISTS:-false}"
 ADDITIONAL_ARGS="${ADDITIONALARGS:-}"
+DIRECTORIES="${DIRECTORIES:-}"
+AUTO_DISCOVER="${AUTODISCOVER:-false}"
 
 echo "📦 Starting automatic package installation..."
-echo "   Working directory: ${WORKING_DIR}"
 
-# Find the actual workspace directory
-if [ ! -d "${WORKING_DIR}" ]; then
-    # Try to find workspace
-    if [ -d "/workspaces" ] && [ "$(ls -A /workspaces 2>/dev/null)" ]; then
-        WORKING_DIR="/workspaces/$(ls /workspaces | head -n1)"
-        echo "   Detected workspace: ${WORKING_DIR}"
-    else
-        echo "❌ Working directory not found: ${WORKING_DIR}"
-        exit 0
-    fi
-fi
+# ── Directory discovery ────────────────────────────────────────────────────────
 
-cd "${WORKING_DIR}" || {
-    echo "❌ Cannot access directory: ${WORKING_DIR}"
-    exit 0
-}
-
-# Check if package.json exists
-if [ ! -f "package.json" ]; then
-    echo "ℹ️  No package.json found, skipping installation"
-    exit 0
-fi
-
-# Check if node_modules exists and skip if requested
-if [ "$SKIP_IF_EXISTS" = "true" ] && [ -d "node_modules" ]; then
-    echo "✅ node_modules already exists, skipping installation"
-    exit 0
-fi
-
-# Extract packageManager field from package.json
-get_package_manager_from_json() {
+# Parse a VS Code / Cursor .code-workspace file; print one resolved path per line
+_parse_code_workspace() {
+    local wsfile="$1"
+    local wsdir folder_path resolved
+    wsdir="$(cd "$(dirname "$wsfile")" && pwd)"
     if command -v jq >/dev/null 2>&1; then
-        jq -r '.packageManager // empty' package.json 2>/dev/null | cut -d'@' -f1
+        while IFS= read -r folder_path; do
+            [ -n "$folder_path" ] || continue
+            case "$folder_path" in
+                /*) echo "$folder_path" ;;
+                *)  resolved="$(realpath -m "$wsdir/$folder_path" 2>/dev/null)" \
+                    && echo "$resolved" || echo "$wsdir/$folder_path" ;;
+            esac
+        done < <(jq -r '.folders[]?.path // empty' "$wsfile" 2>/dev/null)
     else
-        grep -o '"packageManager"[[:space:]]*:[[:space:]]*"[^"]*"' package.json 2>/dev/null | \
-            sed 's/.*"\([^@"]*\)[@"].*/\1/'
+        while IFS= read -r folder_path; do
+            [ -n "$folder_path" ] || continue
+            case "$folder_path" in
+                /*) echo "$folder_path" ;;
+                *)  echo "$wsdir/$folder_path" ;;
+            esac
+        done < <(
+            grep -o '"path"[[:space:]]*:[[:space:]]*"[^"]*"' "$wsfile" 2>/dev/null \
+                | sed 's/.*"path"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/'
+        )
     fi
 }
 
-# Setup corepack if packageManager field exists
-setup_corepack() {
-    local pkg_manager_field=$(get_package_manager_from_json)
-    
-    if [ -n "$pkg_manager_field" ]; then
-        echo "   Found packageManager: $pkg_manager_field"
-        
-        if ! command -v corepack >/dev/null 2>&1; then
-            echo "   Installing corepack..."
-            npm install -g corepack 2>/dev/null || echo "   ⚠️  corepack install failed"
-        fi
-        
-        if command -v corepack >/dev/null 2>&1; then
-            corepack enable 2>/dev/null && echo "   ✅ corepack enabled"
-        fi
-        
-        echo "$pkg_manager_field"
-    fi
+# Parse an IntelliJ modules.xml; print one module root directory per line
+_parse_intellij_modules() {
+    local modules_xml="$1"
+    local project_dir iml_filepath module_dir
+    project_dir="$(dirname "$(dirname "$modules_xml")")"  # parent of .idea/
+    while IFS= read -r iml_filepath; do
+        iml_filepath="${iml_filepath//\$PROJECT_DIR\$/$project_dir}"
+        module_dir="$(dirname "$iml_filepath")"
+        [ -d "$module_dir" ] && echo "$module_dir"
+    done < <(
+        grep -o 'filepath="[^"]*"' "$modules_xml" 2>/dev/null \
+            | sed 's/filepath="\([^"]*\)"/\1/'
+    )
 }
 
-# Detect package manager
-detect_package_manager() {
-    # Priority 1: packageManager field in package.json
-    local from_json=$(setup_corepack)
-    if [ -n "$from_json" ]; then
-        echo "$from_json"
+# Print all directories to process, one per line, deduplicated
+_discover_dirs() {
+    # 1. Explicit comma-separated list (highest priority)
+    if [ -n "$DIRECTORIES" ]; then
+        echo "$DIRECTORIES" | tr ',' '\n' \
+            | sed 's/^[[:space:]]*//;s/[[:space:]]*$//' \
+            | grep -v '^$'
         return
     fi
-    
-    # Priority 2: lockfiles
-    [ -f "pnpm-lock.yaml" ] && echo "pnpm" && return
-    [ -f "yarn.lock" ] && echo "yarn" && return
-    [ -f "package-lock.json" ] && echo "npm" && return
-    
-    # Default
+
+    # 2. Auto-discover from IDE workspace / project files
+    if [ "$AUTO_DISCOVER" = "true" ]; then
+        local discovered
+        discovered="$(
+            {
+                # VS Code / Cursor: *.code-workspace
+                while IFS= read -r wsfile; do
+                    _parse_code_workspace "$wsfile"
+                done < <(find /workspaces -maxdepth 3 -name "*.code-workspace" 2>/dev/null)
+
+                # IntelliJ IDEA: .idea/modules.xml
+                while IFS= read -r modules_xml; do
+                    _parse_intellij_modules "$modules_xml"
+                done < <(find /workspaces -maxdepth 4 -name "modules.xml" -path "*/.idea/*" 2>/dev/null)
+            } | sort -u | grep -v '^$' || true
+        )"
+        if [ -n "$discovered" ]; then
+            echo "$discovered"
+            return
+        fi
+        echo "   ⚠️  autoDiscover: no workspace files found, falling back to workingDirectory" >&2
+    fi
+
+    # 3. Fallback: single workingDirectory (original behaviour)
+    if [ ! -d "${WORKING_DIR}" ]; then
+        if [ -d "/workspaces" ] && [ "$(ls -A /workspaces 2>/dev/null)" ]; then
+            WORKING_DIR="/workspaces/$(ls /workspaces | head -n1)"
+            echo "   Detected workspace: ${WORKING_DIR}" >&2
+        else
+            echo "❌ Working directory not found: ${WORKING_DIR}" >&2
+            return 1
+        fi
+    fi
+    echo "$WORKING_DIR"
+}
+
+# ── Package manager helpers ────────────────────────────────────────────────────
+
+_get_pm_from_json() {
+    if command -v jq >/dev/null 2>&1; then
+        jq -r '.packageManager // empty' package.json 2>/dev/null | cut -d'@' -f1 || true
+    else
+        grep -o '"packageManager"[[:space:]]*:[[:space:]]*"[^"]*"' package.json 2>/dev/null \
+            | sed 's/.*"\([^@"]*\)[@"].*/\1/' || true
+    fi
+}
+
+_setup_corepack() {
+    local pm_field
+    pm_field="$(_get_pm_from_json)"
+    [ -n "$pm_field" ] || return 0
+    echo "   Found packageManager: $pm_field" >&2
+    if ! command -v corepack >/dev/null 2>&1; then
+        echo "   Installing corepack..." >&2
+        npm install -g corepack 2>/dev/null || echo "   ⚠️  corepack install failed" >&2
+    fi
+    command -v corepack >/dev/null 2>&1 \
+        && corepack enable 2>/dev/null && echo "   ✅ corepack enabled" >&2
+    echo "$pm_field"
+}
+
+_detect_pm() {
+    local from_json
+    from_json="$(_setup_corepack)"
+    [ -n "$from_json" ] && echo "$from_json" && return
+    [ -f "pnpm-lock.yaml" ]    && echo "pnpm" && return
+    [ -f "yarn.lock" ]         && echo "yarn" && return
+    [ -f "package-lock.json" ] && echo "npm"  && return
     echo "npm"
 }
 
-# Auto-detect package manager if needed
-if [ "$PACKAGE_MANAGER" = "auto" ]; then
-    PACKAGE_MANAGER=$(detect_package_manager)
-    echo "   Package manager: ${PACKAGE_MANAGER}"
-fi
-
-# Check if package manager is available
-if ! command -v "${PACKAGE_MANAGER}" >/dev/null 2>&1; then
-    echo "❌ Package manager '${PACKAGE_MANAGER}' not found"
-    exit 1
-fi
-
-# Detect install command if auto
-get_install_command() {
-    case "$PACKAGE_MANAGER" in
-        npm)
-            [ -f "package-lock.json" ] && echo "ci" || echo "install"
-            ;;
-        pnpm)
-            [ -f "pnpm-lock.yaml" ] && echo "install --frozen-lockfile" || echo "install"
-            ;;
+_get_install_cmd() {
+    local pm="$1"
+    case "$pm" in
+        npm)  [ -f "package-lock.json" ]  && echo "ci"                        || echo "install" ;;
+        pnpm) [ -f "pnpm-lock.yaml" ]     && echo "install --frozen-lockfile"  || echo "install" ;;
         yarn)
-            local yarn_version=$(yarn --version 2>/dev/null | cut -d. -f1)
-            if [ "$yarn_version" -ge 2 ] 2>/dev/null; then
+            local v
+            v="$(yarn --version 2>/dev/null | cut -d. -f1)"
+            if [ "${v:-0}" -ge 2 ] 2>/dev/null; then
                 [ -f "yarn.lock" ] && echo "install --immutable" || echo "install"
             else
                 [ -f "yarn.lock" ] && echo "install --frozen-lockfile" || echo "install"
             fi
             ;;
-        *)
-            echo "install"
-            ;;
+        *) echo "install" ;;
     esac
 }
 
-if [ "$COMMAND" = "auto" ]; then
-    COMMAND=$(get_install_command)
-fi
+# ── Install in a single directory ─────────────────────────────────────────────
 
-# Ensure CI=true is set
+_install_in_dir() {
+    local dir="$1"
+    local pm cmd
+    if [ ! -d "$dir" ]; then
+        echo "   ⚠️  Not found: $dir — skipping"
+        return 0
+    fi
+    (
+        cd "$dir" || exit 0
+        if [ ! -f "package.json" ]; then
+            echo "   ℹ️  No package.json in $dir — skipping"
+            exit 0
+        fi
+        if [ "$SKIP_IF_EXISTS" = "true" ] && [ -d "node_modules" ]; then
+            echo "   ✅ node_modules exists in $dir — skipping"
+            exit 0
+        fi
+        pm="$PACKAGE_MANAGER"
+        [ "$pm" = "auto" ] && pm="$(_detect_pm)"
+        if ! command -v "$pm" >/dev/null 2>&1; then
+            echo "   ❌ Package manager '$pm' not found — skipping $dir"
+            exit 0
+        fi
+        cmd="$COMMAND"
+        [ "$cmd" = "auto" ] && cmd="$(_get_install_cmd "$pm")"
+        echo "   🚀 [$dir] → $pm $cmd ${ADDITIONAL_ARGS}"
+        # shellcheck disable=SC2086
+        if $pm $cmd $ADDITIONAL_ARGS; then
+            echo "   ✅ [$dir] done"
+        else
+            echo "   ❌ [$dir] failed"
+            exit 1
+        fi
+    )
+}
+
+# ── Main ──────────────────────────────────────────────────────────────────────
+
 export CI=true
 
-# Run the installation
-echo "🚀 Running: ${PACKAGE_MANAGER} ${COMMAND} ${ADDITIONAL_ARGS}"
-echo ""
+mapfile -t DIRS < <(_discover_dirs)
 
-if ${PACKAGE_MANAGER} ${COMMAND} ${ADDITIONAL_ARGS}; then
+if [ "${#DIRS[@]}" -eq 0 ]; then
+    echo "❌ No directories to install in"
+    exit 1
+fi
+
+if [ "${#DIRS[@]}" -gt 1 ]; then
+    echo "   Directories (${#DIRS[@]}):"
+    for d in "${DIRS[@]}"; do echo "   → $d"; done
     echo ""
-    echo "✅ Package installation completed successfully"
-    exit 0
 else
-    echo ""
-    echo "❌ Package installation failed with exit code $?"
+    echo "   Working directory: ${DIRS[0]}"
+fi
+
+FAILED=0
+for dir in "${DIRS[@]}"; do
+    _install_in_dir "$dir" || FAILED=$((FAILED + 1))
+done
+
+echo ""
+if [ "$FAILED" -eq 0 ]; then
+    echo "✅ Package installation complete"
+else
+    echo "❌ Package installation complete with $FAILED failure(s)"
     exit 1
 fi
 EOFSCRIPT
@@ -174,9 +254,11 @@ chmod +x /usr/local/bin/devcontainer-package-install
 cat >> /etc/environment << EOF
 COMMAND=${COMMAND}
 PACKAGEMANAGER=${PACKAGE_MANAGER}
-WORKINGDIRECTORY=${WORKING_DIR}
+WORKINGDIRECTORY="${WORKING_DIR}"
 SKIPIFNODEMODULESEXISTS=${SKIP_IF_EXISTS}
-ADDITIONALARGS=${ADDITIONAL_ARGS}
+ADDITIONALARGS="${ADDITIONAL_ARGS}"
+DIRECTORIES="${DIRECTORIES}"
+AUTODISCOVER=${AUTO_DISCOVER}
 EOF
 
 echo "✅ package-auto-install feature installed"

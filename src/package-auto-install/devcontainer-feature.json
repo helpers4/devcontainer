@@ -1,6 +1,6 @@
 {
   "id": "package-auto-install",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "name": "Automatic Package Installation",
   "description": "Automatically detects and runs npm/yarn/pnpm install in non-interactive mode after container creation.",
   "documentationURL": "https://github.com/helpers4/devcontainer/tree/main/src/package-auto-install",
@@ -40,6 +40,16 @@
       "type": "string",
       "default": "",
       "description": "Additional arguments to pass to the install command"
+    },
+    "directories": {
+      "type": "string",
+      "default": "",
+      "description": "Comma-separated list of directories to run install in. Overrides workingDirectory and autoDiscover."
+    },
+    "autoDiscover": {
+      "type": "boolean",
+      "default": false,
+      "description": "Scan /workspaces for VS Code/Cursor (.code-workspace) and IntelliJ (.idea/modules.xml) project files and install packages in every discovered root that contains a package.json."
     }
   },
   "postCreateCommand": "/usr/local/bin/devcontainer-package-install",
