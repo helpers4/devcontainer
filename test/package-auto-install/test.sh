@@ -60,14 +60,21 @@ cat > /tmp/test-dirs-b/package.json << 'EOF'
 { "name": "dirs-b", "version": "1.0.0" }
 EOF
 
-check "directories option installs in first dir" bash -c \
-    'DIRECTORIES=/tmp/test-dirs-a,/tmp/test-dirs-b /usr/local/bin/devcontainer-package-install 2>&1 | grep -q "test-dirs-a"'
+# Run installer once and capture output; grep for the per-directory '🚀 [/path]' marker
+# to confirm each directory was actually processed (not just listed).
+_dirs_out="$(DIRECTORIES=/tmp/test-dirs-a,/tmp/test-dirs-b /usr/local/bin/devcontainer-package-install 2>&1 || true)"
+export _dirs_out
 
-check "directories option installs in second dir" bash -c \
-    'DIRECTORIES=/tmp/test-dirs-a,/tmp/test-dirs-b /usr/local/bin/devcontainer-package-install 2>&1 | grep -q "test-dirs-b"'
+check "directories option processes first dir" \
+    bash -c 'printf "%s\n" "$_dirs_out" | grep -qF "[/tmp/test-dirs-a]"'
+
+check "directories option processes second dir" \
+    bash -c 'printf "%s\n" "$_dirs_out" | grep -qF "[/tmp/test-dirs-b]"'
+
+unset _dirs_out
 
 check "directories overrides workingDirectory" bash -c \
-    'DIRECTORIES=/tmp/test-dirs-a WORKINGDIRECTORY=/nonexistent /usr/local/bin/devcontainer-package-install 2>&1 | grep -q "test-dirs-a"'
+    'DIRECTORIES=/tmp/test-dirs-a WORKINGDIRECTORY=/nonexistent /usr/local/bin/devcontainer-package-install 2>&1 | grep -qF "[/tmp/test-dirs-a]"'
 
 rm -rf /tmp/test-dirs-a /tmp/test-dirs-b
 
