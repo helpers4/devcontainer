@@ -243,7 +243,6 @@ You can manually run the installation script:
 - **v1.0.2**: Added `autoDiscover` (scan VS Code/Cursor `.code-workspace` and IntelliJ `.idea/modules.xml`) and `directories` (explicit comma-separated list) options for multi-root workspace support. Each folder runs package manager detection independently.
 - **v1.0.1**: Added corepack support for Node 24+ (`packageManager` field in package.json).
 - **v1.0.0**: Initial release.
-- Cache optimization
 
 ## License
 
