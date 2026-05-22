@@ -60,10 +60,12 @@ cat > /tmp/test-dirs-b/package.json << 'EOF'
 { "name": "dirs-b", "version": "1.0.0" }
 EOF
 
-# Run installer once and capture output; grep for the per-directory '🚀 [/path]' marker
-# to confirm each directory was actually processed (not just listed).
-_dirs_out="$(DIRECTORIES=/tmp/test-dirs-a,/tmp/test-dirs-b /usr/local/bin/devcontainer-package-install 2>&1 || true)"
-export _dirs_out
+# Run installer once; capture both output and exit code so the checks can assert
+# that the installer succeeded AND that each directory was actually processed.
+_dirs_rc=0
+_dirs_out="$(DIRECTORIES=/tmp/test-dirs-a,/tmp/test-dirs-b /usr/local/bin/devcontainer-package-install 2>&1)" \
+    || _dirs_rc=$?
+export _dirs_out _dirs_rc
 
 check "directories option processes first dir" \
     bash -c 'printf "%s\n" "$_dirs_out" | grep -qF "[/tmp/test-dirs-a]"'
@@ -71,10 +73,13 @@ check "directories option processes first dir" \
 check "directories option processes second dir" \
     bash -c 'printf "%s\n" "$_dirs_out" | grep -qF "[/tmp/test-dirs-b]"'
 
-unset _dirs_out
+check "directories option installer exits successfully" \
+    bash -c '[ "$_dirs_rc" -eq 0 ]'
+
+unset _dirs_out _dirs_rc
 
 check "directories overrides workingDirectory" bash -c \
-    'DIRECTORIES=/tmp/test-dirs-a WORKINGDIRECTORY=/nonexistent /usr/local/bin/devcontainer-package-install 2>&1 | grep -qF "[/tmp/test-dirs-a]"'
+    'out=$(DIRECTORIES=/tmp/test-dirs-a WORKINGDIRECTORY=/nonexistent /usr/local/bin/devcontainer-package-install 2>&1) && printf "%s\n" "$out" | grep -qF "[/tmp/test-dirs-a]"'
 
 rm -rf /tmp/test-dirs-a /tmp/test-dirs-b
 
@@ -101,11 +106,20 @@ EOF
 { "name": "ws-backend", "version": "1.0.0" }
 EOF
 
-    check "autoDiscover finds frontend folder" bash -c \
-        'AUTODISCOVER=true /usr/local/bin/devcontainer-package-install 2>&1 | grep -q "test-autodiscover/frontend"'
+    # Capture output and exit code once so both directory checks and the success
+    # check all use the same run, and a failing installer cannot hide behind grep.
+    _auto_rc=0
+    _auto_out="$(AUTODISCOVER=true /usr/local/bin/devcontainer-package-install 2>&1)" \
+        || _auto_rc=$?
+    export _auto_out _auto_rc
 
-    check "autoDiscover finds backend folder" bash -c \
-        'AUTODISCOVER=true /usr/local/bin/devcontainer-package-install 2>&1 | grep -q "test-autodiscover/backend"'
+    check "autoDiscover finds frontend folder" \
+        bash -c '[ "$_auto_rc" -eq 0 ] && printf "%s\n" "$_auto_out" | grep -q "test-autodiscover/frontend"'
+
+    check "autoDiscover finds backend folder" \
+        bash -c '[ "$_auto_rc" -eq 0 ] && printf "%s\n" "$_auto_out" | grep -q "test-autodiscover/backend"'
+
+    unset _auto_out _auto_rc
 
     rm -rf /workspaces/test-autodiscover
 else

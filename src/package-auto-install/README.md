@@ -47,7 +47,7 @@ If you have this in your devcontainer.json, you can now remove it:
 |--------|------|---------|-------------|
 | `command` | string | `auto` | Installation command: `install`, `ci`, or `auto` to detect |
 | `packageManager` | string | `auto` | Package manager: `npm`, `yarn`, `pnpm`, or `auto` to detect |
-| `workingDirectory` | string | `/workspaces/${localWorkspaceFolderBasename}` | Directory where to run install (ignored when `autoDiscover` or `directories` is set) |
+| `workingDirectory` | string | `/workspaces/${localWorkspaceFolderBasename}` | Directory where to run install. Overridden by `directories`. Used as fallback scan root when `autoDiscover` finds no workspace files. |
 | `skipIfNodeModulesExists` | boolean | `false` | Skip if node_modules exists |
 | `additionalArgs` | string | `""` | Additional arguments for install command |
 | `directories` | string | `""` | Comma-separated list of directories to install in. Overrides `workingDirectory` and `autoDiscover`. |
