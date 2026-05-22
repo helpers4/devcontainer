@@ -7,6 +7,13 @@ set -euo pipefail
 
 echo "🔧 Setting up package-auto-install devcontainer feature..."
 
+# Ensure jq is available — required for reliable .code-workspace parsing
+if ! command -v jq >/dev/null 2>&1; then
+    apt-get update -y -q 2>/dev/null \
+        && apt-get install -y -q --no-install-recommends jq 2>/dev/null \
+        || echo "⚠️  Could not install jq; autoDiscover will use grep fallback"
+fi
+
 # Get options
 COMMAND="${COMMAND:-auto}"
 PACKAGE_MANAGER="${PACKAGEMANAGER:-auto}"
@@ -198,8 +205,8 @@ _install_in_dir() {
         pm="$PACKAGE_MANAGER"
         [ "$pm" = "auto" ] && pm="$(_detect_pm)"
         if ! command -v "$pm" >/dev/null 2>&1; then
-            echo "   ❌ Package manager '$pm' not found — skipping $dir"
-            exit 0
+            echo "   ❌ Package manager '$pm' not found in $dir"
+            exit 1
         fi
         cmd="$COMMAND"
         [ "$cmd" = "auto" ] && cmd="$(_get_install_cmd "$pm")"
