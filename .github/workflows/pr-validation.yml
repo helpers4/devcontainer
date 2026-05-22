@@ -103,9 +103,8 @@ jobs:
                 ~/.aws/config ~/.kube/config ~/.docker/config.json
 
       - name: "Test feature '${{ matrix.features }}' against '${{ matrix.baseImage }}'"
-        run:
-          devcontainer features test --features ${{ matrix.features }} --base-image
-          ${{ matrix.baseImage }} .
+        run: |
+          devcontainer features test --features ${{ matrix.features }} --base-image ${{ matrix.baseImage }} .
 
   shellcheck:
     runs-on: ubuntu-latest
