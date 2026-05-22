@@ -10,6 +10,7 @@ Automatically detects and runs npm/yarn/pnpm install in non-interactive mode aft
 - **Smart command selection**: Uses `npm ci`, `pnpm install --frozen-lockfile`, or `yarn install --immutable` when lockfiles exist
 - **Flexible configuration**: Override package manager, command, and working directory
 - **Skip if exists**: Optionally skip installation if node_modules already exists
+- **Multi-root support**: Auto-discover VS Code/Cursor `.code-workspace` and IntelliJ `.idea/modules.xml` project files to install across all workspace folders
 
 ## Usage
 
@@ -46,9 +47,11 @@ If you have this in your devcontainer.json, you can now remove it:
 |--------|------|---------|-------------|
 | `command` | string | `auto` | Installation command: `install`, `ci`, or `auto` to detect |
 | `packageManager` | string | `auto` | Package manager: `npm`, `yarn`, `pnpm`, or `auto` to detect |
-| `workingDirectory` | string | `/workspaces/${localWorkspaceFolderBasename}` | Directory where to run install |
+| `workingDirectory` | string | `/workspaces/${localWorkspaceFolderBasename}` | Directory where to run install (ignored when `autoDiscover` or `directories` is set) |
 | `skipIfNodeModulesExists` | boolean | `false` | Skip if node_modules exists |
 | `additionalArgs` | string | `""` | Additional arguments for install command |
+| `directories` | string | `""` | Comma-separated list of directories to install in. Overrides `workingDirectory` and `autoDiscover`. |
+| `autoDiscover` | boolean | `false` | Scan `/workspaces` for VS Code/Cursor `.code-workspace` and IntelliJ `.idea/modules.xml` files and install in every discovered folder with a `package.json`. |
 
 ## Examples
 
@@ -112,6 +115,42 @@ If you have this in your devcontainer.json, you can now remove it:
     }
 }
 ```
+
+### VS Code / Cursor multi-root workspace
+
+When your devcontainer uses a `.code-workspace` file with multiple folders, enable `autoDiscover` to install packages in every discovered folder:
+
+```json
+{
+    "features": {
+        "ghcr.io/helpers4/devcontainer/package-auto-install:1": {
+            "autoDiscover": true
+        }
+    }
+}
+```
+
+The feature scans `/workspaces` (depth 3) for `*.code-workspace` files, parses the `folders[].path` array, resolves relative paths, and runs the appropriate package manager in each folder that contains a `package.json`. Each folder may use a different package manager — detection runs independently per folder.
+
+### IntelliJ IDEA multi-module project
+
+`autoDiscover: true` also scans for `.idea/modules.xml` files (depth 4) and extracts module root directories from the `filepath` attributes.
+
+### Explicit list of directories
+
+For any IDE that does not have a parseable workspace file (Zed, Neovim, etc.) or when you want precise control:
+
+```json
+{
+    "features": {
+        "ghcr.io/helpers4/devcontainer/package-auto-install:1": {
+            "directories": "/workspaces/frontend,/workspaces/backend,/workspaces/shared"
+        }
+    }
+}
+```
+
+`directories` takes precedence over both `workingDirectory` and `autoDiscover`.
 
 ## How It Works
 Corepack Support (Node 24+)
@@ -199,12 +238,11 @@ You can manually run the installation script:
 /usr/local/bin/devcontainer-package-install
 ```
 
-## Future Enhancements
+## Version History
 
-Planned features:
-- Support for monorepos (multiple package.json locations)
-- Custom post-install scripts
-- Conditional installation based on file changes
+- **v1.0.2**: Added `autoDiscover` (scan VS Code/Cursor `.code-workspace` and IntelliJ `.idea/modules.xml`) and `directories` (explicit comma-separated list) options for multi-root workspace support. Each folder runs package manager detection independently.
+- **v1.0.1**: Added corepack support for Node 24+ (`packageManager` field in package.json).
+- **v1.0.0**: Initial release.
 - Cache optimization
 
 ## License
