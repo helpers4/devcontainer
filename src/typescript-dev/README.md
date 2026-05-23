@@ -125,7 +125,7 @@ This feature pairs perfectly with:
 - **[essential-dev](../essential-dev)** - Core development tools (required)
 - **[vite-plus](../vite-plus)** - TypeScript + Vite + Oxc/Vitest toolchain
 - **[package-auto-install](../package-auto-install)** - Automatic dependency installation
-- **[local-mounts](../local-mounts)** - Git/SSH/GPG configuration
+- **[local-mounts](../../deprecated/local-mounts/)** - Git/SSH/GPG configuration
 - **[git-absorb](../git-absorb)** - Commit cleanup tools
 
 ## License

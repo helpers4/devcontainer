@@ -33,7 +33,7 @@ That's it. The feature auto-detects the environment and adapts its behavior.
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | `username` | string | `node` | Container username that receives synchronized config files |
-| `syncGhAuth` | boolean | `false` | Copy `~/.config/gh/hosts.yml` (GitHub OAuth token used by `gh` CLI) into the container's `$HOME`. Skipped on cloud environments (Codespaces / Gitpod / DevPod inject their own token). When `false`, the file is bind-mounted into `/mnt/h4dotfiles` (Feature `mounts` cannot be conditional) but **never copied** to `$HOME` and never read by anything else. Prefer the [`github-dev`](../github-dev/README.md) feature with `GH_TOKEN` for fine-grained PATs. |
+| `syncGhAuth` | boolean | `false` | Copy `~/.config/gh/hosts.yml` (GitHub OAuth token used by `gh` CLI) into the container's `$HOME`. Skipped on cloud environments (Codespaces / Gitpod / DevPod inject their own token). When `false`, the file is bind-mounted into `/mnt/h4dotfiles` (Feature `mounts` cannot be conditional) but **never copied** to `$HOME` and never read by anything else. Prefer the [`github-dev`](../github-dev/) feature with `GH_TOKEN` for fine-grained PATs. |
 | `syncAwsConfig` | boolean | `false` | Sync `~/.aws/config` (profiles only — `~/.aws/credentials` is **never** synced). |
 | `syncKubeConfig` | boolean | `false` | Sync `~/.kube/config` (cluster credentials and tokens). Skipped on cloud environments. |
 | `syncDockerConfig` | boolean | `false` | Sync `~/.docker/config.json` (registry auth tokens). Skipped on cloud environments. |
@@ -62,7 +62,7 @@ That's it. The feature auto-detects the environment and adapts its behavior.
 
 | Local Path | Option | Notes |
 |------------|--------|-------|
-| `~/.config/gh/hosts.yml` | `syncGhAuth` | GitHub OAuth token used by `gh`. The file is bind-mounted into `/mnt/h4dotfiles` unconditionally (Feature `mounts` cannot be gated on options) but **only copied to `$HOME` when `syncGhAuth: true`**. Skipped on cloud environments. For fine-grained PATs, prefer [`github-dev`](../github-dev/README.md) + `GH_TOKEN`. |
+| `~/.config/gh/hosts.yml` | `syncGhAuth` | GitHub OAuth token used by `gh`. The file is bind-mounted into `/mnt/h4dotfiles` unconditionally (Feature `mounts` cannot be gated on options) but **only copied to `$HOME` when `syncGhAuth: true`**. Skipped on cloud environments. For fine-grained PATs, prefer [`github-dev`](../github-dev/) + `GH_TOKEN`. |
 | `~/.aws/config` | `syncAwsConfig` | AWS profiles. `~/.aws/credentials` (long-lived access keys) is **not bind-mounted** and never synced. |
 | `~/.kube/config` | `syncKubeConfig` | Kubernetes cluster credentials. Skipped on cloud environments. |
 | `~/.docker/config.json` | `syncDockerConfig` | Docker registry auth tokens. Skipped on cloud environments. |
