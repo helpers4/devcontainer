@@ -11,7 +11,6 @@
 set -e
 
 USERNAME="${_BUILD_ARG_USERNAME:-"${USERNAME:-"node"}"}"
-SYNC_GH_AUTH="${_BUILD_ARG_DOTFILES_SYNC_SYNCGHAUTH:-"${SYNCGHAUTH:-"false"}"}"
 SYNC_AWS_CONFIG="${_BUILD_ARG_DOTFILES_SYNC_SYNCAWSCONFIG:-"${SYNCAWSCONFIG:-"false"}"}"
 SYNC_KUBE_CONFIG="${_BUILD_ARG_DOTFILES_SYNC_SYNCKUBECONFIG:-"${SYNCKUBECONFIG:-"false"}"}"
 SYNC_DOCKER_CONFIG="${_BUILD_ARG_DOTFILES_SYNC_SYNCDOCKERCONFIG:-"${SYNCDOCKERCONFIG:-"false"}"}"
@@ -28,7 +27,6 @@ echo "Setting up dotfiles-sync devcontainer feature..."
 echo "   Container user: ${USERNAME}"
 echo "   Home directory: ${TARGET_HOME}"
 echo "   Mount staging: ${SOURCE_HOME}"
-echo "   Sync gh auth: ${SYNC_GH_AUTH}"
 echo "   Sync AWS config: ${SYNC_AWS_CONFIG}"
 echo "   Sync kube config: ${SYNC_KUBE_CONFIG}"
 echo "   Sync Docker config: ${SYNC_DOCKER_CONFIG}"
@@ -42,10 +40,6 @@ mkdir -p \
     "${TARGET_HOME}/.ssh" \
     "${TARGET_HOME}/.gnupg" \
     "${TARGET_HOME}/.config/git" \
-    "${TARGET_HOME}/.config/gh" \
-    "${TARGET_HOME}/.config/pip" \
-    "${TARGET_HOME}/.config/pnpm" \
-    "${TARGET_HOME}/.cargo" \
     "${TARGET_HOME}/.aws" \
     "${TARGET_HOME}/.kube" \
     "${TARGET_HOME}/.docker" 2>/dev/null || true
@@ -57,7 +51,6 @@ if getent passwd "${USERNAME}" >/dev/null 2>&1; then
         "${TARGET_HOME}/.ssh" \
         "${TARGET_HOME}/.gnupg" \
         "${TARGET_HOME}/.config" \
-        "${TARGET_HOME}/.cargo" \
         "${TARGET_HOME}/.aws" \
         "${TARGET_HOME}/.kube" \
         "${TARGET_HOME}/.docker" \
@@ -77,7 +70,6 @@ cat > /usr/local/share/dotfiles-sync/config << CONF_EOF
 DOTFILES_SYNC_USERNAME="${USERNAME}"
 DOTFILES_SYNC_SOURCE="${SOURCE_HOME}"
 DOTFILES_SYNC_TARGET="${TARGET_HOME}"
-DOTFILES_SYNC_GH_AUTH="${SYNC_GH_AUTH}"
 DOTFILES_SYNC_AWS_CONFIG="${SYNC_AWS_CONFIG}"
 DOTFILES_SYNC_KUBE_CONFIG="${SYNC_KUBE_CONFIG}"
 DOTFILES_SYNC_DOCKER_CONFIG="${SYNC_DOCKER_CONFIG}"
@@ -152,16 +144,11 @@ echo "   Shell start -> SSH_AUTH_SOCK detection + sync fallback"
 echo ""
 echo "Targets:"
 echo "   Git config       -> ${TARGET_HOME}/.gitconfig"
-echo "   Git ignore/attrs -> ${TARGET_HOME}/.gitignore_global, ${TARGET_HOME}/.config/git/"
+echo "   Git ignore/attrs -> ${TARGET_HOME}/.config/git/"
 echo "   SSH keys         -> ${TARGET_HOME}/.ssh/"
 echo "   GPG keys         -> ${TARGET_HOME}/.gnupg/"
 echo "   npm tokens       -> ${TARGET_HOME}/.npmrc"
 echo "   yarn config      -> ${TARGET_HOME}/.yarnrc.yml"
-echo "   pnpm config      -> ${TARGET_HOME}/.config/pnpm/rc"
-echo "   gh CLI prefs     -> ${TARGET_HOME}/.config/gh/config.yml"
-echo "   gh OAuth token   -> ${TARGET_HOME}/.config/gh/hosts.yml      [opt-in: ${SYNC_GH_AUTH}]"
-echo "   cargo config     -> ${TARGET_HOME}/.cargo/config.toml"
-echo "   pip config       -> ${TARGET_HOME}/.config/pip/pip.conf"
 echo "   AWS profiles     -> ${TARGET_HOME}/.aws/config           [opt-in: ${SYNC_AWS_CONFIG}]"
 echo "   kube config      -> ${TARGET_HOME}/.kube/config          [opt-in: ${SYNC_KUBE_CONFIG}]"
 echo "   Docker auth      -> ${TARGET_HOME}/.docker/config.json   [opt-in: ${SYNC_DOCKER_CONFIG}]"
