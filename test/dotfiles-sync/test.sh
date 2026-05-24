@@ -79,7 +79,7 @@ if [ -f "$CONFIG_FILE" ]; then
         exit 1
     fi
     # Test 5b: Opt-in flags persisted in config
-    for flag in DOTFILES_SYNC_GH_AUTH DOTFILES_SYNC_AWS_CONFIG DOTFILES_SYNC_KUBE_CONFIG DOTFILES_SYNC_DOCKER_CONFIG; do
+    for flag in DOTFILES_SYNC_AWS_CONFIG DOTFILES_SYNC_KUBE_CONFIG DOTFILES_SYNC_DOCKER_CONFIG; do
         if grep -q "^${flag}=" "$CONFIG_FILE"; then
             echo "   PASS: ${flag} present in config"
         else
@@ -92,30 +92,8 @@ else
     exit 1
 fi
 
-# Test 5d: hosts.yml is staged in /mnt/h4dotfiles (always — the mount is
-# unconditional because Feature `mounts` cannot be gated on options). The
-# security boundary is the *copy* step in sync-files.sh, which only writes to
-# $HOME/.config/gh/hosts.yml when DOTFILES_SYNC_GH_AUTH=true and the env is
-# not a cloud platform. The staging path is internal to the feature and never
-# read otherwise.
-GH_STAGE="/mnt/h4dotfiles/.config/gh"
-if [ -d "${GH_STAGE}" ] && [ ! -L "${GH_STAGE}" ]; then
-    for f in "${GH_STAGE}"/*; do
-        [ -e "$f" ] || continue
-        name=$(basename "$f")
-        case "$name" in
-            config.yml|hosts.yml) ;;
-            *)
-                echo "FAIL: unexpected mount in ${GH_STAGE}: ${name}"
-                exit 1
-                ;;
-        esac
-    done
-fi
-echo "PASS: only config.yml and hosts.yml may be staged under /mnt/h4dotfiles/.config/gh"
-
 # Test 5e: opt-in directories created at build time
-for dir in ".aws" ".kube" ".docker" ".cargo" ".config/pip" ".config/pnpm" ".config/gh" ".config/git"; do
+for dir in ".aws" ".kube" ".docker" ".config/git"; do
     if [ -d "${TARGET_HOME}/${dir}" ]; then
         echo "PASS: ${dir} directory exists"
     else
