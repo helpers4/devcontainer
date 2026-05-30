@@ -15,15 +15,6 @@ set -e
 echo "🔧 Setting up auto-header devcontainer feature..."
 
 # ---------------------------------------------------------------------------
-# Dependencies
-# ---------------------------------------------------------------------------
-if ! command -v jq >/dev/null 2>&1; then
-    echo "📦 Installing jq..."
-    apt-get update >/dev/null
-    apt-get install -y jq >/dev/null
-fi
-
-# ---------------------------------------------------------------------------
 # Read feature options (devcontainer-feature.json)
 # ---------------------------------------------------------------------------
 HEADER_TYPE="${HEADERTYPE:-simple}"
