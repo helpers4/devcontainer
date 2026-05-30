@@ -58,9 +58,9 @@ jobs:
           - features: typescript-dev
             baseImage: mcr.microsoft.com/devcontainers/typescript-node:20
 
-          # auto-header - works on any base image with bash and python3
+          # auto-header - requires jq (provided by common-utils / devcontainers base images)
           - features: auto-header
-            baseImage: ubuntu:latest
+            baseImage: mcr.microsoft.com/devcontainers/base:ubuntu
 
           # peon-ping - works on any base image with curl and python3
           - features: peon-ping

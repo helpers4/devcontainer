@@ -17,6 +17,22 @@ Automatically configures VS Code with customizable file headers based on your pr
 
 🚀 **Helper script**: `h4-init-headers` command to initialize headers in any project
 
+## Requirements
+
+This feature requires [`jq`](https://jqlang.org/), which is provided by the [`common-utils`](https://github.com/devcontainers/features/tree/main/src/common-utils) feature.
+All official devcontainers base images (`mcr.microsoft.com/devcontainers/*`) include it automatically.
+
+If you use a minimal base image (e.g. `ubuntu:latest`), add `common-utils` first:
+
+```json
+{
+  "features": {
+    "ghcr.io/devcontainers/features/common-utils:2": {},
+    "ghcr.io/helpers4/devcontainer/auto-header:latest": { ... }
+  }
+}
+```
+
 ## Installation
 
 Add to your `.devcontainer/devcontainer.json`:
