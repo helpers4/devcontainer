@@ -7,16 +7,6 @@ set -euo pipefail
 
 echo "🔧 Setting up package-auto-install devcontainer feature..."
 
-# Ensure jq is available — required for reliable .code-workspace parsing
-if ! command -v jq >/dev/null 2>&1; then
-    if apt-get update -y -q 2>/dev/null \
-        && apt-get install -y -q --no-install-recommends jq 2>/dev/null; then
-        rm -rf /var/lib/apt/lists/*
-    else
-        echo "⚠️  Could not install jq; autoDiscover will use grep fallback"
-    fi
-fi
-
 # Get options
 COMMAND="${COMMAND:-auto}"
 PACKAGE_MANAGER="${PACKAGEMANAGER:-auto}"
