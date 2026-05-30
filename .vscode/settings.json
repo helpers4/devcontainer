@@ -12,6 +12,7 @@
     "github-dev",
     "package-auto-install",
     "peon-ping",
+    "pnpm-store",
     "shell-history-per-project",
     "typescript-dev",
     "vite-plus"

@@ -18,6 +18,7 @@ Commit messages for the **devcontainer** repository must use Conventional Commit
 - `github-dev`
 - `package-auto-install`
 - `peon-ping`
+- `pnpm-store`
 - `shell-history-per-project`
 - `typescript-dev`
 - `vite-plus`
