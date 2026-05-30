@@ -79,16 +79,19 @@ fi
 GUARD="/usr/local/bin/devcontainer-pnpm-store"
 
 # Header with the resolved, feature-scoped values.
-cat > "${GUARD}" <<EOF
+# Use printf %q to safely quote path values — handles spaces and special chars.
+{
+    cat <<'HEADER'
 #!/usr/bin/env bash
 # This file is part of helpers4.
 # Copyright (C) 2025 baxyz
 # SPDX-License-Identifier: LGPL-3.0-or-later
 set -euo pipefail
-STORE_DIR="${STORE_DIR}"
-CHECK_AGAINST="${CHECK_AGAINST}"
-FAIL_IF_CROSS_DEVICE="${FAIL_IF_CROSS_DEVICE}"
-EOF
+HEADER
+    printf 'STORE_DIR=%q\n' "${STORE_DIR}"
+    printf 'CHECK_AGAINST=%q\n' "${CHECK_AGAINST}"
+    printf 'FAIL_IF_CROSS_DEVICE=%q\n' "${FAIL_IF_CROSS_DEVICE}"
+} > "${GUARD}"
 
 # Body (literal — not expanded at install time).
 cat >> "${GUARD}" <<'EOF'
@@ -98,14 +101,16 @@ echo "📦 pnpm-store: ensuring store at ${STORE_DIR}"
 if ! mkdir -p "${STORE_DIR}" 2>/dev/null; then
     echo "❌ pnpm-store: could not create store directory ${STORE_DIR}"
     echo "   Check that the path is writable or that the bind-mount is in place."
-    if [ "${FAIL_IF_CROSS_DEVICE}" = "true" ]; then
-        exit 1
-    fi
+    exit 1
 fi
 
-# Best-effort: take ownership of the store so installs don't hit permission errors.
-if [ -d "${STORE_DIR}" ] && [ "$(id -u)" -ne 0 ] && command -v sudo >/dev/null 2>&1; then
-    sudo chown -R "$(id -u):$(id -g)" "${STORE_DIR}" 2>/dev/null || true
+# Take ownership of the store only when needed — recursive chown is expensive
+# on large stores (tens of thousands of files shared across rebuilds).
+if [ -d "${STORE_DIR}" ]; then
+    store_owner="$(stat -c '%u' "${STORE_DIR}" 2>/dev/null || echo '')"
+    if [ -n "${store_owner}" ] && [ "${store_owner}" != "$(id -u)" ] && command -v sudo >/dev/null 2>&1; then
+        sudo chown -R "$(id -u):$(id -g)" "${STORE_DIR}" 2>/dev/null || true
+    fi
 fi
 
 store_dev=""
