@@ -56,6 +56,7 @@ devcontainer/
 │   ├── angular-dev/                  # Angular dev with port forwarding
 │   ├── vite-plus/                    # Vite development setup
 │   ├── package-auto-install/         # Automatic package installation
+│   ├── pnpm-store/                   # Shared pnpm store on same filesystem as code
 │   ├── auto-header/                  # Automatic LGPL-3.0 file headers
 │   ├── git-absorb/                   # git-absorb tool installation
 │   ├── peon-ping/                    # Health check endpoint
@@ -116,6 +117,7 @@ devcontainer features test .                             # Test all
 | angular-dev | 1.0.2 | Angular dev, port 4200 forwarding | — |
 | vite-plus | 1.0.3 | Vite+ unified CLI (vp), Oxlint/Oxfmt, Vitest, optional system-wide symlink | — |
 | package-auto-install | — | Auto-detect and install packages | — |
+| pnpm-store | 1.0.0 | Shared pnpm store on same filesystem as code (no stray .pnpm-store) | — |
 | auto-header | — | LGPL-3.0 license headers | — |
 | git-absorb | 1.0.2 | git-absorb from GitHub releases | — |
 | dotfiles-sync | 1.0.2 | Sync local Git/SSH/GPG/npm/gh/cargo/pip/yarn/pnpm config — opt-in cloud creds (AWS, kube, Docker, gh OAuth) — macOS, Linux, WSL, Codespaces | — |

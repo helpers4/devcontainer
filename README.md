@@ -49,6 +49,19 @@ Automatically detects and runs npm/yarn/pnpm install in non-interactive mode aft
 
 [📖 Documentation](./src/package-auto-install/README.md)
 
+### pnpm-store
+
+Configures a shared pnpm content-addressable store on the **same filesystem as your code**, so pnpm's hardlinks work and no stray `.pnpm-store` folders pollute your repos. A safer alternative to Docker-volume-based store sharing, which breaks hardlinking in bind-mounted workspaces.
+
+**Key benefits:**
+- Keeps the pnpm store on the same filesystem as bind-mounted repos
+- No `.pnpm-store` clutter inside your projects
+- Shares the store across every repo and across rebuilds
+- Fail-fast cross-device guard with an actionable fix message
+- Writes `store-dir` to `~/.npmrc`; works with any pnpm install
+
+[📖 Documentation](./src/pnpm-store/README.md)
+
 ### angular-dev
 
 Angular-specific development environment with VS Code extensions and CLI autocompletion.
@@ -182,6 +195,7 @@ Features from this repository are available via GitHub Container Registry. Refer
         "ghcr.io/helpers4/devcontainer/github-dev:1": {},
         "ghcr.io/helpers4/devcontainer/vite-plus:1": {},
         "ghcr.io/helpers4/devcontainer/package-auto-install:1": {},
+        "ghcr.io/helpers4/devcontainer/pnpm-store:1": {},
         "ghcr.io/helpers4/devcontainer/typescript-dev:1": {},
         "ghcr.io/helpers4/devcontainer/auto-header:1": {
             "projectName": "my-project"
@@ -204,6 +218,7 @@ Features from this repository are available via GitHub Container Registry. Refer
 | [auto-header](./src/auto-header) | Automatic file headers with customizable templates (simple or custom) | [README](./src/auto-header/README.md) |
 | [vite-plus](./src/vite-plus) | Complete Vite+ toolchain with Oxc, Vitest, and VS Code integration | [README](./src/vite-plus/README.md) |
 | [package-auto-install](./src/package-auto-install) | Automatic package installation with corepack support for Node 24+ | [README](./src/package-auto-install/README.md) |
+| [pnpm-store](./src/pnpm-store) | Shared pnpm store on the same filesystem as your code — no stray .pnpm-store in repos | [README](./src/pnpm-store/README.md) |
 | [typescript-dev](./src/typescript-dev) | TypeScript/JavaScript dev with indexing and web tools (requires essential-dev) | [README](./src/typescript-dev/README.md) |
 | [angular-dev](./src/angular-dev) | Angular development environment with extensions and CLI autocompletion | [README](./src/angular-dev/README.md) |
 | [shell-history-per-project](./src/shell-history-per-project) | Per-project shell history persistence with multi-shell auto-detection | [README](./src/shell-history-per-project/README.md) |
