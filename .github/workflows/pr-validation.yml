@@ -69,7 +69,7 @@ jobs:
           - features: typescript-dev
             baseImage: mcr.microsoft.com/devcontainers/typescript-node:20
           - features: auto-header
-            baseImage: ubuntu:latest
+            baseImage: mcr.microsoft.com/devcontainers/base:ubuntu
           - features: peon-ping
             baseImage: ubuntu:latest
           - features: peon-ping

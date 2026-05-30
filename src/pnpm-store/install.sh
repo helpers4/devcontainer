@@ -62,9 +62,10 @@ fi
 if [ "${SET_GLOBAL_CONFIG}" = "true" ]; then
     NPMRC="${USER_HOME}/.npmrc"
     touch "${NPMRC}"
-    if grep -q '^store-dir=' "${NPMRC}" 2>/dev/null; then
-        grep -v '^store-dir=' "${NPMRC}" > "${NPMRC}.tmp" && mv "${NPMRC}.tmp" "${NPMRC}"
-    fi
+    # Strip any existing store-dir lines (grep -v exits 1 on empty output,
+    # so use || true to prevent set -e from aborting the mv).
+    { grep -v '^store-dir=' "${NPMRC}" 2>/dev/null || true; } > "${NPMRC}.tmp"
+    mv "${NPMRC}.tmp" "${NPMRC}"
     echo "store-dir=${STORE_DIR}" >> "${NPMRC}"
     if [ "${USERNAME}" != "root" ]; then
         chown "${USERNAME}:${USERNAME}" "${NPMRC}" 2>/dev/null || true
@@ -94,9 +95,12 @@ cat >> "${GUARD}" <<'EOF'
 
 echo "📦 pnpm-store: ensuring store at ${STORE_DIR}"
 
-mkdir -p "${STORE_DIR}" 2>/dev/null || true
-if [ ! -d "${STORE_DIR}" ]; then
-    echo "⚠️  pnpm-store: could not create ${STORE_DIR}"
+if ! mkdir -p "${STORE_DIR}" 2>/dev/null; then
+    echo "❌ pnpm-store: could not create store directory ${STORE_DIR}"
+    echo "   Check that the path is writable or that the bind-mount is in place."
+    if [ "${FAIL_IF_CROSS_DEVICE}" = "true" ]; then
+        exit 1
+    fi
 fi
 
 # Best-effort: take ownership of the store so installs don't hit permission errors.
@@ -106,7 +110,16 @@ fi
 
 store_dev=""
 if [ -d "${STORE_DIR}" ]; then
-    store_dev="$(stat -c '%d' "${STORE_DIR}" 2>/dev/null || echo '')"
+    store_dev="$(stat -c '%d' "${STORE_DIR}" 2>/dev/null || true)"
+fi
+
+if [ -z "${store_dev}" ]; then
+    echo "❌ pnpm-store: could not determine the filesystem of ${STORE_DIR}."
+    echo "   The directory may not exist or may not be readable."
+    if [ "${FAIL_IF_CROSS_DEVICE}" = "true" ]; then
+        exit 1
+    fi
+    echo "   (failIfCrossDevice=false → skipping filesystem check)"
 fi
 
 mismatch=0
@@ -141,7 +154,7 @@ if [ "${mismatch}" -ne 0 ]; then
         exit 1
     fi
     echo "   (failIfCrossDevice=false → continuing despite the mismatch)"
-else
+elif [ -n "${store_dev}" ]; then
     echo "✅ pnpm-store: store shares the repos' filesystem — hardlinks will work."
 fi
 
