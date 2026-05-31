@@ -16,7 +16,7 @@ set -euo pipefail
 
 STORE_DIR="${STOREDIR:-/workspaces/.pnpm-store}"
 SET_GLOBAL_CONFIG="${SETGLOBALCONFIG:-true}"
-FAIL_IF_CROSS_DEVICE="${FAILIFCROSSDEVICE:-true}"
+FAIL_IF_CROSS_DEVICE="${FAILIFCROSSDEVICE:-false}"
 CHECK_AGAINST="${CHECKAGAINST:-/workspaces}"
 USERNAME="${USERNAME:-"${_REMOTE_USER:-automatic}"}"
 
@@ -64,6 +64,9 @@ if [ "${SET_GLOBAL_CONFIG}" = "true" ]; then
     # Ensure the home directory exists — minimal base images (e.g. ubuntu:latest)
     # define the user in /etc/passwd but may not create their home directory.
     mkdir -p "${USER_HOME}"
+    if [ "${USERNAME}" != "root" ]; then
+        chown "${USERNAME}:${USERNAME}" "${USER_HOME}" 2>/dev/null || true
+    fi
     touch "${NPMRC}"
     # Strip any existing store-dir lines (grep -v exits 1 on empty output,
     # so use || true to prevent set -e from aborting the mv).
