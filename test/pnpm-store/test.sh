@@ -35,12 +35,11 @@ else
     exit 1
 fi
 
-# Test 3: running the guard succeeds and creates the store directory.
-# In real usage, the devcontainer.json bind-mount creates STORE_DIR on the host
-# before the container starts, so the guard's mkdir -p is idempotent.
-# In this isolated test container there is no bind-mount, so we simulate it:
-# create the directory with elevated permissions if the current user cannot write
-# to its parent (e.g. /workspaces is root-owned in the test image).
+# Test 3: running the guard succeeds and the store directory exists.
+# In real usage the named volume is mounted at STORE_DIR before the container
+# starts, so the guard only needs to take ownership of it. The features-test
+# harness mounts the volume too; pre-create the path defensively in case the
+# parent is root-owned and the current user cannot write to it.
 if ! mkdir -p "${STORE_DIR}" 2>/dev/null; then
     sudo mkdir -p "${STORE_DIR}" 2>/dev/null \
         && sudo chown "$(id -u):$(id -g)" "${STORE_DIR}" 2>/dev/null \
