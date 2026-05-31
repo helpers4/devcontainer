@@ -131,12 +131,14 @@ fi
 # Sanity check: warn (do not fail) if the store somehow lands on a different
 # filesystem than the repos — the built-in bind-mount should prevent this.
 mismatch=0
+compared=0
 if [ -n "${store_dev}" ] && [ -d "${CHECK_AGAINST}" ]; then
     for repo in "${CHECK_AGAINST}"/*; do
         [ -d "${repo}" ] || continue
         [ "${repo}" = "${STORE_DIR}" ] && continue
         repo_dev="$(stat -c '%d' "${repo}" 2>/dev/null || echo '')"
         [ -n "${repo_dev}" ] || continue
+        compared=1
         if [ "${repo_dev}" != "${store_dev}" ]; then
             echo "⚠️  pnpm-store: ${repo} (fs ${repo_dev}) is on a different filesystem than the store (fs ${store_dev})"
             mismatch=1
@@ -151,8 +153,10 @@ if [ "${mismatch}" -ne 0 ]; then
     echo "   so it may silently create a .pnpm-store inside each repo."
     echo "   The built-in bind-mount usually prevents this — check that"
     echo "   the .pnpm-store sibling folder exists on the host."
-elif [ -n "${store_dev}" ]; then
+elif [ "${compared}" -ne 0 ]; then
     echo "✅ pnpm-store: store shares the repos' filesystem — hardlinks will work."
+else
+    echo "ℹ️  pnpm-store: no repos found under ${CHECK_AGAINST} to compare — skipping filesystem check."
 fi
 
 # Confirm pnpm picked up the configured store, when available.
