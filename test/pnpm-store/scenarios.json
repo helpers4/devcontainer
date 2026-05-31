@@ -1,9 +1,0 @@
-{
-  "default": {
-    "features": {
-      "pnpm-store": {
-        "failIfCrossDevice": false
-      }
-    }
-  }
-}

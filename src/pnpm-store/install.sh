@@ -102,9 +102,17 @@ cat >> "${GUARD}" <<'EOF'
 echo "📦 pnpm-store: ensuring store at ${STORE_DIR}"
 
 if ! mkdir -p "${STORE_DIR}" 2>/dev/null; then
-    echo "❌ pnpm-store: could not create store directory ${STORE_DIR}"
-    echo "   Check that the path is writable or that the bind-mount is in place."
-    exit 1
+    # Fallback: try with sudo (needed when the parent directory is root-owned
+    # and the current user is non-root, e.g. in devcontainer features tests).
+    if command -v sudo >/dev/null 2>&1 \
+            && sudo mkdir -p "${STORE_DIR}" 2>/dev/null \
+            && sudo chown "$(id -u):$(id -g)" "${STORE_DIR}" 2>/dev/null; then
+        : # created via sudo
+    else
+        echo "❌ pnpm-store: could not create store directory ${STORE_DIR}"
+        echo "   Check that the path is writable or that the bind-mount is in place."
+        exit 1
+    fi
 fi
 
 # Take ownership of the store only when needed — recursive chown is expensive
