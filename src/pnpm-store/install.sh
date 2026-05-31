@@ -65,7 +65,8 @@ if [ "${SET_GLOBAL_CONFIG}" = "true" ]; then
     # define the user in /etc/passwd but may not create their home directory.
     mkdir -p "${USER_HOME}"
     if [ "${USERNAME}" != "root" ]; then
-        chown "${USERNAME}:${USERNAME}" "${USER_HOME}" 2>/dev/null || true
+        USER_GROUP="$(id -gn "${USERNAME}" 2>/dev/null || echo "${USERNAME}")"
+        chown "${USERNAME}:${USER_GROUP}" "${USER_HOME}" 2>/dev/null || true
     fi
     touch "${NPMRC}"
     # Strip any existing store-dir lines (grep -v exits 1 on empty output,
@@ -74,7 +75,7 @@ if [ "${SET_GLOBAL_CONFIG}" = "true" ]; then
     mv "${NPMRC}.tmp" "${NPMRC}"
     echo "store-dir=${STORE_DIR}" >> "${NPMRC}"
     if [ "${USERNAME}" != "root" ]; then
-        chown "${USERNAME}:${USERNAME}" "${NPMRC}" 2>/dev/null || true
+        chown "${USERNAME}:${USER_GROUP}" "${NPMRC}" 2>/dev/null || true
     fi
     echo "  ✅ Wrote store-dir to ${NPMRC}"
 fi
