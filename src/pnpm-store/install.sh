@@ -61,6 +61,9 @@ fi
 #    Done at build time so it does not depend on pnpm being runnable yet.
 if [ "${SET_GLOBAL_CONFIG}" = "true" ]; then
     NPMRC="${USER_HOME}/.npmrc"
+    # Ensure the home directory exists — minimal base images (e.g. ubuntu:latest)
+    # define the user in /etc/passwd but may not create their home directory.
+    mkdir -p "${USER_HOME}"
     touch "${NPMRC}"
     # Strip any existing store-dir lines (grep -v exits 1 on empty output,
     # so use || true to prevent set -e from aborting the mv).
