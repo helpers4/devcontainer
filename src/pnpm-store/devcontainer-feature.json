@@ -1,32 +1,17 @@
 {
   "id": "pnpm-store",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "name": "pnpm Store (workspace-aware)",
   "description": "Configures a shared pnpm content-addressable store on the SAME filesystem as your code, so pnpm's hardlinks work and no stray .pnpm-store folders pollute your repos. A safer alternative to Docker-volume-based pnpm store sharing, which breaks hardlinking in bind-mounted workspaces.",
   "documentationURL": "https://github.com/helpers4/devcontainer/tree/main/src/pnpm-store",
-  "options": {
-    "storeDir": {
-      "type": "string",
-      "default": "/workspaces/.pnpm-store",
-      "description": "Absolute path of the pnpm store. Must live on the SAME filesystem as your repos (e.g. a host folder bind-mounted next to them). Defaults to /workspaces/.pnpm-store."
-    },
-    "setGlobalConfig": {
-      "type": "boolean",
-      "default": true,
-      "description": "Write 'store-dir=<storeDir>' into the remote user's ~/.npmrc so pnpm uses the shared store globally."
-    },
-    "failIfCrossDevice": {
-      "type": "boolean",
-      "default": false,
-      "description": "Fail container creation if the store is on a different filesystem than one of the repos. Prevents pnpm from silently creating a .pnpm-store inside each repo. Defaults to false (warn only); set to true for strict enforcement once the bind-mount is in place."
-    },
-    "checkAgainst": {
-      "type": "string",
-      "default": "/workspaces",
-      "description": "Directory whose immediate subdirectories are checked to be on the same filesystem as the store. Set to a single repo path to narrow the check."
-    }
-  },
   "postCreateCommand": "/usr/local/bin/devcontainer-pnpm-store",
+  "mounts": [
+    {
+      "source": "${localWorkspaceFolder}/../.pnpm-store",
+      "target": "/workspaces/.pnpm-store",
+      "type": "bind"
+    }
+  ],
   "installsAfter": [
     "ghcr.io/devcontainers/features/common-utils",
     "ghcr.io/devcontainers/features/node"
