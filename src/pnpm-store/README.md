@@ -14,7 +14,7 @@ filesystems, pnpm silently abandons the shared store and recreates a
 `.pnpm-store` **inside each project**.
 
 This feature instead points the store at a path on the **same filesystem** as
-the repos and fails fast (with a clear message) if that invariant is broken.
+the repos and warns (with a clear message) if that invariant is ever broken.
 
 ## Example Usage
 
@@ -22,36 +22,25 @@ the repos and fails fast (with a clear message) if that invariant is broken.
 {
   "features": {
     "ghcr.io/helpers4/devcontainer/pnpm-store:1": {}
-  },
-  // Required: bind-mount a host folder, sibling of your repos, onto the store.
-  "mounts": [
-    "source=${localWorkspaceFolder}/../.pnpm-store,target=/workspaces/.pnpm-store,type=bind,consistency=cached"
-  ]
+  }
 }
 ```
 
-The bind-mount source is a sibling of your repos on the host, so it lands on the
-**same filesystem** as the bind-mounted repos inside the container — hardlinks
-work, and the store is shared across every repo **and** across rebuilds.
-
-## Options
-
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `storeDir` | string | `/workspaces/.pnpm-store` | Absolute path of the pnpm store. Must live on the same filesystem as your repos. |
-| `setGlobalConfig` | boolean | `true` | Write `store-dir=<storeDir>` into the remote user's `~/.npmrc`. |
-| `failIfCrossDevice` | boolean | `false` | Fail container creation if the store is on a different filesystem than a repo. Default is `false` (warn only); set to `true` for strict enforcement once the bind-mount is in place. |
-| `checkAgainst` | string | `/workspaces` | Directory whose immediate subdirectories are checked against the store's filesystem. |
+The feature is **zero-config**: it declares its own bind-mount, binding
+`${localWorkspaceFolder}/../.pnpm-store` (a sibling of your repos on the host)
+onto `/workspaces/.pnpm-store`. That lands on the **same filesystem** as the
+bind-mounted repos inside the container, so hardlinks work and the store is
+shared across every repo **and** across rebuilds — no manual `mounts` entry
+and no options required.
 
 ## How it works
 
-1. **At build time** (`install.sh`): writes `store-dir=<storeDir>` into the
-   remote user's `~/.npmrc` so pnpm uses the shared store globally.
+1. **At build time** (`install.sh`): writes `store-dir=/workspaces/.pnpm-store`
+   into the remote user's `~/.npmrc` so pnpm uses the shared store globally.
 2. **At container creation** (`postCreateCommand`): creates and chowns the
    store directory, then compares its filesystem (`stat -c %d`) against each
-   subdirectory of `checkAgainst`. If any repo is on a different filesystem it
-   prints the exact bind-mount fix and, when `failIfCrossDevice` is `true`,
-   aborts before pnpm has a chance to pollute the repos.
+   repo under `/workspaces`. If any repo is on a different filesystem it warns
+   so you can investigate the host-side `.pnpm-store` bind-mount.
 
 ## Ensuring pnpm is installed
 

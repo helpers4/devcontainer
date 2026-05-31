@@ -9,15 +9,16 @@
 # filesystem boundary. When the store lives on a different filesystem than the
 # repos (e.g. a Docker named volume vs. bind-mounted repos), pnpm silently
 # abandons the shared store and recreates a .pnpm-store inside the project.
-# This feature points the store at a path on the same filesystem and guards
-# against the cross-device situation.
+#
+# This feature is zero-config: it bind-mounts ${localWorkspaceFolder}/../.pnpm-store
+# onto /workspaces/.pnpm-store (declared in devcontainer-feature.json) so the
+# store always shares the repos' filesystem, and points pnpm at it via ~/.npmrc.
 
 set -euo pipefail
 
-STORE_DIR="${STOREDIR:-/workspaces/.pnpm-store}"
-SET_GLOBAL_CONFIG="${SETGLOBALCONFIG:-true}"
-FAIL_IF_CROSS_DEVICE="${FAILIFCROSSDEVICE:-false}"
-CHECK_AGAINST="${CHECKAGAINST:-/workspaces}"
+# Fixed paths — kept in sync with the "mounts" target in devcontainer-feature.json.
+STORE_DIR="/workspaces/.pnpm-store"
+CHECK_AGAINST="/workspaces"
 USERNAME="${USERNAME:-"${_REMOTE_USER:-automatic}"}"
 
 if [ "$(id -u)" -ne 0 ]; then
@@ -45,9 +46,6 @@ fi
 echo "🔧 Configuring pnpm-store feature..."
 echo "  Username:          ${USERNAME}"
 echo "  Store directory:   ${STORE_DIR}"
-echo "  Set global config: ${SET_GLOBAL_CONFIG}"
-echo "  Fail cross-device: ${FAIL_IF_CROSS_DEVICE}"
-echo "  Check against:     ${CHECK_AGAINST}"
 
 # Resolve the user's home directory
 if [ "${USERNAME}" = "root" ]; then
@@ -59,26 +57,24 @@ fi
 
 # 1. Persist store-dir into the user's ~/.npmrc (read by pnpm).
 #    Done at build time so it does not depend on pnpm being runnable yet.
-if [ "${SET_GLOBAL_CONFIG}" = "true" ]; then
-    NPMRC="${USER_HOME}/.npmrc"
-    # Ensure the home directory exists — minimal base images (e.g. ubuntu:latest)
-    # define the user in /etc/passwd but may not create their home directory.
-    mkdir -p "${USER_HOME}"
-    if [ "${USERNAME}" != "root" ]; then
-        USER_GROUP="$(id -gn "${USERNAME}" 2>/dev/null || echo "${USERNAME}")"
-        chown "${USERNAME}:${USER_GROUP}" "${USER_HOME}" 2>/dev/null || true
-    fi
-    touch "${NPMRC}"
-    # Strip any existing store-dir lines (grep -v exits 1 on empty output,
-    # so use || true to prevent set -e from aborting the mv).
-    { grep -v '^store-dir=' "${NPMRC}" 2>/dev/null || true; } > "${NPMRC}.tmp"
-    mv "${NPMRC}.tmp" "${NPMRC}"
-    echo "store-dir=${STORE_DIR}" >> "${NPMRC}"
-    if [ "${USERNAME}" != "root" ]; then
-        chown "${USERNAME}:${USER_GROUP}" "${NPMRC}" 2>/dev/null || true
-    fi
-    echo "  ✅ Wrote store-dir to ${NPMRC}"
+NPMRC="${USER_HOME}/.npmrc"
+# Ensure the home directory exists — minimal base images (e.g. ubuntu:latest)
+# define the user in /etc/passwd but may not create their home directory.
+mkdir -p "${USER_HOME}"
+if [ "${USERNAME}" != "root" ]; then
+    USER_GROUP="$(id -gn "${USERNAME}" 2>/dev/null || echo "${USERNAME}")"
+    chown "${USERNAME}:${USER_GROUP}" "${USER_HOME}" 2>/dev/null || true
 fi
+touch "${NPMRC}"
+# Strip any existing store-dir lines (grep -v exits 1 on empty output,
+# so use || true to prevent set -e from aborting the mv).
+{ grep -v '^store-dir=' "${NPMRC}" 2>/dev/null || true; } > "${NPMRC}.tmp"
+mv "${NPMRC}.tmp" "${NPMRC}"
+echo "store-dir=${STORE_DIR}" >> "${NPMRC}"
+if [ "${USERNAME}" != "root" ]; then
+    chown "${USERNAME}:${USER_GROUP}" "${NPMRC}" 2>/dev/null || true
+fi
+echo "  ✅ Wrote store-dir to ${NPMRC}"
 
 # 2. Install the postCreate guard script. It runs once the bind mounts are in
 #    place, so it can create/own the store and verify it shares the repos'
@@ -97,7 +93,6 @@ set -euo pipefail
 HEADER
     printf 'STORE_DIR=%q\n' "${STORE_DIR}"
     printf 'CHECK_AGAINST=%q\n' "${CHECK_AGAINST}"
-    printf 'FAIL_IF_CROSS_DEVICE=%q\n' "${FAIL_IF_CROSS_DEVICE}"
 } > "${GUARD}"
 
 # Body (literal — not expanded at install time).
@@ -133,20 +128,12 @@ if [ -d "${STORE_DIR}" ]; then
     store_dev="$(stat -c '%d' "${STORE_DIR}" 2>/dev/null || true)"
 fi
 
-if [ -z "${store_dev}" ]; then
-    echo "❌ pnpm-store: could not determine the filesystem of ${STORE_DIR}."
-    echo "   The directory may not exist or may not be readable."
-    if [ "${FAIL_IF_CROSS_DEVICE}" = "true" ]; then
-        exit 1
-    fi
-    echo "   (failIfCrossDevice=false → skipping filesystem check)"
-fi
-
+# Sanity check: warn (do not fail) if the store somehow lands on a different
+# filesystem than the repos — the built-in bind-mount should prevent this.
 mismatch=0
 if [ -n "${store_dev}" ] && [ -d "${CHECK_AGAINST}" ]; then
     for repo in "${CHECK_AGAINST}"/*; do
         [ -d "${repo}" ] || continue
-        # Skip the store directory itself.
         [ "${repo}" = "${STORE_DIR}" ] && continue
         repo_dev="$(stat -c '%d' "${repo}" 2>/dev/null || echo '')"
         [ -n "${repo_dev}" ] || continue
@@ -159,21 +146,11 @@ fi
 
 if [ "${mismatch}" -ne 0 ]; then
     echo ""
-    echo "❌ pnpm-store: the pnpm store is on a different filesystem than one or more repos."
+    echo "⚠️  pnpm-store: the store is on a different filesystem than one or more repos."
     echo "   pnpm hardlinks packages into node_modules and cannot cross filesystems,"
-    echo "   so it would silently create a .pnpm-store inside each repo."
-    echo ""
-    echo "   Fix: bind-mount a host folder that is a sibling of your repos onto"
-    echo "        ${STORE_DIR}, e.g. in devcontainer.json:"
-    echo ""
-    echo "        \"mounts\": ["
-    echo "          \"source=\${localWorkspaceFolder}/../.pnpm-store,target=${STORE_DIR},type=bind,consistency=cached\""
-    echo "        ]"
-    echo ""
-    if [ "${FAIL_IF_CROSS_DEVICE}" = "true" ]; then
-        exit 1
-    fi
-    echo "   (failIfCrossDevice=false → continuing despite the mismatch)"
+    echo "   so it may silently create a .pnpm-store inside each repo."
+    echo "   The built-in bind-mount usually prevents this — check that"
+    echo "   the .pnpm-store sibling folder exists on the host."
 elif [ -n "${store_dev}" ]; then
     echo "✅ pnpm-store: store shares the repos' filesystem — hardlinks will work."
 fi
