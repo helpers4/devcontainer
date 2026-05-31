@@ -17,8 +17,8 @@
     },
     "failIfCrossDevice": {
       "type": "boolean",
-      "default": true,
-      "description": "Fail container creation if the store is on a different filesystem than one of the repos. Prevents pnpm from silently creating a .pnpm-store inside each repo."
+      "default": false,
+      "description": "Fail container creation if the store is on a different filesystem than one of the repos. Prevents pnpm from silently creating a .pnpm-store inside each repo. Defaults to false (warn only); set to true for strict enforcement once the bind-mount is in place."
     },
     "checkAgainst": {
       "type": "string",

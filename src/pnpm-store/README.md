@@ -40,7 +40,7 @@ work, and the store is shared across every repo **and** across rebuilds.
 |--------|------|---------|-------------|
 | `storeDir` | string | `/workspaces/.pnpm-store` | Absolute path of the pnpm store. Must live on the same filesystem as your repos. |
 | `setGlobalConfig` | boolean | `true` | Write `store-dir=<storeDir>` into the remote user's `~/.npmrc`. |
-| `failIfCrossDevice` | boolean | `true` | Fail container creation if the store is on a different filesystem than a repo. |
+| `failIfCrossDevice` | boolean | `false` | Fail container creation if the store is on a different filesystem than a repo. Default is `false` (warn only); set to `true` for strict enforcement once the bind-mount is in place. |
 | `checkAgainst` | string | `/workspaces` | Directory whose immediate subdirectories are checked against the store's filesystem. |
 
 ## How it works
