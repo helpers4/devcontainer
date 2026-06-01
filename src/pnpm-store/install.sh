@@ -76,6 +76,18 @@ if [ "${USERNAME}" != "root" ]; then
 fi
 echo "  ✅ Wrote store-dir to ${NPMRC}"
 
+# Create STORE_DIR during the image build so pnpm can use the configured path
+# immediately. Without this, any pnpm invocation in a later feature (e.g.
+# vite-plus) fails because /workspaces is not mounted at Docker build time and
+# pnpm cannot create the store directory as a non-root user.
+# The named volume declared in devcontainer-feature.json shadows this directory
+# at container start — that's intentional.
+mkdir -p "${STORE_DIR}"
+if [ "${USERNAME}" != "root" ]; then
+    chown "${USERNAME}:${USER_GROUP}" "${STORE_DIR}" 2>/dev/null || true
+fi
+echo "  ✅ Created store directory at ${STORE_DIR}"
+
 # 2. Install the postCreate guard script. It runs once the volume is mounted,
 #    so it can take ownership of the store and confirm pnpm uses it.
 GUARD="/usr/local/bin/devcontainer-pnpm-store"
