@@ -82,7 +82,7 @@ echo "  ✅ Wrote store-dir to ${NPMRC}"
 # pnpm cannot create the store directory as a non-root user.
 # The named volume declared in devcontainer-feature.json shadows this directory
 # at container start — that's intentional.
-mkdir -p "${STORE_DIR}"
+mkdir -p "${STORE_DIR}" || true
 if [ "${USERNAME}" != "root" ]; then
     chown "${USERNAME}:${USER_GROUP}" "${STORE_DIR}" 2>/dev/null || true
 fi
@@ -121,9 +121,17 @@ fi
 # Named volumes are created root-owned; hand the store to the current user so
 # pnpm can write to it. Only chown when needed (recursive chown is expensive on
 # a populated store shared across rebuilds).
-store_owner="$(stat -c '%u' "${STORE_DIR}" 2>/dev/null || echo '')"
-if [ -n "${store_owner}" ] && [ "${store_owner}" != "$(id -u)" ] && command -v sudo >/dev/null 2>&1; then
-    sudo chown -R "$(id -u):$(id -g)" "${STORE_DIR}" 2>/dev/null || true
+# stat failure (NFS root-squash, overlay FS) is treated as "unknown" — attempt
+# chown anyway rather than silently skipping it.
+store_owner="$(stat -c '%u' "${STORE_DIR}" 2>/dev/null || echo 'unknown')"
+if [ "${store_owner}" != "$(id -u)" ]; then
+    if command -v sudo >/dev/null 2>&1; then
+        if ! sudo chown -R "$(id -u):$(id -g)" "${STORE_DIR}"; then
+            echo "⚠️  pnpm-store: chown failed — pnpm may not be able to write to the store"
+        fi
+    else
+        echo "⚠️  pnpm-store: store is owned by uid ${store_owner} and sudo is unavailable; pnpm writes will fail (EACCES)"
+    fi
 fi
 
 # Confirm pnpm picked up the configured store, when available.
