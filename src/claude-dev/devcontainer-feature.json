@@ -1,0 +1,26 @@
+{
+  "id": "claude-dev",
+  "version": "1.0.0",
+  "name": "Claude Code Development Environment",
+  "description": "Installs the Claude Code IDE extension (anthropic.claude-code) for VS Code and Cursor. Provides AI-assisted coding powered by Claude directly in the editor.",
+  "documentationURL": "https://github.com/helpers4/devcontainer/tree/main/src/claude-dev",
+  "customizations": {
+    "vscode": {
+      // Works for both VS Code and Cursor (same extension registry).
+      "extensions": [
+        "anthropic.claude-code"
+      ]
+    }
+    // JetBrains (IntelliJ, WebStorm, …): add once the plugin xmlId is confirmed.
+    // The marketplace page is https://plugins.jetbrains.com/plugin/27310 (vendor: anthropic).
+    // "jetbrains": {
+    //   "plugins": ["<xmlId-to-be-confirmed>"]
+    // }
+    //
+    // Zed: no standard devcontainer customization format yet.
+    // Extensions are managed through Zed's own extension registry and ~/.config/zed/settings.json.
+  },
+  "installsAfter": [
+    "ghcr.io/devcontainers/features/common-utils"
+  ]
+}
