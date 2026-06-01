@@ -2,6 +2,7 @@
   "conventionalCommits.scopes": [
     "angular-dev",
     "auto-header",
+    "claude-dev",
     "deps",
     "deps-dev",
     "CI-CD",

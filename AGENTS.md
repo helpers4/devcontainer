@@ -16,7 +16,7 @@ Follow [Conventional Commits](https://www.conventionalcommits.org/) with a gitmo
 
 **Format:** `<type>(<scope>): <emoji> <description>`
 
-**Scopes:** defined in `.vscode/settings.json` (`conventionalCommits.scopes`)
+**Scopes:** defined in `.vscode/settings.json` (`conventionalCommits.scopes`) — **add the new feature name here when creating a feature**
 
 | Type | Primary | Alternatives (gitmoji.dev) | When to use |
 |------|---------|---------------------------|-------------|
@@ -117,7 +117,8 @@ devcontainer features test .                             # Test all
 | angular-dev | 1.0.2 | Angular dev, port 4200 forwarding | — |
 | vite-plus | 1.0.3 | Vite+ unified CLI (vp), Oxlint/Oxfmt, Vitest, optional system-wide symlink | — |
 | package-auto-install | — | Auto-detect and install packages | — |
-| pnpm-store | 1.0.0 | Shared pnpm store on same filesystem as code (no stray .pnpm-store) | — |
+| claude-dev | 1.0.0 | Claude Code IDE extension (`anthropic.claude-code`) for VS Code and Cursor | — |
+| pnpm-store | 1.0.3 | Shared pnpm store via Docker named volume (no stray .pnpm-store) | — |
 | auto-header | — | LGPL-3.0 license headers | — |
 | git-absorb | 1.0.2 | git-absorb from GitHub releases | — |
 | dotfiles-sync | 1.0.2 | Sync local Git/SSH/GPG/npm/gh/cargo/pip/yarn/pnpm config — opt-in cloud creds (AWS, kube, Docker, gh OAuth) — macOS, Linux, WSL, Codespaces | — |
@@ -144,9 +145,10 @@ devcontainer features test .                             # Test all
 3. Create `src/<feature-name>/README.md`
 4. Create `test/<feature-name>/test.sh`
 5. Update main `README.md`
-6. **Update `.github/workflows/pr-validation.yml`** — Add feature to test matrix with appropriate base image
-7. **Update `.github/workflows/test.yml`** — Add feature to test matrix
-8. Update this `AGENTS.md` (scopes + features table)
+6. **Update `.vscode/settings.json`** — Add feature name to `conventionalCommits.scopes` (required for PR CI to pass)
+7. **Update `.github/workflows/pr-validation.yml`** — Add feature to test matrix with appropriate base image
+8. **Update `.github/workflows/test.yml`** — Add feature to test matrix
+9. Update this `AGENTS.md` (scopes + features table)
 
 ### Usage
 

@@ -8,6 +8,7 @@ Commit messages for the **devcontainer** repository must use Conventional Commit
 **Allowed scopes** (pick one, or omit the scope entirely):
 - `angular-dev`
 - `auto-header`
+- `claude-dev`
 - `deps`
 - `deps-dev`
 - `CI-CD`
