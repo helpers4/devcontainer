@@ -5,6 +5,11 @@
 
 set -euo pipefail
 
+# shellcheck source=/dev/null
+. /usr/local/share/helpers4/common.sh
+
+h4_ensure_packages jq
+
 echo "🔧 Setting up package-auto-install devcontainer feature..."
 
 # Get options

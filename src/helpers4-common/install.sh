@@ -3,7 +3,7 @@
 # Copyright (C) 2025 baxyz
 # SPDX-License-Identifier: LGPL-3.0-or-later
 #
-# helpers4-common: install jq and the shared helpers4 library.
+# helpers4-common: install the shared helpers4 library.
 # All other helpers4 features depend on this feature.
 
 set -euo pipefail
@@ -13,21 +13,9 @@ if [ "$(id -u)" -ne 0 ]; then
     exit 1
 fi
 
-export DEBIAN_FRONTEND=noninteractive
-
 echo "🔧 Installing helpers4-common..."
 
-# ── 1. Install jq ─────────────────────────────────────────────────────────
-if ! command -v jq >/dev/null 2>&1; then
-    echo "  📦 Installing jq..."
-    if [ "$(find /var/lib/apt/lists -maxdepth 1 \( -name '*.lz4' -o -name '*.gz' \) 2>/dev/null | wc -l)" = "0" ]; then
-        apt-get update -y -q
-    fi
-    apt-get install -y -q --no-install-recommends jq
-fi
-echo "  ✅ jq $(jq --version)"
-
-# ── 2. Install common.sh ───────────────────────────────────────────────────
+# ── Install common.sh ──────────────────────────────────────────────────────
 COMMON_DIR="/usr/local/share/helpers4"
 COMMON_SH="${COMMON_DIR}/common.sh"
 mkdir -p "${COMMON_DIR}"

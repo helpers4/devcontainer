@@ -10,9 +10,14 @@
 # container, so every workspace opened in the container picks them up
 # automatically — no need for users to edit .code-workspace or .vscode/.
 
-set -e
+set -euo pipefail
+
+# shellcheck source=/dev/null
+. /usr/local/share/helpers4/common.sh
 
 echo "🔧 Setting up auto-header devcontainer feature..."
+
+h4_ensure_packages jq
 
 # ---------------------------------------------------------------------------
 # Read feature options (devcontainer-feature.json)
