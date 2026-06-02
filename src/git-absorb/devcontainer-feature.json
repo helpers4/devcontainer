@@ -1,5 +1,5 @@
 {
-  "version": "1.0.4",
+  "version": "1.0.5",
   "id": "git-absorb",
   "name": "git-absorb",
   "description": "Installs git-absorb, a tool to automatically absorb staged changes into their logical commits. Like 'git commit --fixup' but automatic.",
@@ -13,10 +13,8 @@
       "description": "Version of git-absorb to install (latest, or specific version like 0.6.11)"
     }
   },
-  "dependsOn": {
-    "ghcr.io/helpers4/devcontainer/helpers4-common:1": {}
-  },
   "installsAfter": [
+    "ghcr.io/helpers4/devcontainer/helpers4-common:1",
     "ghcr.io/devcontainers/features/common-utils"
   ]
 }
