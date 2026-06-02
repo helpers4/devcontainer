@@ -26,37 +26,37 @@ jobs:
             baseImage: mcr.microsoft.com/devcontainers/base:ubuntu
 
           # shell-history-per-project - works on any base image
-          - features: shell-history-per-project
+          - features: helpers4-common,shell-history-per-project
             baseImage: debian:latest
-          - features: shell-history-per-project
+          - features: helpers4-common,shell-history-per-project
             baseImage: ubuntu:latest
-          - features: shell-history-per-project
+          - features: helpers4-common,shell-history-per-project
             baseImage: mcr.microsoft.com/devcontainers/base:ubuntu
 
           # git-absorb - works on any base image
-          - features: git-absorb
+          - features: helpers4-common,git-absorb
             baseImage: debian:latest
-          - features: git-absorb
+          - features: helpers4-common,git-absorb
             baseImage: ubuntu:latest
-          - features: git-absorb
+          - features: helpers4-common,git-absorb
             baseImage: mcr.microsoft.com/devcontainers/base:ubuntu
 
           # angular-dev - requires Node.js
-          - features: angular-dev
+          - features: helpers4-common,angular-dev
             baseImage: mcr.microsoft.com/devcontainers/javascript-node:20
 
           # package-auto-install - requires Node.js
-          - features: package-auto-install
+          - features: helpers4-common,package-auto-install
             baseImage: mcr.microsoft.com/devcontainers/javascript-node:20
 
           # pnpm-store - config only; test with and without pnpm in the image
-          - features: pnpm-store
+          - features: helpers4-common,pnpm-store
             baseImage: mcr.microsoft.com/devcontainers/typescript-node:20
-          - features: pnpm-store
+          - features: helpers4-common,pnpm-store
             baseImage: ubuntu:latest
 
           # vite-plus - requires Node.js
-          - features: vite-plus
+          - features: helpers4-common,vite-plus
             baseImage: mcr.microsoft.com/devcontainers/typescript-node:20
 
           # typescript-dev - requires VS Code (extensions only, no install.sh logic)
@@ -64,14 +64,14 @@ jobs:
           - features: typescript-dev
             baseImage: mcr.microsoft.com/devcontainers/typescript-node:20
 
-          # auto-header - requires jq (provided by common-utils / devcontainers base images)
-          - features: auto-header
+          # auto-header - requires jq (installed by helpers4-common)
+          - features: helpers4-common,auto-header
             baseImage: mcr.microsoft.com/devcontainers/base:ubuntu
 
           # peon-ping - works on any base image with curl and python3
-          - features: peon-ping
+          - features: helpers4-common,peon-ping
             baseImage: ubuntu:latest
-          - features: peon-ping
+          - features: helpers4-common,peon-ping
             baseImage: mcr.microsoft.com/devcontainers/base:ubuntu
 
           # github-dev - requires common-utils (curl, ca-certificates)

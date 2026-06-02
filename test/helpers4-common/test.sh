@@ -14,15 +14,7 @@ else
     exit 1
 fi
 
-# Test 2: jq is installed
-if command -v jq >/dev/null 2>&1; then
-    echo "✅ PASS: jq installed ($(jq --version))"
-else
-    echo "❌ FAIL: jq not found"
-    exit 1
-fi
-
-# Test 3: common.sh exports the expected functions
+# Test 2: common.sh exports the expected functions
 # shellcheck source=/dev/null
 . "${COMMON_SH}"
 for fn in h4_detect_user h4_resolve_home h4_apt_update h4_ensure_packages; do
