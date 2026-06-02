@@ -1,6 +1,6 @@
 {
   "id": "peon-ping",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "name": "Peon Ping — AI Agent Sound Notifications",
   "description": "Installs peon-ping and the Peon Pet VS Code extension for game character voice notifications when your AI coding agent finishes or needs permission. Supports VS Code/Copilot, Cursor, and Codex with audio relay for devcontainers.",
   "documentationURL": "https://github.com/helpers4/devcontainer/tree/main/src/peon-ping",
@@ -38,10 +38,8 @@
       }
     }
   },
-  "dependsOn": {
-    "ghcr.io/helpers4/devcontainer/helpers4-common:1": {}
-  },
   "installsAfter": [
+    "ghcr.io/helpers4/devcontainer/helpers4-common:1",
     "ghcr.io/devcontainers/features/common-utils"
   ]
 }
