@@ -1,6 +1,6 @@
 {
   "id": "typescript-dev",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "name": "TypeScript Development Environment",
   "description": "TypeScript/JavaScript development setup with indexing, import management, HTML/CSS intelligence, and web tools. Built on top of essential-dev for core Git/editor enhancements, with Copilot and PR tooling provided by github-dev.",
   "documentationURL": "https://github.com/helpers4/devcontainer/tree/main/src/typescript-dev",
@@ -10,8 +10,11 @@
   "customizations": {
     "vscode": {
       "extensions": [
-        // Core TypeScript & JavaScript
-        "ms-vscode.vscode-typescript-next",
+        // TypeScript & JavaScript
+        // Native TS language server (Go port, TS 7 preview) — replaces the JS nightly.
+        // ms-vscode.vscode-typescript-next is intentionally omitted: the two conflict
+        // and the native server supersedes the nightly.
+        "TypeScriptTeam.native-preview",
         "guilhermetheodoro.typescript-indexing",
         "christian-kohler.npm-intellisense",
         "christian-kohler.path-intellisense",
