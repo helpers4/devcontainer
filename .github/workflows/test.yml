@@ -11,6 +11,12 @@ jobs:
     strategy:
       matrix:
         include:
+          # helpers4-common - must work on any base image (it's the bootstrap)
+          - features: helpers4-common
+            baseImage: debian:latest
+          - features: helpers4-common
+            baseImage: ubuntu:latest
+
           # essential-dev - works on any base image
           - features: essential-dev
             baseImage: debian:latest

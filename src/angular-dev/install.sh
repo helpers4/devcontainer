@@ -6,7 +6,10 @@
 #
 # Configures Angular development environment with CLI autocompletion
 
-set -e
+set -euo pipefail
+
+# shellcheck source=/dev/null
+. /usr/local/share/helpers4/common.sh
 
 # Feature options
 INSTALL_CLI="${INSTALLCLI:-false}"
@@ -29,22 +32,17 @@ if [ "$INSTALL_CLI" = "true" ]; then
     fi
 fi
 
-# Detect user home directory
-_REMOTE_USER="${_REMOTE_USER:-"${USERNAME:-"${USER:-"$(whoami 2>/dev/null || echo root)"}"}"}"
-if [ "$_REMOTE_USER" = "root" ]; then
-    _REMOTE_USER_HOME="/root"
-else
-    _REMOTE_USER_HOME="/home/$_REMOTE_USER"
-fi
+h4_detect_user
+h4_resolve_home
 
 # Setup Angular CLI autocompletion for zsh
 setup_zsh_completion() {
-    local zshrc="${_REMOTE_USER_HOME}/.zshrc"
-    
+    local zshrc="${USER_HOME}/.zshrc"
+
     if [ -f "$zshrc" ] || command -v zsh >/dev/null 2>&1; then
         # Create .zshrc if it doesn't exist
         touch "$zshrc"
-        
+
         # Check if autocompletion is already configured
         if ! grep -q "ng completion" "$zshrc" 2>/dev/null; then
             echo "" >> "$zshrc"
@@ -61,12 +59,12 @@ setup_zsh_completion() {
 
 # Setup Angular CLI autocompletion for bash
 setup_bash_completion() {
-    local bashrc="${_REMOTE_USER_HOME}/.bashrc"
-    
+    local bashrc="${USER_HOME}/.bashrc"
+
     if [ -f "$bashrc" ] || command -v bash >/dev/null 2>&1; then
         # Create .bashrc if it doesn't exist
         touch "$bashrc"
-        
+
         # Check if autocompletion is already configured
         if ! grep -q "ng completion" "$bashrc" 2>/dev/null; then
             echo "" >> "$bashrc"

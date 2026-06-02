@@ -1,9 +1,11 @@
 {
   "id": "essential-dev",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "name": "Essential Development Environment",
   "description": "Core development environment with Git visualization, Markdown support, and essential editor enhancements.",
   "documentationURL": "https://github.com/helpers4/devcontainer/tree/main/src/essential-dev",
+  "licenseURL": "https://github.com/helpers4/devcontainer/blob/main/LICENSE",
+  "keywords": ["helpers4", "git", "editor", "markdown", "essential"],
   "customizations": {
     "vscode": {
       "extensions": [

@@ -16,7 +16,7 @@ Follow [Conventional Commits](https://www.conventionalcommits.org/) with a gitmo
 
 **Format:** `<type>(<scope>): <emoji> <description>`
 
-**Scopes:** defined in `.vscode/settings.json` (`conventionalCommits.scopes`) — **add the new feature name here when creating a feature**
+**Scopes:** defined in `.vscode/settings.json` (`conventionalCommits.scopes`) — **add the new feature name here when creating a feature** (forgetting this breaks PR CI)
 
 | Type | Primary | Alternatives (gitmoji.dev) | When to use |
 |------|---------|---------------------------|-------------|
@@ -51,15 +51,16 @@ Follow [Conventional Commits](https://www.conventionalcommits.org/) with a gitmo
 ```
 devcontainer/
 ├── src/                              # Feature source code
-│   ├── essential-dev/                # Core dev environment (Git, Copilot, Markdown)
-│   ├── typescript-dev/               # TypeScript/JS dev (requires essential-dev)
+│   ├── helpers4-common/              # Bootstrap: jq + common.sh (all features depend on this)
+│   ├── essential-dev/                # Core dev environment (Git, Markdown, editor config)
+│   ├── typescript-dev/               # TypeScript/JS dev (dependsOn essential-dev)
 │   ├── angular-dev/                  # Angular dev with port forwarding
 │   ├── vite-plus/                    # Vite development setup
 │   ├── package-auto-install/         # Automatic package installation
-│   ├── pnpm-store/                   # Shared pnpm store on same filesystem as code
+│   ├── pnpm-store/                   # Shared pnpm store via Docker named volume
 │   ├── auto-header/                  # Automatic LGPL-3.0 file headers
 │   ├── git-absorb/                   # git-absorb tool installation
-│   ├── peon-ping/                    # Health check endpoint
+│   ├── peon-ping/                    # AI agent sound notifications
 │   └── shell-history-per-project/    # Persistent shell history per project
 ├── test/                             # One test.sh per feature
 ├── .github/
@@ -117,8 +118,9 @@ devcontainer features test .                             # Test all
 | angular-dev | 1.0.2 | Angular dev, port 4200 forwarding | — |
 | vite-plus | 1.0.3 | Vite+ unified CLI (vp), Oxlint/Oxfmt, Vitest, optional system-wide symlink | — |
 | package-auto-install | — | Auto-detect and install packages | — |
-| claude-dev | 1.0.0 | Claude Code IDE extension (`anthropic.claude-code`) for VS Code and Cursor | — |
-| pnpm-store | 1.0.3 | Shared pnpm store via Docker named volume (no stray .pnpm-store) | — |
+| helpers4-common | 1.0.0 | Bootstrap: installs jq + `/usr/local/share/helpers4/common.sh` (user detection, home resolution, apt helpers). All helpers4 features `dependsOn` this. | — |
+| claude-dev | 1.0.1 | Claude Code IDE extension (`anthropic.claude-code`) for VS Code and Cursor | — |
+| pnpm-store | 1.0.4 | Shared pnpm store via Docker named volume `helpers4-pnpm-store-${devcontainerId}` (no stray .pnpm-store) | helpers4-common |
 | auto-header | — | LGPL-3.0 license headers | — |
 | git-absorb | 1.0.2 | git-absorb from GitHub releases | — |
 | dotfiles-sync | 1.0.2 | Sync local Git/SSH/GPG/npm/gh/cargo/pip/yarn/pnpm config — opt-in cloud creds (AWS, kube, Docker, gh OAuth) — macOS, Linux, WSL, Codespaces | — |

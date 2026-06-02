@@ -7,7 +7,10 @@
 # Sets up Vite+ development environment with the unified vp CLI,
 # Oxc formatter/linter, Vitest, and VS Code configuration
 
-set -e
+set -euo pipefail
+
+# shellcheck source=/dev/null
+. /usr/local/share/helpers4/common.sh
 
 echo "🔧 Setting up vite-plus devcontainer feature..."
 
@@ -24,35 +27,11 @@ if [ "$(id -u)" -ne 0 ]; then
     exit 1
 fi
 
-USERNAME="${_REMOTE_USER:-"automatic"}"
-if [ "$USERNAME" = "automatic" ] || [ "$USERNAME" = "root" ]; then
-    if getent passwd vscode >/dev/null 2>&1; then
-        USERNAME="vscode"
-    elif getent passwd node >/dev/null 2>&1; then
-        USERNAME="node"
-    else
-        USERNAME="root"
-    fi
-fi
+h4_detect_user
+h4_resolve_home
 
 # Ensure apt is in non-interactive mode
 export DEBIAN_FRONTEND=noninteractive
-
-# Update apt if needed
-apt_get_update() {
-    if [ "$(find /var/lib/apt/lists/* | wc -l)" = "0" ]; then
-        echo "Running apt-get update..."
-        apt-get update -y
-    fi
-}
-
-# Check and install packages
-check_packages() {
-    if ! dpkg -s "$@" > /dev/null 2>&1; then
-        apt_get_update
-        apt-get -y install --no-install-recommends "$@"
-    fi
-}
 
 # Check if node/npm is available (needed for fallback tools and npm-based installs)
 if ! command -v npm >/dev/null 2>&1; then
@@ -65,7 +44,7 @@ if [ "$INSTALL_VITE_PLUS" = "true" ]; then
     echo "📦 Installing Vite+ unified CLI (vp) via official installer..."
 
     # Ensure curl and ca-certificates are available
-    check_packages curl ca-certificates
+    h4_ensure_packages curl ca-certificates
 
     # Download installer to a temp file to avoid pipefail issues
     INSTALLER_SCRIPT=$(mktemp)
@@ -80,7 +59,6 @@ if [ "$INSTALL_VITE_PLUS" = "true" ]; then
     # Install vp for the devcontainer user (per-user install in ~/.vite-plus/bin)
     if [ "$USERNAME" != "root" ]; then
         if su - "$USERNAME" -c "bash '$INSTALLER_SCRIPT'"; then
-            USER_HOME=$(eval echo "~${USERNAME}")
             USER_VP_HOME="${USER_HOME}/.vite-plus"
             if [ -d "$USER_VP_HOME" ]; then
                 echo "✅ Vite+ CLI (vp) installed at ${USER_VP_HOME}/bin"

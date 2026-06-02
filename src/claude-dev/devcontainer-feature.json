@@ -1,9 +1,11 @@
 {
   "id": "claude-dev",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "name": "Claude Code Development Environment",
   "description": "Installs the Claude Code IDE extension (anthropic.claude-code) for VS Code and Cursor. Provides AI-assisted coding powered by Claude directly in the editor.",
   "documentationURL": "https://github.com/helpers4/devcontainer/tree/main/src/claude-dev",
+  "licenseURL": "https://github.com/helpers4/devcontainer/blob/main/LICENSE",
+  "keywords": ["helpers4", "claude", "anthropic", "ai", "vscode"],
   "customizations": {
     "vscode": {
       // Works for both VS Code and Cursor (same extension registry).

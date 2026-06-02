@@ -3,6 +3,7 @@
     "angular-dev",
     "auto-header",
     "claude-dev",
+    "helpers4-common",
     "deps",
     "deps-dev",
     "CI-CD",

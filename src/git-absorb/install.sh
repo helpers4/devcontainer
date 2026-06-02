@@ -6,33 +6,20 @@
 #
 # Installs git-absorb: automatically absorb staged changes into their logical commits
 
-set -e
+set -euo pipefail
+
+# shellcheck source=/dev/null
+. /usr/local/share/helpers4/common.sh
 
 # Feature options
 GIT_ABSORB_VERSION="${VERSION:-"latest"}"
-USERNAME="${USERNAME:-"${_REMOTE_USER:-"automatic"}"}"
 
 if [ "$(id -u)" -ne 0 ]; then
     echo -e 'Script must be run as root. Use sudo, su, or add "USER root" to your Dockerfile before running this script.'
     exit 1
 fi
 
-# Determine the appropriate non-root user
-if [ "${USERNAME}" = "auto" ] || [ "${USERNAME}" = "automatic" ]; then
-    USERNAME=""
-    POSSIBLE_USERS=("vscode" "node" "codespace" "$(awk -v val=1000 -F ":" '$3==val{print $1}' /etc/passwd)")
-    for CURRENT_USER in "${POSSIBLE_USERS[@]}"; do
-        if id -u ${CURRENT_USER} > /dev/null 2>&1; then
-            USERNAME=${CURRENT_USER}
-            break
-        fi
-    done
-    if [ "${USERNAME}" = "" ]; then
-        USERNAME=root
-    fi
-elif [ "${USERNAME}" = "none" ] || ! id -u ${USERNAME} > /dev/null 2>&1; then
-    USERNAME=root
-fi
+h4_detect_user
 
 # Clean up function
 cleanup() {
@@ -49,29 +36,13 @@ echo "🔧 Installing git-absorb feature..."
 echo "Username: $USERNAME"
 echo "git-absorb version: $GIT_ABSORB_VERSION"
 
-# Update apt if needed
-apt_get_update() {
-    if [ "$(find /var/lib/apt/lists/* | wc -l)" = "0" ]; then
-        echo "Running apt-get update..."
-        apt-get update -y
-    fi
-}
-
-# Check and install packages
-check_packages() {
-    if ! dpkg -s "$@" > /dev/null 2>&1; then
-        apt_get_update
-        apt-get -y install --no-install-recommends "$@"
-    fi
-}
-
 # Install dependencies
 echo "🔧 Installing dependencies..."
-check_packages curl ca-certificates tar
+h4_ensure_packages curl ca-certificates tar
 
 # Ensure git is installed
 if ! command -v git > /dev/null 2>&1; then
-    check_packages git
+    h4_ensure_packages git
 fi
 
 # Detect architecture

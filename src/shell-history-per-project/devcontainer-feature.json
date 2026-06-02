@@ -1,9 +1,11 @@
 {
-  "version": "1.0.3",
+  "version": "1.0.4",
   "id": "shell-history-per-project",
   "name": "Shell History Per Project",
   "description": "Persist shell history per project by automatically detecting and configuring all available shells (zsh, bash, fish). Supports auto-detection or manual shell selection.",
   "documentationURL": "https://github.com/helpers4/devcontainer/tree/main/src/shell-history-per-project",
+  "licenseURL": "https://github.com/helpers4/devcontainer/blob/main/LICENSE",
+  "keywords": ["helpers4", "shell", "history", "zsh", "bash"],
   "options": {
     "shell": {
       "type": "string",
@@ -26,6 +28,9 @@
       "default": "10000",
       "description": "Maximum number of history entries to keep"
     }
+  },
+  "dependsOn": {
+    "ghcr.io/helpers4/devcontainer/helpers4-common:1": {}
   },
   "installsAfter": [
     "ghcr.io/devcontainers/features/common-utils"
