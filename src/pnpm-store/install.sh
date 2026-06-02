@@ -17,43 +17,23 @@
 
 set -euo pipefail
 
+# shellcheck source=/dev/null
+. /usr/local/share/helpers4/common.sh
+
 # Fixed path — kept in sync with the "mounts" target in devcontainer-feature.json.
 STORE_DIR="/workspaces/.pnpm-store"
-USERNAME="${USERNAME:-"${_REMOTE_USER:-automatic}"}"
 
 if [ "$(id -u)" -ne 0 ]; then
     echo 'Script must be run as root. Use sudo, su, or add "USER root" to your Dockerfile before running this script.'
     exit 1
 fi
 
-# Determine the appropriate non-root user (same logic as other helpers4 features)
-if [ "${USERNAME}" = "auto" ] || [ "${USERNAME}" = "automatic" ]; then
-    USERNAME=""
-    POSSIBLE_USERS=("vscode" "node" "codespace" "$(awk -v val=1000 -F ":" '$3==val{print $1}' /etc/passwd)")
-    for CURRENT_USER in "${POSSIBLE_USERS[@]}"; do
-        if id -u "${CURRENT_USER}" > /dev/null 2>&1; then
-            USERNAME=${CURRENT_USER}
-            break
-        fi
-    done
-    if [ "${USERNAME}" = "" ]; then
-        USERNAME=root
-    fi
-elif [ "${USERNAME}" = "none" ] || ! id -u "${USERNAME}" > /dev/null 2>&1; then
-    USERNAME=root
-fi
+h4_detect_user
+h4_resolve_home
 
 echo "🔧 Configuring pnpm-store feature..."
 echo "  Username:          ${USERNAME}"
 echo "  Store directory:   ${STORE_DIR}"
-
-# Resolve the user's home directory
-if [ "${USERNAME}" = "root" ]; then
-    USER_HOME="/root"
-else
-    USER_HOME="$(getent passwd "${USERNAME}" | cut -d: -f6)"
-    [ -n "${USER_HOME}" ] || USER_HOME="/home/${USERNAME}"
-fi
 
 # 1. Persist store-dir into the user's ~/.npmrc (read by pnpm).
 #    Done at build time so it does not depend on pnpm being runnable yet.

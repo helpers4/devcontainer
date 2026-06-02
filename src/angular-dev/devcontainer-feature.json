@@ -1,15 +1,20 @@
 {
   "id": "angular-dev",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "name": "Angular Development Environment",
   "description": "Angular-specific development environment with port forwarding, VS Code extensions, and CLI autocompletion.",
   "documentationURL": "https://github.com/helpers4/devcontainer/tree/main/src/angular-dev",
+  "licenseURL": "https://github.com/helpers4/devcontainer/blob/main/LICENSE",
+  "keywords": ["helpers4", "angular", "typescript", "cli"],
   "options": {
     "installCli": {
       "type": "boolean",
       "default": false,
       "description": "Install Angular CLI globally (set to true if not using another feature for CLI installation)"
     }
+  },
+  "dependsOn": {
+    "ghcr.io/helpers4/devcontainer/helpers4-common:1": {}
   },
   "installsAfter": [
     "ghcr.io/devcontainers/features/common-utils",

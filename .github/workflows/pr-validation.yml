@@ -60,6 +60,10 @@ jobs:
             baseImage: mcr.microsoft.com/devcontainers/javascript-node:20
           - features: package-auto-install
             baseImage: mcr.microsoft.com/devcontainers/javascript-node:20
+          - features: helpers4-common
+            baseImage: debian:latest
+          - features: helpers4-common
+            baseImage: ubuntu:latest
           - features: claude-dev
             baseImage: ubuntu:latest
           - features: pnpm-store

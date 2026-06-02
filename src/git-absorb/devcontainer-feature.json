@@ -1,15 +1,20 @@
 {
-  "version": "1.0.3",
+  "version": "1.0.4",
   "id": "git-absorb",
   "name": "git-absorb",
   "description": "Installs git-absorb, a tool to automatically absorb staged changes into their logical commits. Like 'git commit --fixup' but automatic.",
   "documentationURL": "https://github.com/helpers4/devcontainer/tree/main/src/git-absorb",
+  "licenseURL": "https://github.com/helpers4/devcontainer/blob/main/LICENSE",
+  "keywords": ["helpers4", "git", "absorb", "commits"],
   "options": {
     "version": {
       "type": "string",
       "default": "latest",
       "description": "Version of git-absorb to install (latest, or specific version like 0.6.11)"
     }
+  },
+  "dependsOn": {
+    "ghcr.io/helpers4/devcontainer/helpers4-common:1": {}
   },
   "installsAfter": [
     "ghcr.io/devcontainers/features/common-utils"

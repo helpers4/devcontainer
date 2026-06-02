@@ -6,7 +6,10 @@
 #
 # Installs peon-ping and configures multi-IDE hooks for AI agent sound notifications
 
-set -e
+set -euo pipefail
+
+# shellcheck source=/dev/null
+. /usr/local/share/helpers4/common.sh
 
 # Feature options (env vars auto-generated from devcontainer-feature.json)
 PACKS="${PACKS:-"default"}"
@@ -23,31 +26,13 @@ elif ! awk "BEGIN { v=${VOLUME}; exit (v >= 0.0 && v <= 1.0) ? 0 : 1 }"; then
     VOLUME="0.5"
 fi
 
-USERNAME="${USERNAME:-"${_REMOTE_USER:-"automatic"}"}"
-
 if [ "$(id -u)" -ne 0 ]; then
     echo -e 'Script must be run as root. Use sudo, su, or add "USER root" to your Dockerfile before running this script.'
     exit 1
 fi
 
-# Determine the appropriate non-root user
-if [ "${USERNAME}" = "auto" ] || [ "${USERNAME}" = "automatic" ]; then
-    USERNAME=""
-    POSSIBLE_USERS=("vscode" "node" "codespace" "$(awk -v val=1000 -F ":" '$3==val{print $1}' /etc/passwd)")
-    for CURRENT_USER in "${POSSIBLE_USERS[@]}"; do
-        if id -u "${CURRENT_USER}" > /dev/null 2>&1; then
-            USERNAME="${CURRENT_USER}"
-            break
-        fi
-    done
-    if [ "${USERNAME}" = "" ]; then
-        USERNAME=root
-    fi
-elif [ "${USERNAME}" = "none" ] || ! id -u "${USERNAME}" > /dev/null 2>&1; then
-    USERNAME=root
-fi
-
-USER_HOME=$(eval echo "~${USERNAME}")
+h4_detect_user
+h4_resolve_home
 
 # Clean up
 cleanup() {
@@ -64,26 +49,10 @@ echo "   Username: ${USERNAME}"
 echo "   Packs: ${PACKS}"
 echo "   Volume: ${VOLUME}"
 
-# ── Helpers ──────────────────────────────────────────────────────────────────
-
-apt_get_update() {
-    if [ "$(find /var/lib/apt/lists/* 2>/dev/null | wc -l)" = "0" ]; then
-        echo "Running apt-get update..."
-        apt-get update -y
-    fi
-}
-
-check_packages() {
-    if ! dpkg -s "$@" > /dev/null 2>&1; then
-        apt_get_update
-        apt-get -y install --no-install-recommends "$@"
-    fi
-}
-
 # ── Prerequisites ────────────────────────────────────────────────────────────
 
 echo "🔧 Installing prerequisites..."
-check_packages curl ca-certificates python3 alsa-utils
+h4_ensure_packages curl ca-certificates python3 alsa-utils
 
 # ── Install peon-ping ────────────────────────────────────────────────────────
 

@@ -1,9 +1,11 @@
 {
   "id": "vite-plus",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "name": "Vite+ Development Environment",
   "description": "Complete Vite+ unified toolchain setup (vp) with Vite, Vitest, Oxlint, Oxfmt, Rolldown, tsdown, and VS Code integration.",
   "documentationURL": "https://github.com/helpers4/devcontainer/tree/main/src/vite-plus",
+  "licenseURL": "https://github.com/helpers4/devcontainer/blob/main/LICENSE",
+  "keywords": ["helpers4", "vite", "vitest", "oxc", "typescript"],
   "options": {
     "installVitePlus": {
       "type": "boolean",
@@ -66,6 +68,9 @@
         "vitest.commandLine": "npx vitest"
       }
     }
+  },
+  "dependsOn": {
+    "ghcr.io/helpers4/devcontainer/helpers4-common:1": {}
   },
   "installsAfter": [
     "ghcr.io/devcontainers/features/node",

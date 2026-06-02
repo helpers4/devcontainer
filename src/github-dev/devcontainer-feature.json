@@ -1,9 +1,11 @@
 {
   "id": "github-dev",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "name": "GitHub Development Environment",
   "description": "GitHub CLI (gh) and GitHub VS Code extensions (Copilot Chat, Pull Requests & Issues, GitHub Actions, RemoteHub). Centralizes all GitHub tooling in one feature, including shared Copilot Chat instructions for commit messages and pull-request titles/descriptions (Conventional Commits + gitmoji + the active repo's PR template).",
   "documentationURL": "https://github.com/helpers4/devcontainer/tree/main/src/github-dev",
+  "licenseURL": "https://github.com/helpers4/devcontainer/blob/main/LICENSE",
+  "keywords": ["helpers4", "github", "gh", "copilot", "cli"],
   "options": {
     "ghVersion": {
       "type": "string",

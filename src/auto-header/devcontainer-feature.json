@@ -1,9 +1,11 @@
 {
   "id": "auto-header",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "name": "Automatic File Headers",
   "description": "Automatically configures VS Code file headers with customizable templates based on project, license, company, and contributors information.",
   "documentationURL": "https://github.com/helpers4/devcontainer/tree/main/src/auto-header",
+  "licenseURL": "https://github.com/helpers4/devcontainer/blob/main/LICENSE",
+  "keywords": ["helpers4", "license", "header", "lgpl", "copyright"],
   "options": {
     "headerType": {
       "type": "string",

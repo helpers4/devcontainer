@@ -1,9 +1,11 @@
 {
   "id": "package-auto-install",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "name": "Automatic Package Installation",
   "description": "Automatically detects and runs npm/yarn/pnpm install in non-interactive mode after container creation.",
   "documentationURL": "https://github.com/helpers4/devcontainer/tree/main/src/package-auto-install",
+  "licenseURL": "https://github.com/helpers4/devcontainer/blob/main/LICENSE",
+  "keywords": ["helpers4", "pnpm", "npm", "yarn", "install"],
   "options": {
     "command": {
       "type": "string",

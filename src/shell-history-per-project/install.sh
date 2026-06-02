@@ -1,27 +1,21 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # Shell History Per Project DevContainer Feature
 # Copyright (C) 2025 baxyz
 # Licensed under LGPL-3.0 - see LICENSE file for details
 
-set -e
+set -euo pipefail
+
+# shellcheck source=/dev/null
+. /usr/local/share/helpers4/common.sh
 
 # Get options
 HISTORY_DIRECTORY=${HISTORYDIRECTORY:-"/workspaces/.shell-history"}
 MAX_HISTORY_SIZE=${MAXHISTORYSIZE:-"10000"}
 SHELL_OPTION=${SHELL:-"auto"}
 
-# Auto-detect user (without common-utils dependency)
-_REMOTE_USER="${_REMOTE_USER:-"${USERNAME:-"${USER:-"$(whoami 2>/dev/null || echo root)"}"}"}"
-_REMOTE_USER_HOME="${_REMOTE_USER_HOME:-""}"
-
-if [ -z "$_REMOTE_USER_HOME" ]; then
-    if [ "$_REMOTE_USER" = "root" ]; then
-        _REMOTE_USER_HOME="/root"
-    else
-        _REMOTE_USER_HOME="/home/$_REMOTE_USER"
-    fi
-fi
+h4_detect_user
+h4_resolve_home
 
 # Auto-detect available shells
 AVAILABLE_SHELLS=""
@@ -57,8 +51,8 @@ else
 fi
 
 echo "Installing shell-history-per-project feature..."
-echo "User: $_REMOTE_USER"
-echo "User home: $_REMOTE_USER_HOME"
+echo "User: $USERNAME"
+echo "User home: $USER_HOME"
 echo "Available shells:$AVAILABLE_SHELLS"
 echo "Shells to configure:$SHELLS_TO_CONFIGURE"
 echo "History directory: $HISTORY_DIRECTORY"
@@ -73,28 +67,28 @@ setup_shell_history() {
     local history_file=""
     local config_file=""
     local history_var=""
-    
+
     case "$shell_name" in
         "zsh")
             history_file="$HISTORY_DIRECTORY/.zsh_history"
-            config_file="$_REMOTE_USER_HOME/.zshrc"
+            config_file="$USER_HOME/.zshrc"
             history_var="HISTFILE"
             ;;
         "bash")
             history_file="$HISTORY_DIRECTORY/.bash_history"
-            config_file="$_REMOTE_USER_HOME/.bashrc"
+            config_file="$USER_HOME/.bashrc"
             history_var="HISTFILE"
             ;;
         "fish")
             history_file="$HISTORY_DIRECTORY/fish_history"
-            config_file="$_REMOTE_USER_HOME/.config/fish/config.fish"
+            config_file="$USER_HOME/.config/fish/config.fish"
             mkdir -p "$(dirname "$config_file")"
             ;;
     esac
-    
+
     # Create history file if it doesn't exist
     touch "$history_file"
-    
+
     # Configure shell to use the persistent history file
     if [ "$shell_name" = "fish" ]; then
         # Fish uses a different approach
@@ -107,7 +101,7 @@ setup_shell_history() {
         echo "export $history_var=\"$history_file\"" >> "$config_file"
         echo "export HISTSIZE=$MAX_HISTORY_SIZE" >> "$config_file"
         echo "export SAVEHIST=$MAX_HISTORY_SIZE" >> "$config_file"
-        
+
         if [ "$shell_name" = "zsh" ]; then
             echo "# ZSH specific history options" >> "$config_file"
             echo "setopt SHARE_HISTORY" >> "$config_file"
@@ -120,22 +114,22 @@ setup_shell_history() {
             echo "export HISTCONTROL=ignoredups:erasedups" >> "$config_file"
         fi
     fi
-    
+
     # Create symbolic link from default location to persistent location
     local default_history=""
     case "$shell_name" in
         "zsh")
-            default_history="$_REMOTE_USER_HOME/.zsh_history"
+            default_history="$USER_HOME/.zsh_history"
             ;;
         "bash")
-            default_history="$_REMOTE_USER_HOME/.bash_history"
+            default_history="$USER_HOME/.bash_history"
             ;;
         "fish")
-            default_history="$_REMOTE_USER_HOME/.local/share/fish/fish_history"
+            default_history="$USER_HOME/.local/share/fish/fish_history"
             mkdir -p "$(dirname "$default_history")"
             ;;
     esac
-    
+
     # Remove existing history file and create symbolic link
     if [ -f "$default_history" ]; then
         rm -f "$default_history"
@@ -150,8 +144,8 @@ for shell in $SHELLS_TO_CONFIGURE; do
 done
 
 # Set proper permissions
-if [ "$_REMOTE_USER" != "root" ]; then
-    chown -R "$_REMOTE_USER:$_REMOTE_USER" "$HISTORY_DIRECTORY" || true
+if [ "$USERNAME" != "root" ]; then
+    chown -R "$USERNAME:$USERNAME" "$HISTORY_DIRECTORY" || true
 fi
 chmod -R 755 "$HISTORY_DIRECTORY"
 

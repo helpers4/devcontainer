@@ -1,0 +1,12 @@
+{
+  "id": "helpers4-common",
+  "version": "1.0.0",
+  "name": "helpers4 Common Library",
+  "description": "Minimal bootstrap for helpers4 features: installs jq and the shared /usr/local/share/helpers4/common.sh library (user detection, home resolution, apt helpers). All other helpers4 features depend on this.",
+  "documentationURL": "https://github.com/helpers4/devcontainer/tree/main/src/helpers4-common",
+  "licenseURL": "https://github.com/helpers4/devcontainer/blob/main/LICENSE",
+  "keywords": ["helpers4", "bootstrap", "jq", "common", "base"],
+  "installsAfter": [
+    "ghcr.io/devcontainers/features/common-utils"
+  ]
+}
