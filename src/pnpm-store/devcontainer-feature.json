@@ -15,7 +15,6 @@
     }
   ],
   "installsAfter": [
-    "ghcr.io/helpers4/devcontainer/helpers4-common:1",
     "ghcr.io/devcontainers/features/common-utils",
     "ghcr.io/devcontainers/features/node"
   ]
