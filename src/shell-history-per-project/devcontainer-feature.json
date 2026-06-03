@@ -1,5 +1,5 @@
 {
-  "version": "1.0.5",
+  "version": "1.0.6",
   "id": "shell-history-per-project",
   "name": "Shell History Per Project",
   "description": "Persist shell history per project by automatically detecting and configuring all available shells (zsh, bash, fish). Supports auto-detection or manual shell selection.",
@@ -7,7 +7,7 @@
   "licenseURL": "https://github.com/helpers4/devcontainer/blob/main/LICENSE",
   "keywords": ["helpers4", "shell", "history", "zsh", "bash"],
   "options": {
-    "shell": {
+    "targetShell": {
       "type": "string",
       "enum": [
         "auto",

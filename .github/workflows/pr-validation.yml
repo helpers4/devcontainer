@@ -33,7 +33,6 @@ jobs:
 
   test-features:
     runs-on: ubuntu-latest
-    continue-on-error: true
     strategy:
       fail-fast: false
       matrix:
@@ -127,6 +126,29 @@ jobs:
         run: |
           sudo apt-get update && sudo apt-get install -y shellcheck
           find src -name "install.sh" -exec shellcheck -S warning {} +
+
+      - name: Verify bootstrap copies match helpers4-common canonical
+        run: |
+          # Extract the H4_COMMON heredoc body — same delimiter used by both
+          # helpers4-common/install.sh (canonical) and every feature's bootstrap.
+          CANONICAL=$(sed -n "/cat > .*common\.sh.*<< 'H4_COMMON'/,/^H4_COMMON$/p" \
+            src/helpers4-common/install.sh | sed '1d;$d')
+          FAILED=0
+          for f in src/*/install.sh; do
+            [ "$f" = "src/helpers4-common/install.sh" ] && continue
+            COPY=$(sed -n "/cat > .*common\.sh.*<< 'H4_COMMON'/,/^H4_COMMON$/p" \
+              "$f" | sed '1d;$d')
+            [ -z "$COPY" ] && continue
+            if [ "$CANONICAL" != "$COPY" ]; then
+              echo "❌ Bootstrap in $f differs from src/helpers4-common/install.sh"
+              diff <(echo "$CANONICAL") <(echo "$COPY") || true
+              FAILED=1
+            fi
+          done
+          if [ "$FAILED" -eq 0 ]; then
+            echo "✅ All bootstrap copies match the canonical helpers4-common version"
+          fi
+          exit $FAILED
 
       - name: Set status
         id: status

@@ -89,6 +89,7 @@ echo "  Store directory:   ${STORE_DIR}"
 NPMRC="${USER_HOME}/.npmrc"
 # Ensure the home directory exists — minimal base images (e.g. ubuntu:latest)
 # define the user in /etc/passwd but may not create their home directory.
+USER_GROUP=""
 mkdir -p "${USER_HOME}"
 if [ "${USERNAME}" != "root" ]; then
     USER_GROUP="$(id -gn "${USERNAME}" 2>/dev/null || echo "${USERNAME}")"
