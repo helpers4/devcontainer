@@ -61,7 +61,7 @@ fi
 # Get options
 HISTORY_DIRECTORY=${HISTORYDIRECTORY:-"/workspaces/.shell-history"}
 MAX_HISTORY_SIZE=${MAXHISTORYSIZE:-"10000"}
-SHELL_OPTION=${SHELL:-"auto"}
+SHELL_OPTION=${TARGETSHELL:-"auto"}
 
 h4_detect_user
 h4_resolve_home
@@ -194,7 +194,8 @@ done
 
 # Set proper permissions
 if [ "$USERNAME" != "root" ]; then
-    chown -R "$USERNAME:$USERNAME" "$HISTORY_DIRECTORY" || true
+    USER_GROUP="$(id -gn "${USERNAME}" 2>/dev/null || echo "${USERNAME}")"
+    chown -R "${USERNAME}:${USER_GROUP}" "$HISTORY_DIRECTORY" 2>/dev/null || true
 fi
 chmod -R 755 "$HISTORY_DIRECTORY"
 

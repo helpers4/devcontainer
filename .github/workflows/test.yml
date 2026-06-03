@@ -59,10 +59,13 @@ jobs:
           - features: vite-plus
             baseImage: mcr.microsoft.com/devcontainers/typescript-node:20
 
-          # typescript-dev - requires VS Code (extensions only, no install.sh logic)
-          # Will automatically install essential-dev via installsAfter dependency
+          # typescript-dev — depends on essential-dev:1 via dependsOn (hard dep)
           - features: typescript-dev
             baseImage: mcr.microsoft.com/devcontainers/typescript-node:20
+
+          # claude-dev — IDE-config-only feature
+          - features: claude-dev
+            baseImage: ubuntu:latest
 
           # auto-header - requires jq (installed by helpers4-common)
           - features: auto-header
