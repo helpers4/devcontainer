@@ -1,11 +1,17 @@
 {
   "id": "claude-dev",
-  "version": "1.1.0",
+  "version": "1.0.2",
   "name": "Claude Code Development Environment",
-  "description": "Installs the Claude Code IDE extension (anthropic.claude-code) for VS Code and Cursor. Shares host OAuth credentials via a live symlink — no re-authentication needed after container rebuilds.",
+  "description": "Installs the Claude Code IDE extension (anthropic.claude-code) for VS Code and Cursor. Mounts ~/.claude from the host via a directory symlink — credentials and config persist across all rebuilds.",
   "documentationURL": "https://github.com/helpers4/devcontainer/tree/main/src/claude-dev",
   "licenseURL": "https://github.com/helpers4/devcontainer/blob/main/LICENSE",
-  "keywords": ["helpers4", "claude", "anthropic", "ai", "vscode"],
+  "keywords": [
+    "helpers4",
+    "claude",
+    "anthropic",
+    "ai",
+    "vscode"
+  ],
   "options": {
     "username": {
       "type": "string",
@@ -15,10 +21,10 @@
   },
   "mounts": [
     {
-      // Staging path — avoids mounting directly to ~/.claude/.credentials.json which
-      // would create a host directory if the source file doesn't exist yet.
-      "source": "${localEnv:HOME}/.claude/.credentials.json",
-      "target": "/mnt/h4claude/.credentials.json",
+      // Neutral staging path — install.sh resolves the correct target home at build
+      // time and bakes it into the generated setup-credentials.sh via printf %q.
+      "source": "${localEnv:HOME}/.claude",
+      "target": "/mnt/h4claude",
       "type": "bind"
     }
   ],
