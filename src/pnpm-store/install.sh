@@ -164,10 +164,27 @@ if [ "${store_owner}" != "$(id -u)" ]; then
     fi
 fi
 
+# Re-apply store-dir to ~/.npmrc so it survives dotfiles-sync or any other
+# tool that may have overwritten the file between image build and container start.
+# Write to .tmp first — ~/.npmrc is never left in a partial state on failure.
+NPMRC="${HOME}/.npmrc"
+{ grep -v '^store-dir=' "${NPMRC}" 2>/dev/null || true; } > "${NPMRC}.tmp"
+echo "store-dir=${STORE_DIR}" >> "${NPMRC}.tmp"
+mv "${NPMRC}.tmp" "${NPMRC}"
+echo "✅ pnpm-store: store-dir=${STORE_DIR} written to ${NPMRC}"
+
 # Confirm pnpm picked up the configured store, when available.
+# pnpm config get returns the literal string "undefined" (exit 0) when the key
+# is unset — treat it the same as empty.
 if command -v pnpm >/dev/null 2>&1; then
-    configured="$(pnpm config get store-dir 2>/dev/null || echo '')"
-    echo "✅ pnpm-store: pnpm store-dir = ${configured}"
+    configured="$(pnpm config get store-dir 2>/dev/null || true)"
+    if [ "${configured}" = "${STORE_DIR}" ]; then
+        echo "✅ pnpm-store: pnpm confirms store-dir = ${configured}"
+    elif [ -z "${configured}" ] || [ "${configured}" = "undefined" ]; then
+        echo "⚠️  pnpm-store: pnpm could not resolve store-dir; verify with: pnpm config get store-dir"
+    else
+        echo "⚠️  pnpm-store: pnpm reports store-dir = ${configured} (expected ${STORE_DIR}); a local .npmrc may be overriding it"
+    fi
 else
     echo "ℹ️  pnpm-store: pnpm not on PATH yet; store-dir is set in ~/.npmrc for when it is."
 fi
