@@ -109,16 +109,27 @@ echo "  ✅ Wrote store-dir to ${NPMRC}"
 # 1b. pnpm 11 dropped support for non-auth settings (incl. store-dir) in
 #     .npmrc — they must live in ~/.config/pnpm/config.yaml instead. Write
 #     both so the feature works whether the resolved pnpm is <11 or >=11.
+#     Best-effort: a failure here must not abort the rest of the feature.
 PNPM_CONFIG_DIR="${USER_HOME}/.config/pnpm"
 PNPM_CONFIG_YAML="${PNPM_CONFIG_DIR}/config.yaml"
-mkdir -p "${PNPM_CONFIG_DIR}"
-cat > "${PNPM_CONFIG_YAML}" <<YAML
-storeDir: ${STORE_DIR}
-YAML
-if [ "${USERNAME}" != "root" ]; then
-    chown -R "${USERNAME}:${USER_GROUP}" "${USER_HOME}/.config" 2>/dev/null || true
+if mkdir -p "${PNPM_CONFIG_DIR}" 2>/dev/null; then
+    touch "${PNPM_CONFIG_YAML}"
+    # Strip any existing storeDir line so other keys (registry, hoist-pattern,
+    # etc.) already in config.yaml survive — same rationale as the .npmrc
+    # handling above. Write to .tmp first to keep the file atomic.
+    { grep -v '^storeDir:' "${PNPM_CONFIG_YAML}" 2>/dev/null || true; } > "${PNPM_CONFIG_YAML}.tmp"
+    echo "storeDir: ${STORE_DIR}" >> "${PNPM_CONFIG_YAML}.tmp"
+    mv "${PNPM_CONFIG_YAML}.tmp" "${PNPM_CONFIG_YAML}"
+    if [ "${USERNAME}" != "root" ]; then
+        # Chown .config itself (non-recursive) so the user can create future
+        # subdirectories there, and only recurse into the pnpm subdir we own.
+        chown "${USERNAME}:${USER_GROUP}" "${USER_HOME}/.config" 2>/dev/null || true
+        chown -R "${USERNAME}:${USER_GROUP}" "${PNPM_CONFIG_DIR}" 2>/dev/null || true
+    fi
+    echo "  ✅ Wrote storeDir to ${PNPM_CONFIG_YAML}"
+else
+    echo "  ⚠️  Could not create ${PNPM_CONFIG_DIR}; storeDir not written to config.yaml"
 fi
-echo "  ✅ Wrote storeDir to ${PNPM_CONFIG_YAML}"
 
 # Create STORE_DIR during the image build so pnpm can use the configured path
 # immediately. Without this, any pnpm invocation in a later feature (e.g.
@@ -190,11 +201,19 @@ echo "✅ pnpm-store: store-dir=${STORE_DIR} written to ${NPMRC}"
 # pnpm 11 dropped support for non-auth settings (incl. store-dir) in .npmrc —
 # they must live in ~/.config/pnpm/config.yaml. Re-apply for the same reason
 # as above (dotfiles-sync or a fresh install may not have it).
+# Best-effort: a failure here must not abort the rest of the guard.
 PNPM_CONFIG_DIR="${HOME}/.config/pnpm"
 PNPM_CONFIG_YAML="${PNPM_CONFIG_DIR}/config.yaml"
-mkdir -p "${PNPM_CONFIG_DIR}"
-echo "storeDir: ${STORE_DIR}" > "${PNPM_CONFIG_YAML}"
-echo "✅ pnpm-store: storeDir=${STORE_DIR} written to ${PNPM_CONFIG_YAML}"
+if mkdir -p "${PNPM_CONFIG_DIR}" 2>/dev/null; then
+    # Strip any existing storeDir line so other keys already in config.yaml
+    # survive — same rationale as the .npmrc handling above.
+    { grep -v '^storeDir:' "${PNPM_CONFIG_YAML}" 2>/dev/null || true; } > "${PNPM_CONFIG_YAML}.tmp"
+    echo "storeDir: ${STORE_DIR}" >> "${PNPM_CONFIG_YAML}.tmp"
+    mv "${PNPM_CONFIG_YAML}.tmp" "${PNPM_CONFIG_YAML}"
+    echo "✅ pnpm-store: storeDir=${STORE_DIR} written to ${PNPM_CONFIG_YAML}"
+else
+    echo "⚠️  pnpm-store: could not create ${PNPM_CONFIG_DIR}; storeDir not written to config.yaml"
+fi
 
 # Confirm pnpm picked up the configured store, when available.
 # pnpm config get returns the literal string "undefined" (exit 0) when the key
