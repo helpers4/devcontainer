@@ -106,6 +106,20 @@ if [ "${USERNAME}" != "root" ]; then
 fi
 echo "  ✅ Wrote store-dir to ${NPMRC}"
 
+# 1b. pnpm 11 dropped support for non-auth settings (incl. store-dir) in
+#     .npmrc — they must live in ~/.config/pnpm/config.yaml instead. Write
+#     both so the feature works whether the resolved pnpm is <11 or >=11.
+PNPM_CONFIG_DIR="${USER_HOME}/.config/pnpm"
+PNPM_CONFIG_YAML="${PNPM_CONFIG_DIR}/config.yaml"
+mkdir -p "${PNPM_CONFIG_DIR}"
+cat > "${PNPM_CONFIG_YAML}" <<YAML
+storeDir: ${STORE_DIR}
+YAML
+if [ "${USERNAME}" != "root" ]; then
+    chown -R "${USERNAME}:${USER_GROUP}" "${USER_HOME}/.config" 2>/dev/null || true
+fi
+echo "  ✅ Wrote storeDir to ${PNPM_CONFIG_YAML}"
+
 # Create STORE_DIR during the image build so pnpm can use the configured path
 # immediately. Without this, any pnpm invocation in a later feature (e.g.
 # vite-plus) fails because /workspaces is not mounted at Docker build time and
@@ -173,6 +187,15 @@ echo "store-dir=${STORE_DIR}" >> "${NPMRC}.tmp"
 mv "${NPMRC}.tmp" "${NPMRC}"
 echo "✅ pnpm-store: store-dir=${STORE_DIR} written to ${NPMRC}"
 
+# pnpm 11 dropped support for non-auth settings (incl. store-dir) in .npmrc —
+# they must live in ~/.config/pnpm/config.yaml. Re-apply for the same reason
+# as above (dotfiles-sync or a fresh install may not have it).
+PNPM_CONFIG_DIR="${HOME}/.config/pnpm"
+PNPM_CONFIG_YAML="${PNPM_CONFIG_DIR}/config.yaml"
+mkdir -p "${PNPM_CONFIG_DIR}"
+echo "storeDir: ${STORE_DIR}" > "${PNPM_CONFIG_YAML}"
+echo "✅ pnpm-store: storeDir=${STORE_DIR} written to ${PNPM_CONFIG_YAML}"
+
 # Confirm pnpm picked up the configured store, when available.
 # pnpm config get returns the literal string "undefined" (exit 0) when the key
 # is unset — treat it the same as empty.
@@ -186,7 +209,7 @@ if command -v pnpm >/dev/null 2>&1; then
         echo "⚠️  pnpm-store: pnpm reports store-dir = ${configured} (expected ${STORE_DIR}); a local .npmrc may be overriding it"
     fi
 else
-    echo "ℹ️  pnpm-store: pnpm not on PATH yet; store-dir is set in ~/.npmrc for when it is."
+    echo "ℹ️  pnpm-store: pnpm not on PATH yet; store-dir is set in ~/.npmrc and ~/.config/pnpm/config.yaml for when it is."
 fi
 EOF
 
