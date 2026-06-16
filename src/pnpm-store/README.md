@@ -35,10 +35,20 @@ manual `mounts` entry and no options required.
 ## How it works
 
 1. **At build time** (`install.sh`): writes `store-dir=/workspaces/.pnpm-store`
-   into the remote user's `~/.npmrc` so pnpm uses the shared store globally.
+   into the remote user's `~/.npmrc`, and `storeDir: /workspaces/.pnpm-store`
+   into `~/.config/pnpm/config.yaml`, so pnpm uses the shared store globally
+   regardless of pnpm version (see note below).
 2. **At container creation** (`postCreateCommand`): takes ownership of the
-   volume (named volumes start root-owned) and reports the effective pnpm
-   `store-dir`.
+   volume (named volumes start root-owned) and re-applies both config files,
+   then reports the effective pnpm `store-dir`.
+
+> **pnpm 11 compatibility:** pnpm 11 stopped reading non-auth settings (like
+> `store-dir`) from `.npmrc` — they must live in `pnpm-workspace.yaml` or the
+> global `~/.config/pnpm/config.yaml`. If only `~/.npmrc` is set and the
+> resolved pnpm is v11+, `store-dir` silently resolves to `undefined` and
+> pnpm falls back to creating a `.pnpm-store` folder relative to the current
+> working directory — exactly the stray folder this feature exists to avoid.
+> This feature writes both files so it works across pnpm <11 and >=11.
 
 ## Ensuring pnpm is installed
 
