@@ -35,6 +35,23 @@ else
     exit 1
 fi
 
+# Test 2b: storeDir is configured in ~/.config/pnpm/config.yaml (pnpm 11+
+# stopped reading store-dir from .npmrc).
+found_config_yaml=""
+for config_yaml in /root/.config/pnpm/config.yaml /home/*/.config/pnpm/config.yaml; do
+    [ -f "${config_yaml}" ] || continue
+    if grep -q "^storeDir: ${STORE_DIR}\$" "${config_yaml}"; then
+        found_config_yaml="${config_yaml}"
+        break
+    fi
+done
+if [ -n "${found_config_yaml}" ]; then
+    echo "✅ PASS: storeDir=${STORE_DIR} found in ${found_config_yaml}"
+else
+    echo "❌ FAIL: storeDir=${STORE_DIR} not found in any config.yaml"
+    exit 1
+fi
+
 # Test 3: running the guard succeeds and the store directory exists.
 # In real usage the named volume is mounted at STORE_DIR before the container
 # starts, so the guard only needs to take ownership of it. The features-test
