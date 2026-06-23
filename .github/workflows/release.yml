@@ -29,7 +29,7 @@ jobs:
       changed: ${{ steps.diff.outputs.changed }}
       count: ${{ steps.diff.outputs.count }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0 # need the full push range (github.event.before .. HEAD) for diff
 
@@ -109,7 +109,7 @@ jobs:
       contents: write # tags
       packages: write # GHCR
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
