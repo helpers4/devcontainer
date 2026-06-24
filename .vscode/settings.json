@@ -12,6 +12,8 @@
     "essential-dev",
     "git-absorb",
     "github-dev",
+    "helpers4-common",
+    "mistral-dev",
     "package-auto-install",
     "peon-ping",
     "pnpm-store",
