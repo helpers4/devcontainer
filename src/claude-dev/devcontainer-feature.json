@@ -1,6 +1,6 @@
 {
   "id": "claude-dev",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "name": "Claude Code Development Environment",
   "description": "Installs the Claude Code IDE extension (anthropic.claude-code) for VS Code and Cursor. Mounts ~/.claude from the host via a directory symlink — credentials and config persist across all rebuilds.",
   "documentationURL": "https://github.com/helpers4/devcontainer/tree/main/src/claude-dev",
@@ -19,6 +19,10 @@
       "description": "Username in the container that should receive the Claude credentials symlink."
     }
   },
+  // Creates ~/.claude on the host before Docker evaluates the bind mount.
+  // Without this, Docker refuses to start the container if the directory
+  // has never been created (e.g. fresh OS install, first Claude login).
+  "initializeCommand": "mkdir -p ~/.claude",
   "mounts": [
     {
       // Neutral staging path — install.sh resolves the correct target home at build
