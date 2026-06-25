@@ -67,6 +67,10 @@ jobs:
           - features: claude-dev
             baseImage: ubuntu:latest
 
+          # mistral-dev — IDE-config-only feature
+          - features: mistral-dev
+            baseImage: ubuntu:latest
+
           # auto-header - requires jq (installed by helpers4-common)
           - features: auto-header
             baseImage: mcr.microsoft.com/devcontainers/base:ubuntu
@@ -101,6 +105,11 @@ jobs:
         # The bind mount source ~/.claude must exist on the host or `docker run` aborts
         # before the test runs (same pattern as dotfiles-sync below).
         run: mkdir -p ~/.claude
+
+      - name: Create mount sources for mistral-dev
+        if: matrix.features == 'mistral-dev'
+        # The bind mount source ~/.vibe must exist on the host or `docker run` aborts.
+        run: mkdir -p ~/.vibe
 
       - name: Create mount sources for dotfiles-sync
         if: matrix.features == 'dotfiles-sync'
