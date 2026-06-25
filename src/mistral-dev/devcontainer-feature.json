@@ -1,6 +1,6 @@
 {
   "id": "mistral-dev",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "name": "Mistral Vibe Development Environment",
   "description": "Installs the Mistral Vibe IDE extension (mistralai.mistral-vibe-code) for VS Code and Cursor. Mounts ~/.vibe from the host via a directory symlink — credentials and config persist across all rebuilds.",
   "documentationURL": "https://github.com/helpers4/devcontainer/tree/main/src/mistral-dev",
@@ -24,6 +24,10 @@
       "description": "Also install the Mistral Vibe CLI (vibe command). Requires Python 3.12+ and pip in the container."
     }
   },
+  // Creates ~/.vibe on the host before Docker evaluates the bind mount.
+  // Without this, Docker refuses to start the container if the directory
+  // has never been created (e.g. fresh OS install, first Mistral login).
+  "initializeCommand": "mkdir -p ~/.vibe",
   "mounts": [
     {
       // Neutral staging path — install.sh resolves the correct target home at build
