@@ -19,14 +19,9 @@
       "description": "Username in the container that should receive the Claude credentials symlink."
     }
   },
-  // Creates ~/.claude on the host before Docker evaluates the bind mount.
-  // Without this, Docker refuses to start the container if the directory
-  // has never been created (e.g. fresh OS install, first Claude login).
   "initializeCommand": "mkdir -p ~/.claude",
   "mounts": [
     {
-      // Neutral staging path — install.sh resolves the correct target home at build
-      // time and bakes it into the generated setup-credentials.sh via printf %q.
       "source": "${localEnv:HOME}/.claude",
       "target": "/mnt/h4claude",
       "type": "bind"
@@ -35,19 +30,10 @@
   "postStartCommand": "/usr/local/share/claude-dev/setup-credentials.sh",
   "customizations": {
     "vscode": {
-      // Works for both VS Code and Cursor (same extension registry).
       "extensions": [
         "anthropic.claude-code"
       ]
     }
-    // JetBrains (IntelliJ, WebStorm, …): add once the plugin xmlId is confirmed.
-    // The marketplace page is https://plugins.jetbrains.com/plugin/27310 (vendor: anthropic).
-    // "jetbrains": {
-    //   "plugins": ["<xmlId-to-be-confirmed>"]
-    // }
-    //
-    // Zed: no standard devcontainer customization format yet.
-    // Extensions are managed through Zed's own extension registry and ~/.config/zed/settings.json.
   },
   "installsAfter": [
     "ghcr.io/devcontainers/features/common-utils"

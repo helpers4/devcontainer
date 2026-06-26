@@ -24,14 +24,9 @@
       "description": "Also install the Mistral Vibe CLI (vibe command). Requires Python 3.12+ and pip in the container."
     }
   },
-  // Creates ~/.vibe on the host before Docker evaluates the bind mount.
-  // Without this, Docker refuses to start the container if the directory
-  // has never been created (e.g. fresh OS install, first Mistral login).
   "initializeCommand": "mkdir -p ~/.vibe",
   "mounts": [
     {
-      // Neutral staging path — install.sh resolves the correct target home at build
-      // time and bakes it into the generated setup-credentials.sh via printf %q.
       "source": "${localEnv:HOME}/.vibe",
       "target": "/mnt/h4vibe",
       "type": "bind"
@@ -40,7 +35,6 @@
   "postStartCommand": "/usr/local/share/mistral-dev/setup-credentials.sh",
   "customizations": {
     "vscode": {
-      // Works for both VS Code and Cursor (same extension registry).
       "extensions": [
         "mistralai.mistral-vibe-code"
       ]

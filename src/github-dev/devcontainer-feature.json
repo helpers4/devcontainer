@@ -16,7 +16,6 @@
   "customizations": {
     "vscode": {
       "extensions": [
-        // GitHub Platform
         "github.vscode-pull-request-github",
         "github.vscode-github-actions",
         "github.remotehub",

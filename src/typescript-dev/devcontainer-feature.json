@@ -12,10 +12,6 @@
   "customizations": {
     "vscode": {
       "extensions": [
-        // TypeScript & JavaScript
-        // Native TS language server (Go port, TS 7 preview) — replaces the JS nightly.
-        // ms-vscode.vscode-typescript-next is intentionally omitted: the two conflict
-        // and the native server supersedes the nightly.
         "TypeScriptTeam.native-preview",
         "guilhermetheodoro.typescript-indexing",
         "christian-kohler.npm-intellisense",
@@ -23,19 +19,15 @@
         "YoavBls.pretty-ts-errors",
         "steoates.autoimport",
         "stringham.move-ts",
-        // HTML & CSS Intelligence
         "ecmel.vscode-html-css",
         "formulahendry.auto-rename-tag",
-        // Code Generation
         "quicktype.quicktype"
       ],
       "settings": {
-        // TypeScript & JavaScript
         "javascript.preferences.useAliasesForRenames": false,
         "javascript.updateImportsOnFileMove.enabled": "always",
         "typescript.preferences.useAliasesForRenames": false,
         "typescript.updateImportsOnFileMove.enabled": "always",
-        // Package Manager
         "npm.packageManager": "pnpm"
       }
     }

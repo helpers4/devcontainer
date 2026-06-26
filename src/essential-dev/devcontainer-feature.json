@@ -9,20 +9,16 @@
   "customizations": {
     "vscode": {
       "extensions": [
-        // Git & Version Control
         "donjayamanne.githistory",
         "the0807.git-graph-plus",
         "vivaxy.vscode-conventional-commits",
-        // Editor Enhancements
         "cardinal90.multi-cursor-case-preserve",
         "moshfeu.compare-folders",
         "xyz.local-history",
         "editorconfig.editorconfig",
-        // Markdown and Documentation
         "yzhang.markdown-all-in-one",
         "davidanson.vscode-markdownlint",
         "bierner.markdown-mermaid",
-        // File Format Support
         "redhat.vscode-yaml",
         "redhat.vscode-xml",
         "ms-vscode.vscode-json",
@@ -31,19 +27,16 @@
         "ms-vscode.makefile-tools"
       ],
       "settings": {
-        // File Hygiene
         "files.insertFinalNewline": true,
         "files.trimFinalNewlines": true,
         "files.trimTrailingWhitespace": true,
         "files.eol": "\n",
-        // Editor Configuration
         "editor.insertSpaces": true,
         "editor.detectIndentation": true,
         "editor.formatOnSave": true,
         "editor.codeActionsOnSave": {
           "source.fixAll": "explicit"
         },
-        // Terminal Configuration
         "terminal.integrated.defaultProfile.linux": "zsh",
         "terminal.integrated.profiles.linux": {
           "bash": {
@@ -55,12 +48,10 @@
             "icon": "terminal-zsh"
           }
         },
-        // Search Configuration
         "search.exclude": {
           ".history": true,
           ".copilot": true
         },
-        // Markdown Configuration
         "markdown.extension.toc.levels": "2..6",
         "markdown.extension.preview.autoShowPreviewToSide": true,
         "[markdown]": {
