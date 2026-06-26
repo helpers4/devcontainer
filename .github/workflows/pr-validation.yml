@@ -38,19 +38,19 @@ jobs:
       matrix:
         include:
           - features: essential-dev
-            baseImage: debian:latest
+            baseImage: mcr.microsoft.com/devcontainers/base:debian
           - features: essential-dev
             baseImage: ubuntu:latest
           - features: essential-dev
             baseImage: mcr.microsoft.com/devcontainers/base:ubuntu
           - features: shell-history-per-project
-            baseImage: debian:latest
+            baseImage: mcr.microsoft.com/devcontainers/base:debian
           - features: shell-history-per-project
             baseImage: ubuntu:latest
           - features: shell-history-per-project
             baseImage: mcr.microsoft.com/devcontainers/base:ubuntu
           - features: git-absorb
-            baseImage: debian:latest
+            baseImage: mcr.microsoft.com/devcontainers/base:debian
           - features: git-absorb
             baseImage: ubuntu:latest
           - features: git-absorb
@@ -60,7 +60,7 @@ jobs:
           - features: package-auto-install
             baseImage: mcr.microsoft.com/devcontainers/javascript-node:20
           - features: helpers4-common
-            baseImage: debian:latest
+            baseImage: mcr.microsoft.com/devcontainers/base:debian
           - features: helpers4-common
             baseImage: ubuntu:latest
           - features: claude-dev
@@ -80,7 +80,7 @@ jobs:
           - features: peon-ping
             baseImage: mcr.microsoft.com/devcontainers/base:ubuntu
           - features: dotfiles-sync
-            baseImage: debian:latest
+            baseImage: mcr.microsoft.com/devcontainers/base:debian
           - features: dotfiles-sync
             baseImage: mcr.microsoft.com/devcontainers/base:ubuntu
           - features: github-dev
