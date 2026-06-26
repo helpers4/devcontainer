@@ -24,15 +24,7 @@
       "description": "Also install the Mistral Vibe CLI (vibe command). Requires Python 3.12+ and pip in the container."
     }
   },
-  "initializeCommand": "mkdir -p ~/.vibe",
-  "mounts": [
-    {
-      "source": "${localEnv:HOME}/.vibe",
-      "target": "/mnt/h4vibe",
-      "type": "bind"
-    }
-  ],
-  "postStartCommand": "/usr/local/share/mistral-dev/setup-credentials.sh",
+
   "customizations": {
     "vscode": {
       "extensions": [
