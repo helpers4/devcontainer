@@ -1,6 +1,6 @@
 {
   "id": "essential-dev",
-  "version": "1.0.8",
+  "version": "1.0.9",
   "name": "Essential Development Environment",
   "description": "Core development environment with Git visualization, Markdown support, and essential editor enhancements.",
   "documentationURL": "https://github.com/helpers4/devcontainer/tree/main/src/essential-dev",
@@ -11,7 +11,6 @@
       "extensions": [
         "donjayamanne.githistory",
         "the0807.git-graph-plus",
-        "vivaxy.vscode-conventional-commits",
         "cardinal90.multi-cursor-case-preserve",
         "moshfeu.compare-folders",
         "xyz.local-history",
