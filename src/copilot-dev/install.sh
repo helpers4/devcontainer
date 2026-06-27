@@ -4,7 +4,7 @@
 # SPDX-License-Identifier: LGPL-3.0-or-later
 #
 # Runs at BUILD TIME.
-# Installs the gh-copilot CLI extension if gh is available.
+# Installs the gh-copilot CLI extension.
 
 set -euo pipefail
 
@@ -18,17 +18,13 @@ INSTALL_CLI="${_BUILD_ARG_INSTALLCLI:-${INSTALLCLI:-true}}"
 echo "🔧 Configuring copilot-dev feature..."
 echo "  Install CLI: ${INSTALL_CLI}"
 
-# ============================================================================
-# Install gh copilot CLI extension
-# ============================================================================
-
+# ── Install gh copilot CLI extension ─────────────────────────────────────────
 if [ "${INSTALL_CLI}" = "true" ]; then
     if ! command -v gh >/dev/null 2>&1; then
         echo "  ⚠️  gh CLI not found — skipping gh copilot extension install."
         echo "      Add github-dev before copilot-dev, or install gh manually."
     else
         echo "  Installing gh copilot extension..."
-        # --force re-installs if already present (idempotent).
         gh extension install github/gh-copilot --force
         echo "  ✅ gh copilot extension installed: $(gh copilot --version 2>/dev/null || echo 'ok')"
     fi
