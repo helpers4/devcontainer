@@ -163,9 +163,14 @@ echo "  ✅ git-absorb ${INSTALLED_VERSION} installed successfully"
 echo
 echo "🎉 git-absorb installation complete!"
 echo
+
+# git absorb alias: whole-file matching, scoped to local (unpushed) commits
+git config --system alias.absorb 'absorb --whole-file --base origin/HEAD'
+echo "  ✅ git absorb -> git absorb --whole-file --base origin/HEAD"
+
 echo "📋 Usage:"
 echo "  git add <files>          # Stage your changes"
-echo "  git absorb               # Automatically absorb into logical commits"
+echo "  git absorb               # Absorb staged changes into local commits (whole-file, up to origin/HEAD)"
 echo "  git absorb --dry-run     # Preview what would be absorbed"
 echo
 echo "🚀 Ready to use:"
