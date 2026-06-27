@@ -68,5 +68,8 @@
         }
       }
     }
+  },
+  "dependsOn": {
+    "ghcr.io/helpers4/devcontainer/helpers4-common:1": {}
   }
 }
