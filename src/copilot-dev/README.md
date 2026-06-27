@@ -51,7 +51,7 @@ corresponding type:
 
 | Setting | Trigger | What it enforces |
 | --- | --- | --- |
-| `commitMessageGeneration.instructions` | Generate Commit Message | Conventional Commits + gitmoji, scopes from `conventionalCommits.scopes` workspace setting |
+| `commitMessageGeneration.instructions` | Generate Commit Message | Conventional Commits + gitmoji, scopes from `scopes.json` at the repo root |
 | `pullRequestDescriptionGeneration.instructions` | Create Pull Request | Same title convention + repo PR template auto-detection with fallback |
 | `reviewSelection.instructions` | Review and Comment | Correctness bugs, security issues, simplification - no style feedback |
 
