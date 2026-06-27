@@ -8,6 +8,10 @@
 
 set -e
 
+# Git workflow aliases
+git config --system alias.fixup 'commit --fixup'
+git config --system alias.polish 'rebase -i --autosquash origin/HEAD'
+
 # Enable VS Code shell integration for all shells
 # This captures command execution and working directory changes in the terminal
 echo "🔧 Configuring VS Code shell integration..."
