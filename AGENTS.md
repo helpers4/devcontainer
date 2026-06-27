@@ -1,189 +1,61 @@
-# AGENTS.md - DevContainer Features
+# AGENTS.md — devcontainer
 
-## ⛔ CRITICAL RESTRICTIONS
-
-- **NEVER execute `git push`** - The user will push manually after review
-- **NEVER use GPT models** - Use Claude models only (claude-sonnet-4, Claude Opus 4.5)
-- **Everything in English** - Code, comments, commits, documentation, logs, PR descriptions
-
-## Organization Context
-
-**helpers4** is a collection of open-source utilities across 5 repos: `typescript`, `devcontainer` (this repo), `action`, `website`, `.github`. All licensed LGPL-3.0.
-
-## Commit Messages
-
-Follow [Conventional Commits](https://www.conventionalcommits.org/) with a gitmoji between the scope and the description.
-
-**Format:** `<type>(<scope>): <emoji> <description>`
-
-**Scopes:** defined in `.vscode/settings.json` (`conventionalCommits.scopes`) — **add the new feature name here when creating a feature** (forgetting this breaks PR CI)
-
-| Type | Primary | Alternatives (gitmoji.dev) | When to use |
-|------|---------|---------------------------|-------------|
-| feat | ✨ | 🚸 UX, ♿️ a11y, 🌐 i18n, 💬 text/literals | New feature |
-| fix | 🐛 | 🚑️ hotfix, 🔒️ security, 🩹 trivial, 🥅 errors, 🚨 warnings, ✏️ typo | Bug fix |
-| docs | 📝 | 💡 source comments, 📄 license | Documentation |
-| refactor | ♻️ | 🎨 structure, 🔥 remove code, ⚰️ dead code, 🚚 move/rename | Code refactoring |
-| test | ✅ | 🧪 failing test, 💚 fix CI test | Tests |
-| chore | 🔧 | 🙈 gitignore, 🔖 tag/release, 📌 pin deps, 🩺 healthcheck | Maintenance |
-| perf | ⚡️ | — | Performance |
-| style | 💄 | 🎨 code style | Code style / UI |
-| ci | 👷 | 💚 fix CI | CI/CD |
-| build | 📦️ | ➕ add dep, ➖ remove dep, ⬆️ upgrade dep, ⬇️ downgrade dep | Build system |
-| revert | ⏪️ | — | Revert |
-
-> Pick the **most specific** gitmoji that matches the change. The primary is the safe default; reach for an alternative when it adds real signal. Full list: https://gitmoji.dev
-
-**Examples:**
-- `feat(git-absorb): ✨ add version selection option`
-- `fix(dotfiles-sync): 🐛 fix symlink creation`
-- `docs(typescript-dev): 📝 update README`
-- `chore(CI-CD): 🔧 update dependencies`
-
----
+→ [Org-wide rules](https://github.com/helpers4/.dev/blob/main/AGENTS.md): restrictions · commit format · license headers
 
 ## This Repository
 
-**Purpose:** DevContainer Features published on GitHub Container Registry (`ghcr.io/helpers4/devcontainer/`).
+**Purpose:** DevContainer Features published to `ghcr.io/helpers4/devcontainer/<name>`.
 
-### Project Structure
-
-```
-devcontainer/
-├── src/                              # Feature source code
-│   ├── helpers4-common/              # Bootstrap: jq + common.sh (all features depend on this)
-│   ├── essential-dev/                # Core dev environment (Git, Markdown, editor config)
-│   ├── typescript-dev/               # TypeScript/JS dev (dependsOn essential-dev)
-│   ├── angular-dev/                  # Angular dev with port forwarding
-│   ├── vite-plus/                    # Vite development setup
-│   ├── package-auto-install/         # Automatic package installation
-│   ├── pnpm-store/                   # Shared pnpm store via Docker named volume
-│   ├── auto-header/                  # Automatic LGPL-3.0 file headers
-│   ├── git-absorb/                   # git-absorb tool installation
-│   ├── peon-ping/                    # AI agent sound notifications
-│   └── shell-history-per-project/    # Persistent shell history per project
-├── test/                             # One test.sh per feature
-├── .github/
-│   ├── workflows/                    # CI/CD (test matrix)
-│   ├── CONTRIBUTING.md
-│   └── DEVELOPMENT.md
-├── AGENTS.md                         # This file
-├── LICENSE                           # LGPL-3.0
+```text
+src/<feature>/
+├── devcontainer-feature.json  # id, version, options, mounts, postStartCommand, customizations
+├── install.sh                 # runs as root at build time
 └── README.md
+test/<feature>/test.sh
 ```
 
-### Feature File Structure
+**install.sh pattern:** `set -euo pipefail` · root check · `h4_detect_user` / `h4_resolve_home` from `helpers4-common` · apt deps · arch detection (x86_64/aarch64) · install to `/usr/local/bin/` · `trap cleanup EXIT`
 
-Each feature in `src/<name>/` contains:
-- `devcontainer-feature.json` — Metadata, options, dependencies
-- `install.sh` — Installation script
-- `README.md` — Usage documentation
-
-### Installation Script Pattern
-
-All `install.sh` scripts follow:
-1. Root privileges verification
-2. Automatic non-root user detection
-3. Dependencies installation via `apt`
-4. Architecture detection (x86_64, aarch64)
-5. Download from GitHub releases (when applicable)
-6. Installation in `/usr/local/bin/`
-7. Installation verification
-8. Cleanup (`trap cleanup`)
-
-**Requirements:**
-- Bash with `set -e`
-- Must support both x86_64 and aarch64
-- All features declare `installsAfter: ["ghcr.io/devcontainers/features/common-utils"]`
-
-### Testing
+**Testing:**
 
 ```bash
-devcontainer features test --features <feature-name> .  # Test one feature
-devcontainer features test .                             # Test all
+devcontainer features test --features <name> .
+devcontainer features test .
 ```
 
-**Base image requirements:**
-- Shell features → any base image (debian, ubuntu)
-- Node.js features → `mcr.microsoft.com/devcontainers/javascript-node:20`+
-- TypeScript features → `mcr.microsoft.com/devcontainers/typescript-node:20`+
+**Available features:**
 
-### Available Features
+| Feature | Ver | Description |
+| ------- | --- | ----------- |
+| `helpers4-common` | 1.0.0 | Bootstrap: jq + `common.sh` (user detection, apt helpers) — all features depend on this |
+| `essential-dev` | 1.0.2 | Git visualization, editor enhancements, Markdown |
+| `github-dev` | 1.0.3 | gh CLI, Copilot Chat, PR/Issues/Actions extensions |
+| `copilot-dev` | 1.0.1 | Copilot Chat + AI instructions (commits, PRs, code review) |
+| `claude-dev` | 1.0.4 | Claude Code extension + `~/.claude` bind-mount (credentials + memory persist) |
+| `mistral-dev` | 1.0.1 | Mistral Vibe extension + `~/.vibe` bind-mount |
+| `typescript-dev` | 1.0.5 | TS/JS dev, import management (dependsOn essential-dev) |
+| `angular-dev` | 1.0.2 | Angular dev, port 4200 |
+| `vite-plus` | 1.0.3 | vp CLI, Oxlint/Oxfmt, Vitest |
+| `package-auto-install` | — | Auto-detect and install packages |
+| `pnpm-store` | 1.0.4 | Shared pnpm store via Docker named volume (dependsOn helpers4-common) |
+| `auto-header` | — | LGPL-3.0 license headers |
+| `git-absorb` | 1.0.2 | git-absorb from GitHub releases |
+| `dotfiles-sync` | 1.0.2 | Sync Git/SSH/GPG/npm/gh config from host |
+| `peon-ping` | 1.0.3 | AI agent sound notifications |
+| `shell-history-per-project` | 1.0.2 | Persistent shell history (zsh/bash/fish) |
 
-| Feature | Version | Description | Dependencies |
-|---------|---------|-------------|--------------|
-| essential-dev | 1.0.2 | Git visualization, editor enhancements, Markdown | — |
-| github-dev | 1.0.3 | GitHub CLI (gh), Copilot Chat, PR & Issues, GitHub Actions, RemoteHub, Remote Repositories, shared Copilot Chat instructions for commit messages and PR titles/descriptions (reads `conventionalCommits.scopes` per repo, follows the active repo's own PR template) | — |
-| typescript-dev | 1.0.5 | TypeScript/JS dev with import management | essential-dev |
-| angular-dev | 1.0.2 | Angular dev, port 4200 forwarding | — |
-| vite-plus | 1.0.3 | Vite+ unified CLI (vp), Oxlint/Oxfmt, Vitest, optional system-wide symlink | — |
-| package-auto-install | — | Auto-detect and install packages | — |
-| helpers4-common | 1.0.0 | Bootstrap: installs jq + `/usr/local/share/helpers4/common.sh` (user detection, home resolution, apt helpers). All helpers4 features `dependsOn` this. | — |
-| claude-dev | 1.0.1 | Claude Code IDE extension (`anthropic.claude-code`) for VS Code and Cursor | — |
-| pnpm-store | 1.0.4 | Shared pnpm store via Docker named volume `helpers4-pnpm-store-${devcontainerId}` (no stray .pnpm-store) | helpers4-common |
-| auto-header | — | LGPL-3.0 license headers | — |
-| git-absorb | 1.0.2 | git-absorb from GitHub releases | — |
-| dotfiles-sync | 1.0.2 | Sync local Git/SSH/GPG/npm/gh/cargo/pip/yarn/pnpm config — opt-in cloud creds (AWS, kube, Docker, gh OAuth) — macOS, Linux, WSL, Codespaces | — |
-| peon-ping | — | Health check endpoint | — |
-| shell-history-per-project | 1.0.2 | Persistent shell history (zsh/bash/fish) | — |
+**Adding a new feature — checklist:**
 
-### CI/CD Workflows
+1. `src/<name>/devcontainer-feature.json` + `install.sh` + `README.md`
+2. `test/<name>/test.sh`
+3. `.vscode/settings.json` → add to `conventionalCommits.scopes` ← **PR CI fails without this**
+4. `.github/workflows/pr-validation.yml` + `test.yml` → add to test matrix
+5. This `AGENTS.md` features table
 
-| Workflow | Trigger | Jobs |
-|----------|---------|------|
-| `pr-validation.yml` | Pull request → main | conventional-commits, test-features (matrix), shellcheck, pr-comment |
-| `test.yml` | Push → main | Feature tests matrix |
-| `release.yml` | Published release | Publish features to GHCR |
-
-- **conventional-commits** — Validates PR commit messages against conventional commit format
-- **test-features** — Matrix of 16 feature/baseImage combos (`devcontainer features test`)
-- **shellcheck** — Lints all `install.sh` scripts with ShellCheck
-- **pr-comment** — Posts/updates a status summary comment on the PR
-
-### Adding a New Feature
-
-1. Create `src/<feature-name>/devcontainer-feature.json`
-2. Create `src/<feature-name>/install.sh`
-3. Create `src/<feature-name>/README.md`
-4. Create `test/<feature-name>/test.sh`
-5. Update main `README.md`
-6. **Update `.vscode/settings.json`** — Add feature name to `conventionalCommits.scopes` (required for PR CI to pass)
-7. **Update `.github/workflows/pr-validation.yml`** — Add feature to test matrix with appropriate base image
-8. **Update `.github/workflows/test.yml`** — Add feature to test matrix
-9. Update this `AGENTS.md` (scopes + features table)
-
-### Usage
-
-```json
-{
-  "features": {
-    "ghcr.io/helpers4/devcontainer/essential-dev:1": {},
-    "ghcr.io/helpers4/devcontainer/typescript-dev:1": {},
-    "ghcr.io/helpers4/devcontainer/vite-plus:1": {},
-    "ghcr.io/helpers4/devcontainer/package-auto-install:1": {},
-    "ghcr.io/helpers4/devcontainer/git-absorb:1": {},
-    "ghcr.io/helpers4/devcontainer/dotfiles-sync:1": {},
-    "ghcr.io/helpers4/devcontainer/shell-history-per-project:1": {}
-  }
-}
-```
-
-### License Header (required on all scripts)
+**License header (all scripts):**
 
 ```bash
 # This file is part of helpers4.
 # Copyright (C) 2025 baxyz
 # SPDX-License-Identifier: LGPL-3.0-or-later
 ```
-
-## Repository Links
-
-- TypeScript: https://github.com/helpers4/typescript
-- DevContainer: https://github.com/helpers4/devcontainer
-- Actions: https://github.com/helpers4/action
-- Website: https://github.com/helpers4/website
-- Organization: https://github.com/helpers4
-
-## Questions?
-
-If you need clarification on any aspect, open an issue or comment on the PR. We're here to help!
