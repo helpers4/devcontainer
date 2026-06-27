@@ -1,0 +1,22 @@
+[
+  "angular-dev",
+  "auto-header",
+  "CI-CD",
+  "claude-dev",
+  "copilot-dev",
+  "deprecated",
+  "deps-dev",
+  "deps",
+  "dotfiles-sync",
+  "essential-dev",
+  "git-absorb",
+  "github-dev",
+  "helpers4-common",
+  "mistral-dev",
+  "package-auto-install",
+  "peon-ping",
+  "pnpm-store",
+  "shell-history-per-project",
+  "typescript-dev",
+  "vite-plus"
+]

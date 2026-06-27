@@ -48,7 +48,7 @@ devcontainer features test .
 
 1. `src/<name>/devcontainer-feature.json` + `install.sh` + `README.md`
 2. `test/<name>/test.sh`
-3. `.vscode/settings.json` → add to `conventionalCommits.scopes` ← **PR CI fails without this**
+3. `scopes.json` → add the feature name ← **PR CI fails without this** (action reads `scopes.json` automatically)
 4. `.github/workflows/pr-validation.yml` + `test.yml` → add to test matrix
 5. This `AGENTS.md` features table
 
