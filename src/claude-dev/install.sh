@@ -102,8 +102,8 @@ STAGED="/mnt/h4claude"
 TARGET="${TARGET_HOME}/.claude"
 
 if [ ! -d "${STAGED}" ]; then
-    echo "[claude-dev] ERROR: ${STAGED} is not mounted — cannot link ~/.claude" >&2
-    exit 1
+    echo "[claude-dev] WARN: ${STAGED} not mounted — ~/.claude not linked, no persistence across rebuilds" >&2
+    exit 0
 fi
 
 rm -rf "${TARGET}"
