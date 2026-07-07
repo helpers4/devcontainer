@@ -102,6 +102,13 @@ That's it. The feature auto-detects the environment and adapts its behavior.
 | `.gnupg` | Copied on local/WSL; **skipped on cloud environments** (see below) |
 | All other files (git/ignore, git/attributes, yarnrc.yml, …) | **Copy-if-absent** — never overwrites an existing target |
 
+### Host-path rewriting and verification
+
+The host's `.gitconfig` can reference files by absolute path (e.g. `user.signingkey` for SSH-based commit signing). Those paths are meaningless inside the container — the host's home directory isn't mounted, only specific dotfiles are. Two safeguards handle this:
+
+- **Rewrite**: for a small set of keys known to hold a bare filesystem path (`user.signingkey`, `http.sslCert`, `http.sslKey`, `http.sslCAInfo`), if the value points inside `.ssh/` or `.gnupg/`, it's rewritten to `TARGET_HOME/.ssh/<basename>` or `TARGET_HOME/.gnupg/<basename>` — matching where the SSH/GPG sync steps actually re-home those files.
+- **Verify**: after merging, the same keys plus `gpg.program` and `core.editor` (paths the rewrite can't fix, since they point at host binaries with no container equivalent — e.g. a macOS Homebrew prefix) are checked for existence in the container. A `WARN` is printed for anything missing — sync never fails, but you get a visible signal instead of a commit silently failing to sign weeks later.
+
 ### Cloud environment protection
 
 On **GitHub Codespaces**, **Gitpod**, and **DevPod**, the platform manages git authentication and GPG signing. The following `.gitconfig` keys are **never overwritten** if already set by the platform:
