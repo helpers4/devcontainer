@@ -12,6 +12,12 @@
 #   .gitconfig  -> merge via `git config`: source keys applied only when absent
 #                  in target; protected keys (credential.helper, user.*, gpg.*)
 #                  never overwritten on cloud environments (managed by platform).
+#                  Bare-path values (user.signingkey, http.ssl*) that point
+#                  inside the synced .ssh/.gnupg dirs are rewritten to the
+#                  container's TARGET_HOME. After merging, path-like keys
+#                  (signingkey, gpg.program, core.editor, http.ssl*) are
+#                  checked for existence in the container and a WARN is
+#                  printed (not fatal) if a host-specific path didn't survive.
 #   .npmrc      -> merge line-by-line (key=value): source entries appended only
 #                  when the key is absent from the target.
 #   .ssh/config -> merge Host blocks: source blocks appended when Host absent.
@@ -116,12 +122,34 @@ elif [ -f "${SOURCE_HOME}/.gitconfig" ] && [ -s "${SOURCE_HOME}/.gitconfig" ]; t
         # Smart merge via git config
         PROTECTED_KEYS="credential.helper user.name user.email user.signingkey gpg.program gpg.format commit.gpgsign tag.gpgsign"
 
+        # Keys whose value is a bare filesystem path (never a shell command
+        # string) that may point inside the synced .ssh/.gnupg directories —
+        # e.g. user.signingkey with an SSH key under the host user's home.
+        # The host home doesn't exist in the container, but the referenced
+        # file itself is re-homed under TARGET_HOME/.ssh or TARGET_HOME/.gnupg
+        # by the syncs below, so rewrite the value to match. This is what
+        # broke commit signing before: the path survived the merge verbatim.
+        REHOMEABLE_PATH_KEYS="user.signingkey http.sslCert http.sslKey http.sslCAInfo"
+
         MERGED=0
         SKIPPED=0
         while IFS= read -r line; do
             KEY="${line%%=*}"
             VAL="${line#*=}"
             [ -z "${KEY}" ] && continue
+
+            case " ${REHOMEABLE_PATH_KEYS} " in
+                *" ${KEY} "*)
+                    case "${VAL}" in
+                        */.ssh/*)
+                            VAL="${TARGET_HOME}/.ssh/$(basename "${VAL}")"
+                            ;;
+                        */.gnupg/*)
+                            VAL="${TARGET_HOME}/.gnupg/$(basename "${VAL}")"
+                            ;;
+                    esac
+                    ;;
+            esac
 
             # On cloud envs: skip protected keys if already present
             if [ "${IS_CLOUD_ENV}" = "true" ]; then
@@ -148,6 +176,21 @@ elif [ -f "${SOURCE_HOME}/.gitconfig" ] && [ -s "${SOURCE_HOME}/.gitconfig" ]; t
         done < <(git config --file "${SOURCE_HOME}/.gitconfig" --list 2>/dev/null)
 
         echo "   .gitconfig: merged (${MERGED} added, ${SKIPPED} protected)"
+
+        # Verify path-like values resolve inside the container. Best-effort:
+        # warn, never fail — catches host/container mismatches the rewrite
+        # above doesn't cover (e.g. gpg.program or core.editor pointing at a
+        # host-only binary path, like a macOS Homebrew prefix that doesn't
+        # exist in a Linux container).
+        VERIFY_PATH_KEYS="user.signingkey gpg.program core.editor http.sslCert http.sslKey http.sslCAInfo"
+        for vkey in ${VERIFY_PATH_KEYS}; do
+            vval="$(_gitconfig_get "${TARGET_GIT}" "${vkey}")"
+            case "${vval}" in
+                /*)
+                    [ -e "${vval}" ] || echo "   WARN: ${vkey}=${vval} does not exist in container (host-specific path?)"
+                    ;;
+            esac
+        done
     else
         # Fallback without git: copy source if target is empty
         if [ ! -s "${TARGET_GIT}" ]; then
