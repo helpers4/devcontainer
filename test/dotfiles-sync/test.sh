@@ -165,6 +165,92 @@ else
 fi
 rm -rf "${TMP_SRC}" "${TMP_DST}"
 
+# Test 5h: bare-path git config values under .ssh/.gnupg are rewritten to
+# TARGET_HOME/.ssh or TARGET_HOME/.gnupg for allowlisted keys only (mirrors
+# REHOMEABLE_PATH_KEYS in sync-files.sh — the host's home directory doesn't
+# exist in the container, but the referenced file itself is re-homed under
+# TARGET_HOME by the SSH/GPG sync steps).
+REHOMEABLE_PATH_KEYS="user.signingkey http.sslCert http.sslKey http.sslCAInfo"
+TEST_TARGET_HOME="/home/other-user"
+
+_rehome_test() {
+    local _key="$1" _val="$2"
+    case " ${REHOMEABLE_PATH_KEYS} " in
+        *" ${_key} "*)
+            case "${_val}" in
+                */.ssh/*)
+                    _val="${TEST_TARGET_HOME}/.ssh/$(basename "${_val}")"
+                    ;;
+                */.gnupg/*)
+                    _val="${TEST_TARGET_HOME}/.gnupg/$(basename "${_val}")"
+                    ;;
+            esac
+            ;;
+    esac
+    printf '%s' "${_val}"
+}
+
+RESULT_SSH="$(_rehome_test "user.signingkey" "/home/some-host-user/.ssh/id_test_ed25519.pub")"
+if [ "${RESULT_SSH}" = "/home/other-user/.ssh/id_test_ed25519.pub" ]; then
+    echo "PASS: user.signingkey .ssh path rewritten to TARGET_HOME/.ssh"
+else
+    echo "FAIL: user.signingkey path not rewritten correctly (got: ${RESULT_SSH})"
+    exit 1
+fi
+
+RESULT_GNUPG="$(_rehome_test "http.sslKey" "/home/some-host-user/.gnupg/client.key")"
+if [ "${RESULT_GNUPG}" = "/home/other-user/.gnupg/client.key" ]; then
+    echo "PASS: http.sslKey .gnupg path rewritten to TARGET_HOME/.gnupg"
+else
+    echo "FAIL: http.sslKey path not rewritten correctly (got: ${RESULT_GNUPG})"
+    exit 1
+fi
+
+RESULT_UNLISTED="$(_rehome_test "core.editor" "/home/some-host-user/.ssh/some-editor")"
+if [ "${RESULT_UNLISTED}" = "/home/some-host-user/.ssh/some-editor" ]; then
+    echo "PASS: non-allowlisted key left untouched by the rehome rewrite"
+else
+    echo "FAIL: rehome rewrite touched a key outside REHOMEABLE_PATH_KEYS (got: ${RESULT_UNLISTED})"
+    exit 1
+fi
+
+# Test 5i: post-merge verification warns for path-like values that don't
+# exist in the container and stays silent for ones that do (mirrors the
+# VERIFY_PATH_KEYS loop in sync-files.sh).
+TMP_GIT=$(mktemp)
+EXISTING_FILE=$(mktemp)
+git config --file "${TMP_GIT}" user.signingkey "/definitely/does/not/exist/id_ed25519.pub"
+git config --file "${TMP_GIT}" gpg.program "${EXISTING_FILE}"
+
+VERIFY_OUTPUT=$(
+    VERIFY_PATH_KEYS="user.signingkey gpg.program core.editor http.sslCert http.sslKey http.sslCAInfo"
+    for vkey in ${VERIFY_PATH_KEYS}; do
+        vval="$(git config --file "${TMP_GIT}" --get "${vkey}" 2>/dev/null)"
+        case "${vval}" in
+            /*)
+                [ -e "${vval}" ] || echo "WARN: ${vkey}=${vval} does not exist in container (host-specific path?)"
+                ;;
+        esac
+    done
+)
+
+if echo "${VERIFY_OUTPUT}" | grep -q "WARN: user.signingkey"; then
+    echo "PASS: verification warns for a missing signingkey path"
+else
+    echo "FAIL: verification did not warn for a missing signingkey path"
+    rm -f "${TMP_GIT}" "${EXISTING_FILE}"
+    exit 1
+fi
+
+if echo "${VERIFY_OUTPUT}" | grep -q "WARN: gpg.program"; then
+    echo "FAIL: verification incorrectly warned for an existing gpg.program path"
+    rm -f "${TMP_GIT}" "${EXISTING_FILE}"
+    exit 1
+else
+    echo "PASS: verification stays silent for an existing gpg.program path"
+fi
+rm -f "${TMP_GIT}" "${EXISTING_FILE}"
+
 # Test 6: SSH agent runtime detection script exists
 PROFILE_SSH="/etc/profile.d/dotfiles-sync-ssh.sh"
 if [ -f "$PROFILE_SSH" ]; then
