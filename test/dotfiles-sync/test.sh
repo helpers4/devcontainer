@@ -167,71 +167,105 @@ rm -rf "${TMP_SRC}" "${TMP_DST}"
 
 # Test 5h: bare-path git config values under .ssh/.gnupg are rewritten to
 # TARGET_HOME/.ssh or TARGET_HOME/.gnupg for allowlisted keys only (mirrors
-# REHOMEABLE_PATH_KEYS in sync-files.sh — the host's home directory doesn't
-# exist in the container, but the referenced file itself is re-homed under
-# TARGET_HOME by the SSH/GPG sync steps).
-REHOMEABLE_PATH_KEYS="user.signingkey http.sslCert http.sslKey http.sslCAInfo"
+# REHOMEABLE_PATH_KEYS + the _key_in_list rewrite in sync-files.sh). Routed
+# through a REAL `git config --file ... --list` round trip (not a hand-typed
+# key string) — `git config --list` always lowercases keys, so a previous
+# version of this test that called the rewrite helper directly with the
+# mixed-case key spelling ("http.sslKey") never exercised that normalization
+# and missed a real bug where the allowlist itself used mixed-case spellings
+# that could never match the lowercased KEY seen in production.
+REHOMEABLE_PATH_KEYS="user.signingkey http.sslcert http.sslkey http.sslcainfo"
 TEST_TARGET_HOME="/home/other-user"
 
-_rehome_test() {
-    local _key="$1" _val="$2"
-    case " ${REHOMEABLE_PATH_KEYS} " in
-        *" ${_key} "*)
-            case "${_val}" in
-                */.ssh/*)
-                    _val="${TEST_TARGET_HOME}/.ssh/$(basename "${_val}")"
-                    ;;
-                */.gnupg/*)
-                    _val="${TEST_TARGET_HOME}/.gnupg/$(basename "${_val}")"
-                    ;;
-            esac
-            ;;
-    esac
-    printf '%s' "${_val}"
+_key_in_list_test() {
+    local _needle="$1" _item
+    for _item in ${2}; do
+        [ "${_needle}" = "${_item}" ] && return 0
+    done
+    return 1
 }
 
-RESULT_SSH="$(_rehome_test "user.signingkey" "/home/some-host-user/.ssh/id_test_ed25519.pub")"
-if [ "${RESULT_SSH}" = "/home/other-user/.ssh/id_test_ed25519.pub" ]; then
+TMP_SRC_GIT=$(mktemp)
+git config --file "${TMP_SRC_GIT}" user.signingKey "/home/some-host-user/.ssh/id_test_ed25519.pub"
+git config --file "${TMP_SRC_GIT}" http.sslCert "/home/some-host-user/.gnupg/nested/client.key"
+git config --file "${TMP_SRC_GIT}" core.editor "/home/some-host-user/.ssh/some-editor"
+
+REWRITTEN=""
+while IFS= read -r line; do
+    _key="${line%%=*}"
+    _val="${line#*=}"
+    if _key_in_list_test "${_key}" "${REHOMEABLE_PATH_KEYS}"; then
+        case "${_val}" in
+            */.ssh/*)
+                _val="${TEST_TARGET_HOME}/.ssh/${_val#*/.ssh/}"
+                ;;
+            */.gnupg/*)
+                _val="${TEST_TARGET_HOME}/.gnupg/${_val#*/.gnupg/}"
+                ;;
+        esac
+    fi
+    REWRITTEN="${REWRITTEN}${_key}=${_val}
+"
+done < <(git config --file "${TMP_SRC_GIT}" --list)
+rm -f "${TMP_SRC_GIT}"
+
+if echo "${REWRITTEN}" | grep -qF "user.signingkey=/home/other-user/.ssh/id_test_ed25519.pub"; then
     echo "PASS: user.signingkey .ssh path rewritten to TARGET_HOME/.ssh"
 else
-    echo "FAIL: user.signingkey path not rewritten correctly (got: ${RESULT_SSH})"
+    echo "FAIL: user.signingkey path not rewritten correctly"
+    echo "${REWRITTEN}"
     exit 1
 fi
 
-RESULT_GNUPG="$(_rehome_test "http.sslKey" "/home/some-host-user/.gnupg/client.key")"
-if [ "${RESULT_GNUPG}" = "/home/other-user/.gnupg/client.key" ]; then
-    echo "PASS: http.sslKey .gnupg path rewritten to TARGET_HOME/.gnupg"
+# This is the exact regression this test previously missed: git normalizes
+# "http.sslCert" to "http.sslcert" in --list output, and the rewrite must
+# also preserve the subdirectory under .gnupg (not just the basename), since
+# the real .gnupg sync copies files recursively.
+if echo "${REWRITTEN}" | grep -qF "http.sslcert=/home/other-user/.gnupg/nested/client.key"; then
+    echo "PASS: http.sslCert (normalized to http.sslcert) .gnupg nested path rewritten, subdirectory preserved"
 else
-    echo "FAIL: http.sslKey path not rewritten correctly (got: ${RESULT_GNUPG})"
+    echo "FAIL: http.sslCert path not rewritten correctly (mixed-case key or nested-path regression)"
+    echo "${REWRITTEN}"
     exit 1
 fi
 
-RESULT_UNLISTED="$(_rehome_test "core.editor" "/home/some-host-user/.ssh/some-editor")"
-if [ "${RESULT_UNLISTED}" = "/home/some-host-user/.ssh/some-editor" ]; then
+if echo "${REWRITTEN}" | grep -qF "core.editor=/home/some-host-user/.ssh/some-editor"; then
     echo "PASS: non-allowlisted key left untouched by the rehome rewrite"
 else
-    echo "FAIL: rehome rewrite touched a key outside REHOMEABLE_PATH_KEYS (got: ${RESULT_UNLISTED})"
+    echo "FAIL: rehome rewrite touched a key outside REHOMEABLE_PATH_KEYS"
+    echo "${REWRITTEN}"
     exit 1
 fi
 
-# Test 5i: post-merge verification warns for path-like values that don't
-# exist in the container and stays silent for ones that do (mirrors the
-# VERIFY_PATH_KEYS loop in sync-files.sh).
+# Test 5i: post-sync verification (single `git config --list` pass, run only
+# after .ssh/.gnupg are synced — see sync-files.sh) warns for path-like
+# values missing in the container, strips a leading "!" (credential.helper's
+# shell-invocation prefix) and trailing arguments (e.g. `code --wait`) before
+# checking, and stays silent for values that exist or aren't path-shaped.
+VERIFY_ONLY_PATH_KEYS="gpg.program core.editor credential.helper"
+VERIFY_PATH_KEYS="${REHOMEABLE_PATH_KEYS} ${VERIFY_ONLY_PATH_KEYS}"
+
 TMP_GIT=$(mktemp)
 EXISTING_FILE=$(mktemp)
 git config --file "${TMP_GIT}" user.signingkey "/definitely/does/not/exist/id_ed25519.pub"
-git config --file "${TMP_GIT}" gpg.program "${EXISTING_FILE}"
+git config --file "${TMP_GIT}" gpg.program "${EXISTING_FILE} --batch"
+git config --file "${TMP_GIT}" core.editor "code --wait"
+git config --file "${TMP_GIT}" credential.helper "!/definitely/does/not/exist/git-credential-wrapper --flag"
 
 VERIFY_OUTPUT=$(
-    VERIFY_PATH_KEYS="user.signingkey gpg.program core.editor http.sslCert http.sslKey http.sslCAInfo"
-    for vkey in ${VERIFY_PATH_KEYS}; do
-        vval="$(git config --file "${TMP_GIT}" --get "${vkey}" 2>/dev/null)"
-        case "${vval}" in
+    while IFS= read -r line; do
+        vkey="${line%%=*}"
+        vval="${line#*=}"
+        [ -z "${vkey}" ] && continue
+        _key_in_list_test "${vkey}" "${VERIFY_PATH_KEYS}" || continue
+        _check="${vval#!}"
+        _check="${_check%% *}"
+        case "${_check}" in
             /*)
-                [ -e "${vval}" ] || echo "WARN: ${vkey}=${vval} does not exist in container (host-specific path?)"
+                [ -e "${_check}" ] || echo "WARN: ${vkey}=${vval} does not exist in container (host-specific path?)"
                 ;;
         esac
-    done
+    done < <(git config --file "${TMP_GIT}" --list 2>/dev/null)
 )
 
 if echo "${VERIFY_OUTPUT}" | grep -q "WARN: user.signingkey"; then
@@ -243,11 +277,27 @@ else
 fi
 
 if echo "${VERIFY_OUTPUT}" | grep -q "WARN: gpg.program"; then
-    echo "FAIL: verification incorrectly warned for an existing gpg.program path"
+    echo "FAIL: verification incorrectly warned for an existing gpg.program path with trailing flags"
     rm -f "${TMP_GIT}" "${EXISTING_FILE}"
     exit 1
 else
-    echo "PASS: verification stays silent for an existing gpg.program path"
+    echo "PASS: verification stays silent for an existing gpg.program path despite trailing flags"
+fi
+
+if echo "${VERIFY_OUTPUT}" | grep -q "WARN: core.editor"; then
+    echo "FAIL: verification incorrectly warned for a bare-command core.editor value"
+    rm -f "${TMP_GIT}" "${EXISTING_FILE}"
+    exit 1
+else
+    echo "PASS: verification stays silent for a non-absolute core.editor command"
+fi
+
+if echo "${VERIFY_OUTPUT}" | grep -q "WARN: credential.helper"; then
+    echo "PASS: verification warns for a missing '!'-prefixed credential.helper path"
+else
+    echo "FAIL: verification did not warn for a missing '!'-prefixed credential.helper path"
+    rm -f "${TMP_GIT}" "${EXISTING_FILE}"
+    exit 1
 fi
 rm -f "${TMP_GIT}" "${EXISTING_FILE}"
 
