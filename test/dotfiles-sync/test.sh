@@ -166,50 +166,46 @@ fi
 rm -rf "${TMP_SRC}" "${TMP_DST}"
 
 # Test 5h: bare-path git config values under .ssh/.gnupg are rewritten to
-# TARGET_HOME/.ssh or TARGET_HOME/.gnupg for allowlisted keys only (mirrors
-# REHOMEABLE_PATH_KEYS + the _key_in_list rewrite in sync-files.sh). Routed
-# through a REAL `git config --file ... --list` round trip (not a hand-typed
-# key string) — `git config --list` always lowercases keys, so a previous
-# version of this test that called the rewrite helper directly with the
-# mixed-case key spelling ("http.sslKey") never exercised that normalization
-# and missed a real bug where the allowlist itself used mixed-case spellings
-# that could never match the lowercased KEY seen in production.
-REHOMEABLE_PATH_KEYS="user.signingkey http.sslcert http.sslkey http.sslcainfo"
-TEST_TARGET_HOME="/home/other-user"
-
-_key_in_list_test() {
-    local _needle="$1" _item
-    for _item in ${2}; do
-        [ "${_needle}" = "${_item}" ] && return 0
-    done
-    return 1
-}
+# TARGET_HOME/.ssh or TARGET_HOME/.gnupg for allowlisted keys only. Sources
+# the REAL path-keys.sh (installed by install.sh) instead of hand-copying the
+# allowlists/helpers — a change to REHOMEABLE_PATH_KEYS or the rewrite logic
+# in production is automatically exercised here too, no separate test copy to
+# fall out of sync. Uses the same TARGET_HOME this test already derived from
+# the real config file above (not a disconnected placeholder), and routes
+# values through a REAL `git config --file ... --list` round trip (not a
+# hand-typed key string) — `git config --list` always lowercases keys, so a
+# previous version of this test that called the rewrite helper directly with
+# the mixed-case key spelling ("http.sslKey") never exercised that
+# normalization and missed a real bug where the allowlist itself used
+# mixed-case spellings that could never match the lowercased KEY seen in
+# production.
+PATH_KEYS_FILE="/usr/local/share/dotfiles-sync/path-keys.sh"
+if [ ! -r "${PATH_KEYS_FILE}" ]; then
+    echo "FAIL: path-keys.sh not found at ${PATH_KEYS_FILE}"
+    exit 1
+fi
+# shellcheck source=/dev/null
+. "${PATH_KEYS_FILE}"
 
 TMP_SRC_GIT=$(mktemp)
 git config --file "${TMP_SRC_GIT}" user.signingKey "/home/some-host-user/.ssh/id_test_ed25519.pub"
 git config --file "${TMP_SRC_GIT}" http.sslCert "/home/some-host-user/.gnupg/nested/client.key"
 git config --file "${TMP_SRC_GIT}" core.editor "/home/some-host-user/.ssh/some-editor"
+git config --file "${TMP_SRC_GIT}" http.sslCAInfo ".ssh/id_relative_ed25519.pub"
 
 REWRITTEN=""
 while IFS= read -r line; do
     _key="${line%%=*}"
     _val="${line#*=}"
-    if _key_in_list_test "${_key}" "${REHOMEABLE_PATH_KEYS}"; then
-        case "${_val}" in
-            */.ssh/*)
-                _val="${TEST_TARGET_HOME}/.ssh/${_val#*/.ssh/}"
-                ;;
-            */.gnupg/*)
-                _val="${TEST_TARGET_HOME}/.gnupg/${_val#*/.gnupg/}"
-                ;;
-        esac
+    if _key_in_list "${_key}" "${REHOMEABLE_PATH_KEYS}"; then
+        _val="$(_rehome_path_value "${_val}")"
     fi
     REWRITTEN="${REWRITTEN}${_key}=${_val}
 "
 done < <(git config --file "${TMP_SRC_GIT}" --list)
 rm -f "${TMP_SRC_GIT}"
 
-if echo "${REWRITTEN}" | grep -qF "user.signingkey=/home/other-user/.ssh/id_test_ed25519.pub"; then
+if echo "${REWRITTEN}" | grep -qF "user.signingkey=${TARGET_HOME}/.ssh/id_test_ed25519.pub"; then
     echo "PASS: user.signingkey .ssh path rewritten to TARGET_HOME/.ssh"
 else
     echo "FAIL: user.signingkey path not rewritten correctly"
@@ -221,7 +217,7 @@ fi
 # "http.sslCert" to "http.sslcert" in --list output, and the rewrite must
 # also preserve the subdirectory under .gnupg (not just the basename), since
 # the real .gnupg sync copies files recursively.
-if echo "${REWRITTEN}" | grep -qF "http.sslcert=/home/other-user/.gnupg/nested/client.key"; then
+if echo "${REWRITTEN}" | grep -qF "http.sslcert=${TARGET_HOME}/.gnupg/nested/client.key"; then
     echo "PASS: http.sslCert (normalized to http.sslcert) .gnupg nested path rewritten, subdirectory preserved"
 else
     echo "FAIL: http.sslCert path not rewritten correctly (mixed-case key or nested-path regression)"
@@ -237,34 +233,50 @@ else
     exit 1
 fi
 
+# A bare relative path (no leading "/", as git config allows) must also be
+# rewritten — this previously required a literal "/" before ".ssh/"/".gnupg/"
+# and silently left relative-form values unrewritten.
+if echo "${REWRITTEN}" | grep -qF "http.sslcainfo=${TARGET_HOME}/.ssh/id_relative_ed25519.pub"; then
+    echo "PASS: bare-relative .ssh path (no leading slash) rewritten to TARGET_HOME/.ssh"
+else
+    echo "FAIL: bare-relative .ssh path not rewritten correctly"
+    echo "${REWRITTEN}"
+    exit 1
+fi
+
 # Test 5i: post-sync verification (single `git config --list` pass, run only
 # after .ssh/.gnupg are synced — see sync-files.sh) warns for path-like
 # values missing in the container, strips a leading "!" (credential.helper's
-# shell-invocation prefix) and trailing arguments (e.g. `code --wait`) before
-# checking, and stays silent for values that exist or aren't path-shaped.
-VERIFY_ONLY_PATH_KEYS="gpg.program core.editor credential.helper"
-VERIFY_PATH_KEYS="${REHOMEABLE_PATH_KEYS} ${VERIFY_ONLY_PATH_KEYS}"
-
+# shell-invocation prefix) and a leading "~/" (resolved against TARGET_HOME)
+# before checking, checks the whole value first so paths containing spaces
+# aren't falsely flagged, then falls back to per-token checks so an
+# interpreter-invoked script isn't hidden behind an always-present
+# interpreter binary — and stays silent for values that exist or aren't
+# path-shaped. Uses the real _key_in_list/_warn_if_missing_path from
+# path-keys.sh (sourced in Test 5h above), not a hand-copied reimplementation.
 TMP_GIT=$(mktemp)
 EXISTING_FILE=$(mktemp)
+EXISTING_DIR_WITH_SPACE=$(mktemp -d)"/dir with space"
+mkdir -p "${EXISTING_DIR_WITH_SPACE}"
+touch "${EXISTING_DIR_WITH_SPACE}/gpg.exe"
+
 git config --file "${TMP_GIT}" user.signingkey "/definitely/does/not/exist/id_ed25519.pub"
 git config --file "${TMP_GIT}" gpg.program "${EXISTING_FILE} --batch"
 git config --file "${TMP_GIT}" core.editor "code --wait"
 git config --file "${TMP_GIT}" credential.helper "!/definitely/does/not/exist/git-credential-wrapper --flag"
+git config --file "${TMP_GIT}" http.sslcert "${EXISTING_DIR_WITH_SPACE}/gpg.exe"
+git config --file "${TMP_GIT}" gpg.ssh.program "!/bin/sh /definitely/does/not/exist/gpg-ssh-wrapper.sh"
+# shellcheck disable=SC2088 # literal "~" is intentional: testing that
+# _warn_if_missing_path expands it against TARGET_HOME, not the shell
+git config --file "${TMP_GIT}" http.sslkey "~/definitely/does/not/exist/tls.key"
 
 VERIFY_OUTPUT=$(
     while IFS= read -r line; do
         vkey="${line%%=*}"
         vval="${line#*=}"
         [ -z "${vkey}" ] && continue
-        _key_in_list_test "${vkey}" "${VERIFY_PATH_KEYS}" || continue
-        _check="${vval#!}"
-        _check="${_check%% *}"
-        case "${_check}" in
-            /*)
-                [ -e "${_check}" ] || echo "WARN: ${vkey}=${vval} does not exist in container (host-specific path?)"
-                ;;
-        esac
+        _key_in_list "${vkey}" "${VERIFY_PATH_KEYS}" || continue
+        _warn_if_missing_path "${vkey}" "${vval}"
     done < <(git config --file "${TMP_GIT}" --list 2>/dev/null)
 )
 
@@ -272,21 +284,21 @@ if echo "${VERIFY_OUTPUT}" | grep -q "WARN: user.signingkey"; then
     echo "PASS: verification warns for a missing signingkey path"
 else
     echo "FAIL: verification did not warn for a missing signingkey path"
-    rm -f "${TMP_GIT}" "${EXISTING_FILE}"
+    rm -rf "${TMP_GIT}" "${EXISTING_FILE}" "${EXISTING_DIR_WITH_SPACE}"
     exit 1
 fi
 
 if echo "${VERIFY_OUTPUT}" | grep -q "WARN: gpg.program"; then
     echo "FAIL: verification incorrectly warned for an existing gpg.program path with trailing flags"
-    rm -f "${TMP_GIT}" "${EXISTING_FILE}"
+    rm -rf "${TMP_GIT}" "${EXISTING_FILE}" "${EXISTING_DIR_WITH_SPACE}"
     exit 1
 else
     echo "PASS: verification stays silent for an existing gpg.program path despite trailing flags"
 fi
 
-if echo "${VERIFY_OUTPUT}" | grep -q "WARN: core.editor"; then
+if echo "${VERIFY_OUTPUT}" | grep -q "WARN: core.editor="; then
     echo "FAIL: verification incorrectly warned for a bare-command core.editor value"
-    rm -f "${TMP_GIT}" "${EXISTING_FILE}"
+    rm -rf "${TMP_GIT}" "${EXISTING_FILE}" "${EXISTING_DIR_WITH_SPACE}"
     exit 1
 else
     echo "PASS: verification stays silent for a non-absolute core.editor command"
@@ -296,10 +308,34 @@ if echo "${VERIFY_OUTPUT}" | grep -q "WARN: credential.helper"; then
     echo "PASS: verification warns for a missing '!'-prefixed credential.helper path"
 else
     echo "FAIL: verification did not warn for a missing '!'-prefixed credential.helper path"
-    rm -f "${TMP_GIT}" "${EXISTING_FILE}"
+    rm -rf "${TMP_GIT}" "${EXISTING_FILE}" "${EXISTING_DIR_WITH_SPACE}"
     exit 1
 fi
-rm -f "${TMP_GIT}" "${EXISTING_FILE}"
+
+if echo "${VERIFY_OUTPUT}" | grep -q "WARN: http.sslcert"; then
+    echo "FAIL: verification incorrectly warned for an existing path containing a space"
+    rm -rf "${TMP_GIT}" "${EXISTING_FILE}" "${EXISTING_DIR_WITH_SPACE}"
+    exit 1
+else
+    echo "PASS: verification stays silent for an existing path containing a space (not truncated)"
+fi
+
+if echo "${VERIFY_OUTPUT}" | grep -q "WARN: gpg.ssh.program"; then
+    echo "PASS: verification warns for a missing interpreter-invoked script (not hidden behind the interpreter binary)"
+else
+    echo "FAIL: verification did not warn for a missing interpreter-invoked script"
+    rm -rf "${TMP_GIT}" "${EXISTING_FILE}" "${EXISTING_DIR_WITH_SPACE}"
+    exit 1
+fi
+
+if echo "${VERIFY_OUTPUT}" | grep -q "WARN: http.sslkey"; then
+    echo "PASS: verification warns for a missing '~/'-prefixed path"
+else
+    echo "FAIL: verification did not warn for a missing '~/'-prefixed path"
+    rm -rf "${TMP_GIT}" "${EXISTING_FILE}" "${EXISTING_DIR_WITH_SPACE}"
+    exit 1
+fi
+rm -rf "${TMP_GIT}" "${EXISTING_FILE}" "${EXISTING_DIR_WITH_SPACE}"
 
 # Test 6: SSH agent runtime detection script exists
 PROFILE_SSH="/etc/profile.d/dotfiles-sync-ssh.sh"

@@ -14,11 +14,12 @@
 #                  never overwritten on cloud environments (managed by platform).
 #                  Bare-path values (user.signingkey, http.ssl*) that point
 #                  inside the synced .ssh/.gnupg dirs are rewritten to the
-#                  container's TARGET_HOME. After the .ssh/.gnupg syncs below
-#                  have run, path-like keys (signingkey, gpg.program,
-#                  core.editor, credential.helper, http.ssl*) are checked for
-#                  existence in the container and a WARN is printed (not
-#                  fatal) if a host-specific path didn't survive.
+#                  container's TARGET_HOME (see path-keys.sh). After the
+#                  .ssh/.gnupg syncs below have run, path-like keys (signingkey,
+#                  gpg.program, gpg.ssh.program, core.editor, credential.helper,
+#                  http.ssl*) are checked for existence in the container and a
+#                  WARN is printed (not fatal) if a host-specific path didn't
+#                  survive.
 #   .npmrc      -> merge line-by-line (key=value): source entries appended only
 #                  when the key is absent from the target.
 #   .ssh/config -> merge Host blocks: source blocks appended when Host absent.
@@ -35,14 +36,22 @@
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 CONFIG_FILE="${SCRIPT_DIR}/config"
+PATH_KEYS_FILE="${SCRIPT_DIR}/path-keys.sh"
 
 if [ ! -r "${CONFIG_FILE}" ]; then
     echo "dotfiles-sync: config file ${CONFIG_FILE} not found or not readable, aborting sync"
     exit 1
 fi
 
+if [ ! -r "${PATH_KEYS_FILE}" ]; then
+    echo "dotfiles-sync: path-keys file ${PATH_KEYS_FILE} not found or not readable, aborting sync"
+    exit 1
+fi
+
 # shellcheck source=/dev/null
 . "${CONFIG_FILE}"
+# shellcheck source=/dev/null
+. "${PATH_KEYS_FILE}"
 
 USERNAME="${DOTFILES_SYNC_USERNAME}"
 SOURCE_HOME="${DOTFILES_SYNC_SOURCE}"
@@ -110,16 +119,6 @@ _gitconfig_get() {
     git config --file "$1" --get "$2" 2>/dev/null || true
 }
 
-# Membership test for a space-separated allowlist string (e.g. PROTECTED_KEYS,
-# REHOMEABLE_PATH_KEYS, VERIFY_PATH_KEYS). Args: <needle> <space-separated list>
-_key_in_list() {
-    local _needle="$1" _item
-    for _item in ${2}; do
-        [ "${_needle}" = "${_item}" ] && return 0
-    done
-    return 1
-}
-
 # ── Merge .gitconfig ──────────────────────────────────────────────────────────
 
 if [ -L "${SOURCE_HOME}/.gitconfig" ]; then
@@ -133,27 +132,10 @@ elif [ -f "${SOURCE_HOME}/.gitconfig" ] && [ -s "${SOURCE_HOME}/.gitconfig" ]; t
         # Smart merge via git config
         PROTECTED_KEYS="credential.helper user.name user.email user.signingkey gpg.program gpg.format commit.gpgsign tag.gpgsign"
 
-        # Keys whose value is a bare filesystem path (never a shell command
-        # string) that may point inside the synced .ssh/.gnupg directories —
-        # e.g. user.signingkey with an SSH key under the host user's home.
-        # The host home doesn't exist in the container, but the referenced
-        # file itself is re-homed under TARGET_HOME/.ssh or TARGET_HOME/.gnupg
-        # by the syncs below, so rewrite the value to match. This is what
-        # broke commit signing before: the path survived the merge verbatim.
-        #
-        # NOTE: `git config --list` always lowercases the key portion (e.g.
-        # `http.sslCert` -> `http.sslcert`), so every entry here MUST already
-        # be lowercase or the membership check below silently never matches.
-        REHOMEABLE_PATH_KEYS="user.signingkey http.sslcert http.sslkey http.sslcainfo"
-
-        # Keys worth a post-sync existence check even when no deterministic
-        # target path is known (gpg.program/core.editor/credential.helper
-        # point at a host binary or script — there's no container equivalent
-        # to rewrite them to). Includes every REHOMEABLE_PATH_KEYS entry too,
-        # so the two lists can't silently drift apart — see the verify pass
-        # after the .ssh/.gnupg syncs below.
-        VERIFY_ONLY_PATH_KEYS="gpg.program core.editor credential.helper"
-        VERIFY_PATH_KEYS="${REHOMEABLE_PATH_KEYS} ${VERIFY_ONLY_PATH_KEYS}"
+        # REHOMEABLE_PATH_KEYS / VERIFY_ONLY_PATH_KEYS / VERIFY_PATH_KEYS and
+        # the _rehome_path_value/_warn_if_missing_path helpers come from
+        # path-keys.sh (sourced above) — shared with test.sh so the allowlists
+        # and rewrite/verify logic can't silently drift apart.
 
         MERGED=0
         SKIPPED=0
@@ -163,29 +145,19 @@ elif [ -f "${SOURCE_HOME}/.gitconfig" ] && [ -s "${SOURCE_HOME}/.gitconfig" ]; t
             [ -z "${KEY}" ] && continue
 
             if _key_in_list "${KEY}" "${REHOMEABLE_PATH_KEYS}"; then
-                case "${VAL}" in
-                    */.ssh/*)
-                        VAL="${TARGET_HOME}/.ssh/${VAL#*/.ssh/}"
-                        ;;
-                    */.gnupg/*)
-                        VAL="${TARGET_HOME}/.gnupg/${VAL#*/.gnupg/}"
-                        ;;
-                esac
+                VAL="$(_rehome_path_value "${VAL}")"
             fi
 
+            existing="$(_gitconfig_get "${TARGET_GIT}" "${KEY}")"
+
             # On cloud envs: skip protected keys if already present
-            if [ "${IS_CLOUD_ENV}" = "true" ]; then
-                if _key_in_list "${KEY}" "${PROTECTED_KEYS}"; then
-                    existing="$(_gitconfig_get "${TARGET_GIT}" "${KEY}")"
-                    if [ -n "${existing}" ]; then
-                        SKIPPED=$((SKIPPED + 1))
-                        continue
-                    fi
-                fi
+            if [ "${IS_CLOUD_ENV}" = "true" ] && [ -n "${existing}" ] && \
+                    _key_in_list "${KEY}" "${PROTECTED_KEYS}"; then
+                SKIPPED=$((SKIPPED + 1))
+                continue
             fi
 
             # Merge: only set if not already present
-            existing="$(_gitconfig_get "${TARGET_GIT}" "${KEY}")"
             if [ -z "${existing}" ]; then
                 _gitconfig_set "${TARGET_GIT}" "${KEY}" "${VAL}"
                 MERGED=$((MERGED + 1))
@@ -349,18 +321,7 @@ if [ "${HAS_GIT}" = "true" ] && [ -n "${TARGET_GIT:-}" ] && [ -f "${TARGET_GIT}"
         vval="${line#*=}"
         [ -z "${vkey}" ] && continue
         _key_in_list "${vkey}" "${VERIFY_PATH_KEYS}" || continue
-
-        # credential.helper may use a leading "!" to mean "run this as a
-        # shell command"; gpg.program/core.editor may carry trailing flags
-        # (e.g. `code --wait`). Only the leading token needs to resolve to a
-        # file — strip both before checking existence.
-        _check="${vval#!}"
-        _check="${_check%% *}"
-        case "${_check}" in
-            /*)
-                [ -e "${_check}" ] || echo "   WARN: ${vkey}=${vval} does not exist in container (host-specific path?)"
-                ;;
-        esac
+        _warn_if_missing_path "${vkey}" "${vval}"
     done < <(git config --file "${TARGET_GIT}" --list 2>/dev/null)
 fi
 
