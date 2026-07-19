@@ -173,13 +173,20 @@ jobs:
           echo "$CHANGED" | jq -c '.[]' | while read -r row; do
             name=$(jq -r '.name' <<< "$row")
             version=$(jq -r '.version' <<< "$row")
-            payload=$(jq -nc --arg n "$name" --arg v "$version" --arg sha "${{ github.sha }}" \
-              '{feature:$n, version:$v, ref:$sha, sha:$sha, source:"devcontainer-release"}')
             echo "→ dispatch website: $name v$version"
+            # client_payload must be a JSON object, not a stringified one —
+            # gh api's "field[nested]=value" bracket syntax builds it as such.
+            # (A previous version passed a pre-serialized JSON string via
+            # --raw-field, which the API rejects with HTTP 422.)
             gh api \
               -X POST \
               -H "Accept: application/vnd.github+json" \
               "/repos/helpers4/website/dispatches" \
               -f event_type=devcontainer-release \
-              --raw-field "client_payload=$payload" || echo "⚠️  dispatch failed for $name"
+              -f "client_payload[feature]=$name" \
+              -f "client_payload[version]=$version" \
+              -f "client_payload[ref]=${{ github.sha }}" \
+              -f "client_payload[sha]=${{ github.sha }}" \
+              -f "client_payload[source]=devcontainer-release" \
+              || echo "⚠️  dispatch failed for $name"
           done
