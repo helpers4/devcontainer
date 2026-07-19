@@ -76,6 +76,7 @@ DOTFILES_SYNC_DOCKER_CONFIG="${SYNC_DOCKER_CONFIG}"
 CONF_EOF
 
 cp "$(dirname "$0")/sync-files.sh" /usr/local/share/dotfiles-sync/sync-files.sh
+cp "$(dirname "$0")/path-keys.sh" /usr/local/share/dotfiles-sync/path-keys.sh
 chmod +x /usr/local/share/dotfiles-sync/sync-files.sh
 
 echo "Runtime sync script installed (/usr/local/share/dotfiles-sync/sync-files.sh)"
