@@ -80,30 +80,44 @@ _rehome_path_value() {
 #
 # Handles, in order:
 #  - a leading "!" (credential.helper's shell-invocation prefix)
-#  - a leading "~/" (resolved against TARGET_HOME, checked both as a whole
-#    value and per-token — see below)
+#  - a leading "~/" (resolved against TARGET_HOME) or a bare "~user/..." form
+#    (can't be resolved to a container path — no other user's home is
+#    mounted — but still checked as-is so it's flagged rather than silently
+#    skipped)
 #  - the value AS A WHOLE being a path that itself contains spaces (e.g. a
 #    Windows path surfaced via WSL: "/mnt/c/Program Files/Git/.../gpg.exe") —
-#    checked before any splitting, so this never gets truncated
+#    checked before any splitting, so this never gets truncated. Skipped
+#    entirely when the value has no whitespace at all, since the per-token
+#    loop below would just re-check the identical single token.
 #  - trailing flags or an interpreter prefix (e.g. `code --wait`, or
 #    `!/usr/bin/python3 /host/only/helper.py`) — each whitespace-separated
-#    token that looks like a path (leading "/" or "~/") is checked
+#    token that looks like a path (leading "/" or "~") is checked
 #    individually, so an interpreter-invoked script isn't hidden behind an
-#    always-present interpreter binary
+#    always-present interpreter binary. Globbing is disabled around the
+#    split (`set -f`) so a literal "*"/"?"/"[...]" in a value can't expand
+#    against whatever happens to be in the current working directory.
 _warn_if_missing_path() {
-    local _key="$1" _raw="$2" _val _tok _resolved _reason
+    local _key="$1" _raw="$2" _val _tok _resolved _reason _has_space=false
 
     _val="${_raw#!}"
 
-    _resolved="${_val}"
-    case "${_resolved}" in
-        '~'/*) _resolved="${TARGET_HOME}${_resolved#\~}" ;;
+    case "${_val}" in
+        *[[:space:]]*) _has_space=true ;;
     esac
-    [ -e "${_resolved}" ] && return 0
 
+    if [ "${_has_space}" = "true" ]; then
+        _resolved="${_val}"
+        case "${_resolved}" in
+            '~'/*) _resolved="${TARGET_HOME}${_resolved#\~}" ;;
+        esac
+        [ -e "${_resolved}" ] && return 0
+    fi
+
+    set -f
     for _tok in ${_val}; do
         case "${_tok}" in
             '~'/*) _tok="${TARGET_HOME}${_tok#\~}" ;;
+            '~'*) : ;;
             /*) ;;
             *) continue ;;
         esac
@@ -118,4 +132,5 @@ _warn_if_missing_path() {
             echo "   WARN: ${_key}=${_raw} does not exist in container (${_reason}) [missing: ${_tok}]"
         fi
     done
+    set +f
 }

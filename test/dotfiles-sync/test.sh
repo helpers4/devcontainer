@@ -256,7 +256,8 @@ fi
 # path-keys.sh (sourced in Test 5h above), not a hand-copied reimplementation.
 TMP_GIT=$(mktemp)
 EXISTING_FILE=$(mktemp)
-EXISTING_DIR_WITH_SPACE=$(mktemp -d)"/dir with space"
+TMP_SPACE_PARENT=$(mktemp -d)
+EXISTING_DIR_WITH_SPACE="${TMP_SPACE_PARENT}/dir with space"
 mkdir -p "${EXISTING_DIR_WITH_SPACE}"
 touch "${EXISTING_DIR_WITH_SPACE}/gpg.exe"
 
@@ -284,13 +285,13 @@ if echo "${VERIFY_OUTPUT}" | grep -q "WARN: user.signingkey"; then
     echo "PASS: verification warns for a missing signingkey path"
 else
     echo "FAIL: verification did not warn for a missing signingkey path"
-    rm -rf "${TMP_GIT}" "${EXISTING_FILE}" "${EXISTING_DIR_WITH_SPACE}"
+    rm -rf "${TMP_GIT}" "${EXISTING_FILE}" "${TMP_SPACE_PARENT}"
     exit 1
 fi
 
 if echo "${VERIFY_OUTPUT}" | grep -q "WARN: gpg.program"; then
     echo "FAIL: verification incorrectly warned for an existing gpg.program path with trailing flags"
-    rm -rf "${TMP_GIT}" "${EXISTING_FILE}" "${EXISTING_DIR_WITH_SPACE}"
+    rm -rf "${TMP_GIT}" "${EXISTING_FILE}" "${TMP_SPACE_PARENT}"
     exit 1
 else
     echo "PASS: verification stays silent for an existing gpg.program path despite trailing flags"
@@ -298,7 +299,7 @@ fi
 
 if echo "${VERIFY_OUTPUT}" | grep -q "WARN: core.editor="; then
     echo "FAIL: verification incorrectly warned for a bare-command core.editor value"
-    rm -rf "${TMP_GIT}" "${EXISTING_FILE}" "${EXISTING_DIR_WITH_SPACE}"
+    rm -rf "${TMP_GIT}" "${EXISTING_FILE}" "${TMP_SPACE_PARENT}"
     exit 1
 else
     echo "PASS: verification stays silent for a non-absolute core.editor command"
@@ -308,13 +309,13 @@ if echo "${VERIFY_OUTPUT}" | grep -q "WARN: credential.helper"; then
     echo "PASS: verification warns for a missing '!'-prefixed credential.helper path"
 else
     echo "FAIL: verification did not warn for a missing '!'-prefixed credential.helper path"
-    rm -rf "${TMP_GIT}" "${EXISTING_FILE}" "${EXISTING_DIR_WITH_SPACE}"
+    rm -rf "${TMP_GIT}" "${EXISTING_FILE}" "${TMP_SPACE_PARENT}"
     exit 1
 fi
 
 if echo "${VERIFY_OUTPUT}" | grep -q "WARN: http.sslcert"; then
     echo "FAIL: verification incorrectly warned for an existing path containing a space"
-    rm -rf "${TMP_GIT}" "${EXISTING_FILE}" "${EXISTING_DIR_WITH_SPACE}"
+    rm -rf "${TMP_GIT}" "${EXISTING_FILE}" "${TMP_SPACE_PARENT}"
     exit 1
 else
     echo "PASS: verification stays silent for an existing path containing a space (not truncated)"
@@ -324,7 +325,7 @@ if echo "${VERIFY_OUTPUT}" | grep -q "WARN: gpg.ssh.program"; then
     echo "PASS: verification warns for a missing interpreter-invoked script (not hidden behind the interpreter binary)"
 else
     echo "FAIL: verification did not warn for a missing interpreter-invoked script"
-    rm -rf "${TMP_GIT}" "${EXISTING_FILE}" "${EXISTING_DIR_WITH_SPACE}"
+    rm -rf "${TMP_GIT}" "${EXISTING_FILE}" "${TMP_SPACE_PARENT}"
     exit 1
 fi
 
@@ -332,10 +333,10 @@ if echo "${VERIFY_OUTPUT}" | grep -q "WARN: http.sslkey"; then
     echo "PASS: verification warns for a missing '~/'-prefixed path"
 else
     echo "FAIL: verification did not warn for a missing '~/'-prefixed path"
-    rm -rf "${TMP_GIT}" "${EXISTING_FILE}" "${EXISTING_DIR_WITH_SPACE}"
+    rm -rf "${TMP_GIT}" "${EXISTING_FILE}" "${TMP_SPACE_PARENT}"
     exit 1
 fi
-rm -rf "${TMP_GIT}" "${EXISTING_FILE}" "${EXISTING_DIR_WITH_SPACE}"
+rm -rf "${TMP_GIT}" "${EXISTING_FILE}" "${TMP_SPACE_PARENT}"
 
 # Test 6: SSH agent runtime detection script exists
 PROFILE_SSH="/etc/profile.d/dotfiles-sync-ssh.sh"
