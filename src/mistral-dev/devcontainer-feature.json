@@ -1,8 +1,8 @@
 {
   "id": "mistral-dev",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "name": "Mistral Vibe Development Environment",
-  "description": "Installs the Mistral Vibe IDE extension (mistralai.mistral-vibe-code) for VS Code and Cursor. Mounts ~/.vibe from the host via a directory symlink — credentials and config persist across all rebuilds.",
+  "description": "Installs the Mistral Vibe IDE extension (mistralai.mistral-vibe-code) for VS Code and Cursor. Bind-mounts ~/.vibe from the host and symlinks it at container start — credentials and config persist across all rebuilds.",
   "documentationURL": "https://github.com/helpers4/devcontainer/tree/main/src/mistral-dev",
   "licenseURL": "https://github.com/helpers4/devcontainer/blob/main/LICENSE",
   "keywords": [
@@ -25,6 +25,14 @@
     }
   },
 
+  "mounts": [
+    {
+      "source": "${localEnv:HOME}/.vibe",
+      "target": "/mnt/h4vibe",
+      "type": "bind"
+    }
+  ],
+  "postStartCommand": "/usr/local/share/mistral-dev/setup-credentials.sh",
   "customizations": {
     "vscode": {
       "extensions": [

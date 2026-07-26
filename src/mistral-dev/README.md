@@ -16,6 +16,18 @@ including `--no-cache`.
 }
 ```
 
+Add `initializeCommand` to your `devcontainer.json` so the host directory is
+guaranteed to exist before Docker tries to bind-mount it:
+
+```jsonc
+{
+  "initializeCommand": "mkdir -p ~/.vibe",
+  "features": {
+    "ghcr.io/helpers4/devcontainer/mistral-dev:1": {}
+  }
+}
+```
+
 With the optional CLI:
 
 ```jsonc
@@ -50,15 +62,26 @@ The feature declares the `mistralai.mistral-vibe-code` extension via the
 installs it automatically.
 
 ### Credential persistence
-At build time, `install.sh` generates `/usr/local/share/mistral-dev/setup-credentials.sh`
-with the target user's home directory baked in. At every container start
-(`postStartCommand`), that script replaces `~/.vibe` with a symlink pointing to
-the host bind-mounted path `/mnt/h4vibe` (sourced from `~/.vibe` on the host).
+1. **Build time** (`install.sh`): generates `/usr/local/share/mistral-dev/setup-credentials.sh`
+   with the target user's home path baked in.
+2. **Mount** (`devcontainer-feature.json → mounts`): bind-mounts `$HOME/.vibe` from
+   the host to `/mnt/h4vibe` inside the container.
+3. **Every start** (`postStartCommand`): `setup-credentials.sh` replaces `~/.vibe`
+   with a symlink to `/mnt/h4vibe` — credentials and config survive rebuilds.
 
 This means:
 - Credentials survive container rebuilds (including `--no-cache`).
 - First-time auth inside the container writes back to the host automatically.
 - `VIBE_HOME` is not required — the symlink is transparent to Mistral Vibe.
+
+Docker refuses to start the container if a bind-mount source has never existed
+on the host (fresh machine, first Vibe login). A Feature's `devcontainer-feature.json`
+can't fix this itself — `initializeCommand` set there is silently ignored by the
+devcontainers CLI, only the consumer's top-level `devcontainer.json` is honored for
+it — which is why `initializeCommand` above is required in your own config rather
+than bundled into the feature. If `/mnt/h4vibe` is not mounted (e.g. missing
+`initializeCommand`, standalone test), the script errors out — check that
+`initializeCommand` is present in your `devcontainer.json`.
 
 ### CLI (optional)
 When `installCli: true`, the `vibe` command is installed at build time via `uv`
