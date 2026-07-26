@@ -32,17 +32,17 @@ devcontainer features test .
 | `github-dev` | 1.0.3 | gh CLI, Copilot Chat, PR/Issues/Actions extensions |
 | `copilot-dev` | 1.0.1 | Copilot Chat + AI instructions (commits, PRs, code review) |
 | `claude-dev` | 1.0.4 | Claude Code extension + `~/.claude` bind-mount (credentials + memory persist) |
-| `mistral-dev` | 1.0.1 | Mistral Vibe extension + `~/.vibe` bind-mount |
+| `mistral-dev` | 1.0.2 | Mistral Vibe extension + `~/.vibe` bind-mount |
 | `typescript-dev` | 1.0.5 | TS/JS dev, import management (dependsOn essential-dev) |
-| `angular-dev` | 1.0.2 | Angular dev, port 4200 |
+| `angular-dev` | 1.0.6 | Angular dev, port 4200 |
 | `vite-plus` | 1.0.3 | vp CLI, Oxlint/Oxfmt, Vitest |
-| `package-auto-install` | — | Auto-detect and install packages |
+| `package-auto-install` | 1.0.7 | Auto-detect and install packages |
 | `pnpm-store` | 1.0.4 | Shared pnpm store via Docker named volume (dependsOn helpers4-common) |
 | `auto-header` | — | LGPL-3.0 license headers |
-| `git-absorb` | 1.0.2 | git-absorb from GitHub releases |
-| `dotfiles-sync` | 1.0.2 | Sync Git/SSH/GPG/npm/gh config from host |
+| `git-absorb` | 1.0.7 | git-absorb from GitHub releases |
+| `dotfiles-sync` | 1.0.7 | Sync Git/SSH/GPG/npm/gh config from host |
 | `peon-ping` | 1.0.3 | AI agent sound notifications |
-| `shell-history-per-project` | 1.0.2 | Persistent shell history (zsh/bash/fish) |
+| `shell-history-per-project` | 1.0.7 | Persistent shell history (zsh/bash/fish) |
 
 **Adding a new feature — checklist:**
 
@@ -83,20 +83,40 @@ and push again.
 These are hard requirements, not style preferences — violating them breaks the
 container for users, sometimes silently.
 
-- **Never rely on a direct `mounts` entry for a host path that might not exist.**
-  DevContainer `mounts` are resolved by Docker before any `install.sh` /
-  `postCreateCommand` / `postStartCommand` runs. If the host source path is
-  missing — file *or* directory — the mount fails and the container fails to
-  start. No feature script can catch or work around this after the fact. This
-  is why `dotfiles-sync` doesn't bind-mount straight into the final target
-  (`~/.gitconfig`, `~/.ssh`, …); it stages into `/mnt/h4dotfiles` and merges at
-  `postStartCommand`, tolerating an absent source. Any new feature that needs
-  host state (credentials, config dirs) must follow the same staging pattern —
-  don't copy `claude-dev`'s/`mistral-dev`'s direct-mount-and-symlink shape
-  without first confirming it can't crash on a first-time user who has no
-  `~/.claude` / `~/.vibe` yet.
-- **Features must work out-of-the-box.** Never require the user to manually
-  create a folder or file on the host before first use.
+- **A `mounts` entry fails the whole container if the host source doesn't
+  exist — file *or* directory, no exceptions.** Verified against
+  `@devcontainers/cli` directly (decompiled `devContainersSpecCLI.js`):
+  `docker run --mount type=bind,...` is used, which errors out
+  (`bind source path does not exist`) instead of silently creating anything.
+  No feature script can catch this — mounts resolve before `install.sh` /
+  `postCreateCommand` / `postStartCommand` ever run.
+- **A Feature's own `initializeCommand` cannot fix this — it's silently
+  ignored.** Also verified in the CLI source: the lifecycle-command merge
+  step only collects `onCreateCommand`, `updateContentCommand`,
+  `postCreateCommand`, `postStartCommand`, `postAttachCommand` from each
+  Feature (`lv` in the minified bundle) plus `mounts`/`customizations`/etc.
+  (`xV`) — `initializeCommand` is *not* in either list. It only has effect in
+  the **consumer's own top-level `devcontainer.json`**. This was tried on
+  `claude-dev` (v1.0.3, since reverted as dead code) before the real fix
+  landed: document a required `initializeCommand` in the feature's README
+  Example Usage (see `claude-dev`'s and `mistral-dev`'s READMEs) — a Feature
+  cannot inject into the consumer's `devcontainer.json`, so this is the only
+  place it can actually run.
+- **"Out-of-the-box" for a mount-dependent feature means "one documented
+  `initializeCommand` line away," not zero-config.** Given the constraint
+  above, don't chase a fully silent fix for a feature with a hard mount
+  dependency — document the required line prominently instead. If a feature
+  can tolerate a missing/empty source at the file level (many small files,
+  like `dotfiles-sync`), prefer staging into `/mnt/h4dotfiles`-style path and
+  merging at `postStartCommand` over a hard mount dependency — but note that
+  even staged mounts still fail hard if *their* source is missing, so staging
+  only helps once the source is guaranteed to exist (see `dotfiles-sync`'s
+  own `initializeCommand` requirement for exactly the files it can't avoid
+  mounting).
+- **`devcontainer-feature.json` must be plain JSON — no `//` comments.**
+  `devcontainers/action` parses it with `JSON.parse`, which chokes on JSONC.
+  This broke the release workflow once already (see commit `4e6e5ee`). Put
+  rationale in the README or a neighboring `.sh` file instead.
 - **Must work inside a VS Code multi-root `.code-workspace`** — this repo's own
   devcontainer bundles 6 sibling repos this way (see the root `.dev/CLAUDE.md`
   workspace layout). Treat this as a standard case, not an edge case.
