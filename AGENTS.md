@@ -31,8 +31,8 @@ devcontainer features test .
 | `essential-dev` | 1.0.2 | Git visualization, editor enhancements, Markdown |
 | `github-dev` | 1.0.3 | gh CLI, Copilot Chat, PR/Issues/Actions extensions |
 | `copilot-dev` | 1.0.1 | Copilot Chat + AI instructions (commits, PRs, code review) |
-| `claude-dev` | 1.0.4 | Claude Code extension + `~/.claude` bind-mount (credentials + memory persist) |
-| `mistral-dev` | 1.0.2 | Mistral Vibe extension + `~/.vibe` bind-mount |
+| `claude-dev` | 1.0.5 | Claude Code extension + `~/.claude` bind-mount (credentials + memory persist) |
+| `mistral-dev` | 1.0.3 | Mistral Vibe extension + `~/.vibe` bind-mount |
 | `typescript-dev` | 1.0.5 | TS/JS dev, import management (dependsOn essential-dev) |
 | `angular-dev` | 1.0.6 | Angular dev, port 4200 |
 | `vite-plus` | 1.0.3 | vp CLI, Oxlint/Oxfmt, Vitest |
