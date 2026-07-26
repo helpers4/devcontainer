@@ -1,6 +1,6 @@
 {
   "id": "claude-dev",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "name": "Claude Code Development Environment",
   "description": "Installs the Claude Code IDE extension (anthropic.claude-code) for VS Code and Cursor. Bind-mounts ~/.claude from the host and symlinks it at container start — credentials, config, and memory persist across all rebuilds.",
   "documentationURL": "https://github.com/helpers4/devcontainer/tree/main/src/claude-dev",
@@ -15,8 +15,8 @@
   "options": {
     "username": {
       "type": "string",
-      "default": "node",
-      "description": "Username in the container that should receive the Claude credentials symlink."
+      "default": "auto",
+      "description": "Username in the container that should receive the Claude credentials symlink. 'auto' detects vscode/node/codespace/uid-1000, in that order."
     }
   },
 

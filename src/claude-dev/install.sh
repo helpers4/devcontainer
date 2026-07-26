@@ -68,6 +68,7 @@ fi
 
 # USERNAME is injected by the devcontainer CLI from the 'username' feature option.
 # h4_detect_user falls back to UID-1000 candidate or root when not explicitly set.
+USERNAME="${_BUILD_ARG_USERNAME:-"${USERNAME:-"automatic"}"}"
 h4_detect_user
 h4_resolve_home
 

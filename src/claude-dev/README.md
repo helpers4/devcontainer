@@ -26,6 +26,12 @@ guaranteed to exist before Docker tries to bind-mount it:
 }
 ```
 
+## Options
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `username` | string | `auto` | Container user that receives the `~/.claude` symlink. `auto` detects vscode/node/codespace/uid-1000, in that order; set an explicit username to override. |
+
 ## IDE support
 
 | Editor | Status | ID |
