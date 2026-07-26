@@ -12,7 +12,26 @@ Syncs local Git, SSH, GPG, npm, and yarn config files into the devcontainer. Opt
 }
 ```
 
-That's it. The feature auto-detects the environment and adapts its behavior.
+The feature auto-detects the environment and adapts its behavior. **Add
+`initializeCommand`** so every bind-mount source is guaranteed to exist before
+Docker resolves the mounts — without it, a container can fail to start on a
+machine that's simply never created one of these files (see "Operational
+note" below):
+
+```json
+{
+    "initializeCommand": "mkdir -p ~/.ssh ~/.gnupg ~/.config/git ~/.aws ~/.kube ~/.docker && touch ~/.gitconfig ~/.npmrc ~/.yarnrc.yml ~/.aws/config ~/.kube/config ~/.docker/config.json",
+    "features": {
+        "ghcr.io/helpers4/devcontainer/dotfiles-sync:1": {}
+    }
+}
+```
+
+This can't be baked into the feature itself — a Feature's own
+`initializeCommand` field is silently ignored by the devcontainers CLI, only
+the consumer's top-level `devcontainer.json` is honored for it (see AGENTS.md
+"Design constraints for features"). `mkdir -p`/`touch` on paths that already
+exist are no-ops, so this is always safe to add.
 
 ### With custom username
 
@@ -56,8 +75,12 @@ That's it. The feature auto-detects the environment and adapts its behavior.
 
 **Operational note — bind-mounts are unconditional:** DevContainer Feature `mounts` cannot be gated on option values. The files below are always bind-mounted into `/mnt/h4dotfiles` at container start, regardless of the option value. The option only controls whether `sync-files.sh` copies the staged file into `$HOME`. Consequences:
 
-- **Startup failure risk** — Docker file bind-mounts fail hard if the source path does not exist on the host. If you don't have `~/.aws/config`, `~/.kube/config`, or `~/.docker/config.json`, the container will fail to start even if the corresponding option is `false`. Create the file (it can be empty) to unblock startup.
+- **Startup failure risk** — Docker file bind-mounts fail hard if the source path does not exist on the host. If you don't have `~/.aws/config`, `~/.kube/config`, or `~/.docker/config.json`, the container will fail to start even if the corresponding option is `false`. The `initializeCommand` in "Usage" above pre-creates all of them (empty file, `touch`) so this can't happen — that's the supported fix, not creating the file by hand once and hoping it survives.
 - **Data visible in staging** — even when the option is `false`, the host file is accessible inside the container at `/mnt/h4dotfiles/<path>`. Nothing reads that path unless the option is enabled, but if your threat model requires full isolation, do not use the feature for that credential.
+
+The same startup-failure risk applies to the "always synced" files above
+(`~/.npmrc`, `~/.yarnrc.yml` in particular are frequently absent on a fresh
+machine) — the `initializeCommand` in "Usage" covers those too.
 
 | Local Path | Option | Notes |
 |------------|--------|-------|
@@ -244,6 +267,7 @@ ssh-add -l
 
 ## Version History
 
+- **v1.0.7**: Documented the required `initializeCommand` in "Usage" (pre-creates every bind-mount source, mandatory and opt-in) so a container can't fail to start on a machine missing one of these files — a Feature's own `initializeCommand` is silently ignored by the devcontainers CLI, so this has to live in the consumer's `devcontainer.json`, not the feature. No behavior change to `sync-files.sh`.
 - **v1.0.4**: Removed bind-mounts for files that are frequently absent on host machines and have little value inside a devcontainer: `~/.gitignore_global` (redundant with `~/.config/git/` directory mount), `~/.config/pnpm/rc` (pnpm store-dir is counter-productive in a container), `~/.config/gh/config.yml` and `~/.config/gh/hosts.yml` (gh CLI auth managed separately), `~/.cargo/config.toml` (cargo not relevant in most containers), `~/.config/pip/pip.conf` (too environment-specific). Docker file bind-mounts fail hard if the source path doesn't exist on the host, which was causing containers to fail to start. The `syncGhAuth` option is removed.
 - **v1.0.3**: Fixed incompatibility with `docker-in-docker` feature — staging directory moved from `/tmp/dotfiles-sync/` to `/mnt/h4dotfiles/` to avoid being hidden by the tmpfs that `docker-in-docker` mounts on `/tmp` at container start.
 - **v1.0.2**: Added `syncGhAuth` opt-in to copy `~/.config/gh/hosts.yml` (GitHub OAuth token used by `gh` CLI) into `$HOME`. Default `false`, skipped on cloud environments. The file is bind-mounted into `/tmp/dotfiles-sync/` regardless (Feature `mounts` cannot be conditional) but only copied to `$HOME` when the option is enabled. For fine-grained PATs prefer the `github-dev` feature with `GH_TOKEN`.

@@ -1,6 +1,6 @@
 {
   "id": "dotfiles-sync",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "name": "Dotfiles Sync",
   "description": "Syncs local Git, SSH, GPG, npm, yarn config files into the devcontainer. Optionally syncs cloud credentials (AWS, kube, Docker) — opt-in only. Works on macOS, Linux, Windows (WSL), Codespaces, Gitpod, DevPod. Merges instead of overwriting.",
   "documentationURL": "https://github.com/helpers4/devcontainer/tree/main/src/dotfiles-sync",
