@@ -52,6 +52,18 @@ devcontainer features test .
 4. `.github/workflows/pr-validation.yml` + `test.yml` → add to test matrix
 5. This `AGENTS.md` features table
 
+**Modifying an existing feature — version bump:**
+
+Any change under `src/<name>/` (`install.sh`, `devcontainer-feature.json`,
+`README.md`, …) must bump that feature's `version` field (patch by default,
+minor/major when warranted) — `release.yml` only tags and publishes a feature
+whose `version` changed between the base branch and HEAD, so an unbumped
+feature change silently never ships. Bump it **once per branch**: if the
+version on the branch already differs from `main`'s, a further commit on that
+same branch/PR must *not* bump it again — check the diff against `main`
+first, don't bump reflexively on every commit. This should eventually be a CI
+check/auto-bump rather than a manual habit — see `TODO.md`.
+
 **License header (all scripts):**
 
 ```bash
