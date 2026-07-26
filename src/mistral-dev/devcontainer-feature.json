@@ -1,6 +1,6 @@
 {
   "id": "mistral-dev",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "name": "Mistral Vibe Development Environment",
   "description": "Installs the Mistral Vibe IDE extension (mistralai.mistral-vibe-code) for VS Code and Cursor. Bind-mounts ~/.vibe from the host and symlinks it at container start — credentials and config persist across all rebuilds.",
   "documentationURL": "https://github.com/helpers4/devcontainer/tree/main/src/mistral-dev",
@@ -15,8 +15,8 @@
   "options": {
     "username": {
       "type": "string",
-      "default": "node",
-      "description": "Username in the container that should receive the Mistral Vibe credentials symlink."
+      "default": "auto",
+      "description": "Username in the container that should receive the Mistral Vibe credentials symlink. 'auto' detects vscode/node/codespace/uid-1000, in that order."
     },
     "installCli": {
       "type": "boolean",

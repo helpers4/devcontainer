@@ -44,7 +44,7 @@ With the optional CLI:
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
-| `username` | string | `node` | Container user that receives the `~/.vibe` symlink. |
+| `username` | string | `auto` | Container user that receives the `~/.vibe` symlink. `auto` detects vscode/node/codespace/uid-1000, in that order; set an explicit username to override. |
 | `installCli` | boolean | `false` | Install the `vibe` CLI. Requires Python 3.12+ or `uv` in the container. |
 
 ## IDE support
