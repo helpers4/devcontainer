@@ -61,8 +61,14 @@ whose `version` changed between the base branch and HEAD, so an unbumped
 feature change silently never ships. Bump it **once per branch**: if the
 version on the branch already differs from `main`'s, a further commit on that
 same branch/PR must *not* bump it again — check the diff against `main`
-first, don't bump reflexively on every commit. This should eventually be a CI
-check/auto-bump rather than a manual habit — see `TODO.md`.
+first, don't bump reflexively on every commit.
+
+Enforced by the `version-bump-check` job in `pr-validation.yml`: it fails the
+PR if a touched feature's `version` is unchanged from `main`. It's a blocking
+check only — it never commits a bump on your behalf (deliberately: no bot
+commits, no push-permission/fork edge cases, consistent with how
+`conventional-commits` already works in this repo). Bump the version yourself
+and push again.
 
 **License header (all scripts):**
 
