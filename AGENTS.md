@@ -59,3 +59,32 @@ devcontainer features test .
 # Copyright (C) 2025 baxyz
 # SPDX-License-Identifier: LGPL-3.0-or-later
 ```
+
+## Design constraints for features
+
+These are hard requirements, not style preferences — violating them breaks the
+container for users, sometimes silently.
+
+- **Never rely on a direct `mounts` entry for a host path that might not exist.**
+  DevContainer `mounts` are resolved by Docker before any `install.sh` /
+  `postCreateCommand` / `postStartCommand` runs. If the host source path is
+  missing — file *or* directory — the mount fails and the container fails to
+  start. No feature script can catch or work around this after the fact. This
+  is why `dotfiles-sync` doesn't bind-mount straight into the final target
+  (`~/.gitconfig`, `~/.ssh`, …); it stages into `/mnt/h4dotfiles` and merges at
+  `postStartCommand`, tolerating an absent source. Any new feature that needs
+  host state (credentials, config dirs) must follow the same staging pattern —
+  don't copy `claude-dev`'s/`mistral-dev`'s direct-mount-and-symlink shape
+  without first confirming it can't crash on a first-time user who has no
+  `~/.claude` / `~/.vibe` yet.
+- **Features must work out-of-the-box.** Never require the user to manually
+  create a folder or file on the host before first use.
+- **Must work inside a VS Code multi-root `.code-workspace`** — this repo's own
+  devcontainer bundles 6 sibling repos this way (see the root `.dev/CLAUDE.md`
+  workspace layout). Treat this as a standard case, not an edge case.
+- **Dedicated AI-tool features must cover three things**: CLI install, IDE
+  extension, and settings/configuration — see `claude-dev`, `mistral-dev`,
+  `copilot-dev`. `github-dev` intentionally reimplements `gh` CLI install
+  rather than depending on an upstream feature, because no known existing
+  devcontainer feature bundles the CLI *and* the IDE extension together — that
+  bundling is the actual reason this feature exists.
