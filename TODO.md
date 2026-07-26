@@ -53,16 +53,14 @@ out-of-the-box requirement, multi-root workspace support, AI-feature pattern).
 
 ## 3. Process / tooling
 
-- [ ] **Auto-bump feature version on change, once per branch.** `release.yml`
-  only tags/publishes a feature whose `version` changed between the base
-  branch and HEAD (see AGENTS.md "Modifying an existing feature — version
-  bump"), so today an unbumped change silently never ships — this is a manual
-  habit, not enforced. Add a `pr-validation.yml` step (or a separate workflow)
-  that, for each `src/<feature>/` touched by the PR:
-  - reads `version` for that feature on `main` vs on the PR branch HEAD,
-  - if unchanged → bump patch and push a commit to the PR branch,
-  - if already different → do nothing (this *is* the "once per branch" rule:
-    no extra branch-local state needed, the diff-against-`main` check is
-    naturally idempotent across repeated pushes to the same branch).
-  Decide bump granularity policy (always patch vs. letting a PR label pick
-  minor/major) before implementing.
+- [x] **Bump feature version on change, once per branch — blocking check.**
+  Implemented as a `version-bump-check` job in `pr-validation.yml` (same
+  pattern as `conventional-commits`/`shellcheck`: sets `outputs.status`, feeds
+  the `pr-comment` summary table). For each feature touched by the PR, diffs
+  `version` between the PR's merge-base and HEAD; **fails the job** if it's
+  unchanged. No bot commits — a first attempt at auto-bumping-and-pushing was
+  dropped as unnecessarily complex (push permissions, fork PRs can't be
+  pushed to, bot-commit noise) in favor of a plain blocking check, consistent
+  with how `conventional-commits` already works here. The "once per branch"
+  behavior falls out of the same diff-against-base logic: once bumped, the
+  check passes for every subsequent push to that branch without re-bumping.
