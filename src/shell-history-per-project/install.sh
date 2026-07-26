@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
 
-# Shell History Per Project DevContainer Feature
+# This file is part of helpers4.
 # Copyright (C) 2025 baxyz
-# Licensed under LGPL-3.0 - see LICENSE file for details
+# SPDX-License-Identifier: LGPL-3.0-or-later
+#
+# Shell History Per Project DevContainer Feature
 
 set -euo pipefail
 
