@@ -157,6 +157,9 @@ jobs:
     if: ${{ needs.detect.outputs.count != '0' }}
     continue-on-error: true
     runs-on: ubuntu-latest
+    # No checkout, no GITHUB_TOKEN use — the composite action mints its own token via the
+    # GitHub App credentials passed in `with:`, so the default token needs zero permissions here.
+    permissions: {}
     strategy:
       fail-fast: false
       # One dispatch per changed feature so the website workflow can react per-feature —
