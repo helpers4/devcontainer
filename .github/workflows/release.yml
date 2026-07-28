@@ -152,41 +152,30 @@ jobs:
             echo "→ created tag ${tag}"
           done
 
-      - name: Get Trigganator token
-        id: trigganator
-        uses: actions/create-github-app-token@v3
-        with:
-          client-id: ${{ vars.TRIGGANATOR_ID }}
-          private-key: ${{ secrets.TRIGGANATOR_KEY }}
-          owner: helpers4
-          repositories: website
-          permission-contents: write
-
-      - name: Trigger website update
+  trigger-website:
+    needs: [detect, release]
+    if: ${{ needs.detect.outputs.count != '0' }}
+    continue-on-error: true
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      # One dispatch per changed feature so the website workflow can react per-feature —
+      # matrix built from detect's JSON output instead of a bash loop over `gh api`.
+      matrix:
+        feature: ${{ fromJson(needs.detect.outputs.changed) }}
+    steps:
+      - name: "Trigger website update: ${{ matrix.feature.name }} v${{ matrix.feature.version }}"
         continue-on-error: true
-        env:
-          CHANGED: ${{ needs.detect.outputs.changed }}
-          GH_TOKEN: ${{ steps.trigganator.outputs.token }}
-        run: |
-          set -euo pipefail
-          # One dispatch per feature so the website workflow can react per-feature.
-          echo "$CHANGED" | jq -c '.[]' | while read -r row; do
-            name=$(jq -r '.name' <<< "$row")
-            version=$(jq -r '.version' <<< "$row")
-            echo "→ dispatch website: $name v$version"
-            # client_payload must be a JSON object, not a stringified one —
-            # gh api's "field[nested]=value" bracket syntax builds it as such.
-            # (A previous version passed a pre-serialized JSON string via
-            # --raw-field, which the API rejects with HTTP 422.)
-            gh api \
-              -X POST \
-              -H "Accept: application/vnd.github+json" \
-              "/repos/helpers4/website/dispatches" \
-              -f event_type=devcontainer-release \
-              -f "client_payload[feature]=$name" \
-              -f "client_payload[version]=$version" \
-              -f "client_payload[ref]=${{ github.sha }}" \
-              -f "client_payload[sha]=${{ github.sha }}" \
-              -f "client_payload[source]=devcontainer-release" \
-              || echo "⚠️  dispatch failed for $name"
-          done
+        uses: helpers4/action/trigger-website-update@main
+        with:
+          event-type: devcontainer-release
+          payload: |
+            {
+              "feature": "${{ matrix.feature.name }}",
+              "version": "${{ matrix.feature.version }}",
+              "ref": "${{ github.sha }}",
+              "sha": "${{ github.sha }}",
+              "source": "devcontainer-release"
+            }
+          app-id: ${{ vars.TRIGGANATOR_ID }}
+          app-private-key: ${{ secrets.TRIGGANATOR_KEY }}
