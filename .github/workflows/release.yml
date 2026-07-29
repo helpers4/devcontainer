@@ -169,8 +169,10 @@ jobs:
     steps:
       - name: "Trigger website update: ${{ matrix.feature.name }} v${{ matrix.feature.version }}"
         continue-on-error: true
-        uses: helpers4/action/trigger-website-update@main
+        uses: helpers4/action/dispatch-with-fallback@main
         with:
+          target-owner: helpers4
+          target-repo: website
           event-type: devcontainer-release
           payload: |
             {
