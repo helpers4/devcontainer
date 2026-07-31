@@ -37,6 +37,19 @@ Complete Vite+ toolchain setup with VS Code extensions (Oxc, Vitest), optimized 
 
 [📖 Documentation](./src/vite-plus/README.md)
 
+### playwright-dev
+
+OS-level dependencies for headless Chromium, Firefox, and WebKit, a browser-binary cache shared across rebuilds via a Docker named volume, and the official Playwright Test VS Code extension.
+
+**Key benefits:**
+- OS packages installed once via the official `playwright install-deps` (no hand-maintained apt list)
+- Browser binaries cached in a Docker volume — no re-download on every rebuild
+- Official Playwright Test VS Code extension, pre-configured
+- Doesn't install the `playwright` npm package itself — stays in sync with your project's own version
+- Enables Chromium's CDP `WebAuthn.addVirtualAuthenticator` for passkey/WebAuthn testing without hardware
+
+[📖 Documentation](./src/playwright-dev/README.md)
+
 ### package-auto-install
 
 Automatically detects and runs npm/yarn/pnpm install in non-interactive mode after container creation. Handles corepack setup for Node 24+ and intelligently detects the package manager from package.json or lockfiles.
@@ -195,6 +208,7 @@ Features from this repository are available via GitHub Container Registry. Refer
         "ghcr.io/helpers4/devcontainer/essential-dev:1": {},
         "ghcr.io/helpers4/devcontainer/github-dev:1": {},
         "ghcr.io/helpers4/devcontainer/vite-plus:1": {},
+        "ghcr.io/helpers4/devcontainer/playwright-dev:1": {},
         "ghcr.io/helpers4/devcontainer/package-auto-install:1": {},
         "ghcr.io/helpers4/devcontainer/pnpm-store:1": {},
         "ghcr.io/helpers4/devcontainer/typescript-dev:1": {},
@@ -218,6 +232,7 @@ Features from this repository are available via GitHub Container Registry. Refer
 | [github-dev](./src/github-dev) | gh CLI, Copilot, PR & Issues, Actions, RemoteHub | [README](./src/github-dev/README.md) |
 | [auto-header](./src/auto-header) | Automatic file headers with customizable templates (simple or custom) | [README](./src/auto-header/README.md) |
 | [vite-plus](./src/vite-plus) | Complete Vite+ toolchain with Oxc, Vitest, and VS Code integration | [README](./src/vite-plus/README.md) |
+| [playwright-dev](./src/playwright-dev) | Playwright OS deps (Chromium/Firefox/WebKit) + shared browser-binary volume + VS Code extension | [README](./src/playwright-dev/README.md) |
 | [package-auto-install](./src/package-auto-install) | Automatic package installation with corepack support for Node 24+ | [README](./src/package-auto-install/README.md) |
 | [pnpm-store](./src/pnpm-store) | Shared pnpm store on the same filesystem as your code — no stray .pnpm-store in repos | [README](./src/pnpm-store/README.md) |
 | [typescript-dev](./src/typescript-dev) | TypeScript/JavaScript dev with indexing and web tools (requires essential-dev) | [README](./src/typescript-dev/README.md) |
