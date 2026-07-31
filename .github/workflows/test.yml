@@ -59,6 +59,10 @@ jobs:
           - features: vite-plus
             baseImage: mcr.microsoft.com/devcontainers/typescript-node:20
 
+          # playwright-dev — requires Node.js (dependsOn typescript-dev)
+          - features: playwright-dev
+            baseImage: mcr.microsoft.com/devcontainers/typescript-node:20
+
           # typescript-dev — depends on essential-dev:1 via dependsOn (hard dep)
           - features: typescript-dev
             baseImage: mcr.microsoft.com/devcontainers/typescript-node:20

@@ -15,6 +15,7 @@
   "mistral-dev",
   "package-auto-install",
   "peon-ping",
+  "playwright-dev",
   "pnpm-store",
   "shell-history-per-project",
   "typescript-dev",
