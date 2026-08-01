@@ -1,15 +1,29 @@
 {
   "id": "playwright-dev",
-  "version": "1.0.1",
+  "version": "1.0.0",
   "name": "Playwright Development Environment",
   "description": "Playwright E2E/browser-automation toolchain: OS-level dependencies for headless Chromium, Firefox, and WebKit (via the official `playwright install-deps`), a browser-binary cache shared across rebuilds through a Docker named volume, and the official Playwright Test VS Code extension.",
   "documentationURL": "https://github.com/helpers4/devcontainer/tree/main/src/playwright-dev",
   "licenseURL": "https://github.com/helpers4/devcontainer/blob/main/LICENSE",
-  "keywords": ["helpers4", "playwright", "e2e", "chromium", "firefox", "webkit", "testing", "webauthn"],
+  "keywords": [
+    "helpers4",
+    "playwright",
+    "e2e",
+    "chromium",
+    "firefox",
+    "webkit",
+    "testing",
+    "webauthn"
+  ],
   "options": {
     "browsers": {
       "type": "string",
-      "enum": ["chromium", "firefox", "webkit", "all"],
+      "enum": [
+        "chromium",
+        "firefox",
+        "webkit",
+        "all"
+      ],
       "default": "all",
       "description": "Which browser engine(s) to install OS-level dependencies for, and to pre-download into the shared browser cache."
     },
@@ -32,7 +46,9 @@
   "postCreateCommand": "/usr/local/bin/devcontainer-playwright-browsers",
   "customizations": {
     "vscode": {
-      "extensions": ["ms-playwright.playwright"],
+      "extensions": [
+        "ms-playwright.playwright"
+      ],
       "settings": {
         "playwright.reuseBrowser": true,
         "playwright.showTrace": true
@@ -40,10 +56,10 @@
     }
   },
   "dependsOn": {
-    "ghcr.io/helpers4/devcontainer/typescript-dev:1": {}
+    "ghcr.io/helpers4/devcontainer/typescript-dev:1": {},
+    "ghcr.io/devcontainers/features/node:1": {}
   },
   "installsAfter": [
-    "ghcr.io/devcontainers/features/node",
     "ghcr.io/devcontainers/features/common-utils"
   ]
 }

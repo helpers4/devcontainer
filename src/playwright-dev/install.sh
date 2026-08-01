@@ -106,8 +106,12 @@ fi
 
 if [ "${INSTALL_DEPS}" = "true" ]; then
     echo "📦 Installing OS dependencies for Playwright browser(s): ${BROWSERS}..."
+    # No @latest pin: npx resolves the project's own devDependency version
+    # first if one is already installed, falling back to the newest release
+    # only when nothing local exists yet (e.g. here, at image build time,
+    # before the workspace is even mounted).
     # shellcheck disable=SC2086
-    if npx -y playwright@latest install-deps ${browser_arg}; then
+    if npx -y playwright install-deps ${browser_arg}; then
         echo "✅ Playwright OS dependencies installed (${BROWSERS})"
     else
         echo "❌ Failed to install Playwright OS dependencies."
@@ -169,13 +173,19 @@ if [ "${cache_owner}" != "$(id -u)" ]; then
     fi
 fi
 
-# Download the actual browser binaries on first run only (an empty cache dir
-# means nothing has been fetched into this volume yet). Re-running on every
-# container start would otherwise re-check the network each time.
-if [ -z "$(ls -A "${BROWSERS_PATH}" 2>/dev/null)" ]; then
+# Download the actual browser binaries only if not already fetched for this
+# browser selection. A completion marker (rather than "directory non-empty")
+# is used so an interrupted first download gets retried on the next start
+# instead of being silently treated as done forever; the marker is scoped
+# per browser selection so switching the `browsers` option after a rebuild
+# re-triggers a download instead of trusting a stale, incomplete cache.
+MARKER="${BROWSERS_PATH}/.h4-installed-${BROWSER_ARG:-all}"
+if [ ! -f "${MARKER}" ]; then
     echo "📥 playwright-dev: downloading browser binaries (${BROWSER_ARG:-all}) into ${BROWSERS_PATH}..."
+    # No @latest pin — see install.sh's install-deps step for why.
     # shellcheck disable=SC2086
-    if npx -y playwright@latest install ${BROWSER_ARG}; then
+    if npx -y playwright install ${BROWSER_ARG}; then
+        touch "${MARKER}"
         echo "✅ playwright-dev: browsers installed"
     else
         echo "⚠️  playwright-dev: browser download failed — check network access, or run 'npx playwright install' manually"
