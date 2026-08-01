@@ -1,6 +1,6 @@
 {
   "id": "playwright-dev",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "name": "Playwright Development Environment",
   "description": "Playwright E2E/browser-automation toolchain: OS-level dependencies for headless Chromium, Firefox, and WebKit (via the official `playwright install-deps`), a browser-binary cache shared across rebuilds through a Docker named volume, and the official Playwright Test VS Code extension.",
   "documentationURL": "https://github.com/helpers4/devcontainer/tree/main/src/playwright-dev",

@@ -13,6 +13,10 @@ This feature moves both steps into the devcontainer lifecycle: OS packages are i
 
 It deliberately does **not** install the `playwright` npm package itself — that stays a devDependency of the consuming project, so the CLI version always matches the project's own Playwright version instead of drifting from a separately-installed global one.
 
+### Alternative: Microsoft's prebuilt Playwright image
+
+Microsoft publishes `mcr.microsoft.com/playwright:v<version>-<os>`, a Docker image with browsers and OS deps already baked in — zero install time, nothing to cache. If your `devcontainer.json` doesn't need to compose with other `helpers4` features on top of your own base image, using that image directly as `"image"` is a legitimate, simpler alternative to this feature. The tradeoff: it pins your whole devcontainer to Microsoft's base image and its Playwright version/OS combination, rather than letting you add browser support to whatever base image and feature set (`typescript-dev`, `vite-plus`, `pnpm-store`, …) you're already using — which is the reason this feature exists as a feature rather than a documentation note pointing at that image.
+
 ## Usage
 
 Add this feature to your `devcontainer.json`:
@@ -51,6 +55,15 @@ If your project only needs Chromium (e.g. CDP-based WebAuthn testing), skip the 
 |--------|------|---------|-------------|
 | `browsers` | string (`chromium` \| `firefox` \| `webkit` \| `all`) | `all` | Which browser engine(s) to install OS-level dependencies for, and to pre-download into the shared cache. |
 | `installDeps` | boolean | `true` | Install the OS packages required to run the selected browser(s) headless, via `playwright install-deps`. Disable if the base image already provides them. |
+
+## IDE support
+
+| Editor | Status | ID |
+| ------ | ------ | -- |
+| VS Code | ✅ | `ms-playwright.playwright` |
+| Cursor | ✅ | `ms-playwright.playwright` (same registry as VS Code) |
+| WebStorm / IntelliJ IDEA (2023.3+) | ℹ️ | Playwright tests are recognized natively via the built-in Test Automation plugin — not something this feature installs, nothing to configure here. |
+| Zed | 🔜 | no standard devcontainer customization format yet |
 
 ## Browser cache volume
 
@@ -126,6 +139,11 @@ npx playwright install
 - **Playwright**: https://playwright.dev/
 - **VS Code extension**: https://marketplace.visualstudio.com/items?itemName=ms-playwright.playwright
 - **CDP WebAuthn domain**: https://chromedevtools.github.io/devtools-protocol/tot/WebAuthn/
+
+## Version History
+
+- **v1.0.1**: Added "IDE support" table (VS Code/Cursor/WebStorm/Zed) and documented the `mcr.microsoft.com/playwright` prebuilt-image alternative. No behavior change.
+- **v1.0.0**: Initial release.
 
 ## License
 
