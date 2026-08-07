@@ -213,17 +213,24 @@ Works in most cases. Docker Desktop automatically translates `C:\Users\<name>` p
 
 ### GitHub Codespaces
 
-The feature auto-detects Codespaces via `CODESPACES=true`. Protected keys are preserved, and `.gnupg` is not synced (platform manages GPG signing). See [Cloud environment protection](#cloud-environment-protection) above.
+**Read this before assuming the feature "just works" here — it needs the same `initializeCommand` as any other environment, and it has nothing real to sync unless you've set up Codespaces' own personalization separately.**
 
-To get signed commits on Codespaces without managing your own key: enable **GitHub Settings → Codespaces → GPG verification**. GitHub will sign commits on your behalf using a GitHub-managed key — they will show as "Verified" on GitHub.com.
+`${localEnv:HOME}` — the source of every bind mount this feature declares — resolves against the **Codespaces VM that GitHub provisions for you**, not your actual laptop. There is no path from a codespace back to your local machine's filesystem; Codespaces never has access to it. Two consequences:
+
+- **Startup risk is real here too, not just locally.** A fresh codespace VM's home directory has no reason to already contain `.gitconfig`, `.ssh`, `.gnupg`, `.npmrc`, `.yarnrc.yml`, etc. If any of those are missing, the bind mount fails and the codespace won't build — exactly the failure mode documented in the main "Usage" section above. Add the same `initializeCommand` there; it runs on the codespace VM at creation time, same as it would run on your laptop locally.
+- **Even once it builds, there's nothing meaningful to sync** unless something else populated the codespace VM's home first. If you use GitHub's own, separate personalization mechanism — a **[dotfiles repository](https://docs.github.com/en/codespaces/setting-your-user-preferences/personalizing-github-codespaces-for-your-account#dotfiles)** configured under your GitHub account settings — GitHub clones it into the codespace VM *before* this feature's mounts resolve, and this feature will then merge whatever that repository placed at `~/.gitconfig`, `~/.ssh`, etc., same as it would on a real local machine. Without that, every mount source exists (thanks to `initializeCommand`) but is empty, and every file this feature "syncs" is just an empty placeholder.
+
+What still applies as before: the feature auto-detects Codespaces via `CODESPACES=true`, protected keys are preserved, and `.gnupg` is not synced (platform manages GPG signing) — see [Cloud environment protection](#cloud-environment-protection) above. To get signed commits without managing your own key: enable **GitHub Settings → Codespaces → GPG verification**; GitHub signs commits on your behalf and they show as "Verified" on GitHub.com.
+
+There's an open upstream proposal for `mounts` entries to support an `optional: true` flag (`devcontainers/spec#132`) that would let a feature itself guarantee this instead of pushing the requirement onto every consumer's `devcontainer.json` — not merged as of this writing, and several other projects hit the exact same `.aws`/`.kube`-style problem in that thread using the same `initializeCommand` workaround documented here.
 
 ### Gitpod
 
-Auto-detected via `GITPOD_WORKSPACE_ID`. Same cloud protection as Codespaces applies.
+Auto-detected via `GITPOD_WORKSPACE_ID`. Same cloud protection as Codespaces applies, and the same reasoning above holds: `${localEnv:HOME}` resolves against the Gitpod workspace, not your local machine, so the same `initializeCommand` requirement and "nothing to sync without separate personalization" caveat apply.
 
 ### DevPod
 
-Auto-detected via `DEVPOD=true` or `DEVPOD_WORKSPACE_ID`. When running on a remote provider (cloud VM), no local files are available — the staging directory will be empty and sync is skipped gracefully. When running locally (Docker), the feature behaves like a standard local devcontainer.
+Auto-detected via `DEVPOD=true` or `DEVPOD_WORKSPACE_ID`. When running on a remote provider (cloud VM), the same `initializeCommand` requirement applies as above; without it, or without something else populating the remote host's home directory first, the staging directory will be empty and sync is skipped gracefully rather than syncing anything meaningful. When running locally (Docker), the feature behaves like a standard local devcontainer.
 
 ## How It Works
 
@@ -267,6 +274,7 @@ ssh-add -l
 
 ## Version History
 
+- **v1.0.8**: Corrected the Codespaces/Gitpod/DevPod platform notes — the same `initializeCommand` requirement documented in "Usage" applies to cloud environments too (`${localEnv:HOME}` resolves against the cloud VM, not your laptop), and even with it, there's nothing real to sync without a separately-configured GitHub Codespaces dotfiles-repository seeding the VM's home first. Previously these sections only covered *what gets merged* (protected keys, GPG skip) without addressing *whether the mount succeeds at all*. Also references the open upstream `devcontainers/spec#132` proposal (`optional: true` on `mounts`) that would fix this at the spec level. Docs only, no behavior change.
 - **v1.0.7**: Documented the required `initializeCommand` in "Usage" (pre-creates every bind-mount source, mandatory and opt-in) so a container can't fail to start on a machine missing one of these files — a Feature's own `initializeCommand` is silently ignored by the devcontainers CLI, so this has to live in the consumer's `devcontainer.json`, not the feature. No behavior change to `sync-files.sh`.
 - **v1.0.4**: Removed bind-mounts for files that are frequently absent on host machines and have little value inside a devcontainer: `~/.gitignore_global` (redundant with `~/.config/git/` directory mount), `~/.config/pnpm/rc` (pnpm store-dir is counter-productive in a container), `~/.config/gh/config.yml` and `~/.config/gh/hosts.yml` (gh CLI auth managed separately), `~/.cargo/config.toml` (cargo not relevant in most containers), `~/.config/pip/pip.conf` (too environment-specific). Docker file bind-mounts fail hard if the source path doesn't exist on the host, which was causing containers to fail to start. The `syncGhAuth` option is removed.
 - **v1.0.3**: Fixed incompatibility with `docker-in-docker` feature — staging directory moved from `/tmp/dotfiles-sync/` to `/mnt/h4dotfiles/` to avoid being hidden by the tmpfs that `docker-in-docker` mounts on `/tmp` at container start.
