@@ -37,7 +37,7 @@ devcontainer features test .
 | `angular-dev` | 1.0.6 | Angular dev, port 4200 |
 | `vite-plus` | 1.0.3 | vp CLI, Oxlint/Oxfmt, Vitest |
 | `package-auto-install` | 1.0.7 | Auto-detect and install packages |
-| `playwright-dev` | 1.0.0 | Playwright OS deps (Chromium/Firefox/WebKit) + shared browser-binary volume + VS Code extension |
+| `playwright-dev` | 1.0.1 | Playwright OS deps (Chromium/Firefox/WebKit) + shared browser-binary volume + VS Code extension |
 | `pnpm-store` | 1.0.4 | Shared pnpm store via Docker named volume (dependsOn helpers4-common) |
 | `auto-header` | — | LGPL-3.0 license headers |
 | `git-absorb` | 1.0.7 | git-absorb from GitHub releases |
@@ -70,6 +70,18 @@ check only — it never commits a bump on your behalf (deliberately: no bot
 commits, no push-permission/fork edge cases, consistent with how
 `conventional-commits` already works in this repo). Bump the version yourself
 and push again.
+
+**Verify `version` after merge, not just before.** A real incident: PR#52
+(`playwright-dev`) had its manifest correctly bumped through 1.0.0 → 1.0.1 →
+1.0.2 across three commits on the PR branch (verified — the pre-merge commits
+still exist in the object store), but what landed on `main` after merge had
+`version` back down to `1.0.0`, with unrelated JSON array formatting changed
+too (compact → multi-line) — root cause unconfirmed, but the pattern doesn't
+match a normal fast-forward or squash. `version-bump-check` in
+`pr-validation.yml` only validates the PR branch before merge — it can't
+catch corruption introduced by the merge itself. After merging anything that
+touches a `devcontainer-feature.json`, diff `origin/main` against the PR's
+last known-good commit for that file before trusting it.
 
 **License header (all scripts):**
 
