@@ -154,3 +154,14 @@ container for users, sometimes silently.
   rather than depending on an upstream feature, because no known existing
   devcontainer feature bundles the CLI *and* the IDE extension together — that
   bundling is the actual reason this feature exists.
+- **A shared named `volume` mount must suffix its source with
+  `${devcontainerId}`** — see `pnpm-store` (commit `beb0dcb`) and
+  `playwright-dev`. `devcontainerId` is derived from the workspace's local
+  folder path, so it's stable across rebuilds of *this* workspace but
+  different for an unrelated project on the same machine. A fixed, unsuffixed
+  volume name is a real collision risk between unrelated devcontainer
+  sessions sharing the same Docker daemon, not just a hygiene nicety — this
+  is not the same concern as the bind-mount-source constraints above (which
+  are about `bind` mounts of host *paths*); named `volume` mounts are
+  auto-created by Docker regardless of whether the name previously existed,
+  so they don't share that crash risk, but they do share this scoping one.
