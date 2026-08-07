@@ -41,7 +41,7 @@ devcontainer features test .
 | `pnpm-store` | 1.0.4 | Shared pnpm store via Docker named volume (dependsOn helpers4-common) |
 | `auto-header` | — | LGPL-3.0 license headers |
 | `git-absorb` | 1.0.7 | git-absorb from GitHub releases |
-| `dotfiles-sync` | 1.0.7 | Sync Git/SSH/GPG/npm/gh config from host |
+| `dotfiles-sync` | 1.0.8 | Sync Git/SSH/GPG/npm/gh config from host |
 | `peon-ping` | 1.0.3 | AI agent sound notifications |
 | `shell-history-per-project` | 1.0.7 | Persistent shell history (zsh/bash/fish) |
 
@@ -126,6 +126,21 @@ container for users, sometimes silently.
   only helps once the source is guaranteed to exist (see `dotfiles-sync`'s
   own `initializeCommand` requirement for exactly the files it can't avoid
   mounting).
+- **Cloud environments (Codespaces, Gitpod, DevPod-remote) need the exact same
+  `initializeCommand` as local — they are not a separate problem.**
+  `${localEnv:HOME}` resolves against whatever machine orchestrates container
+  creation: on Codespaces/Gitpod that's the cloud VM GitHub/Gitpod provisions
+  for you, never the user's actual laptop, so a mount source is just as likely
+  to be missing there as locally — the same crash risk applies, and the same
+  `initializeCommand` fix works (it runs on that VM too). Don't write cloud
+  handling as if it only concerns *what gets synced* (protected keys, GPG
+  skip) without also covering *whether the mount succeeds at all* — see
+  `dotfiles-sync`'s "GitHub Codespaces"/"Gitpod"/"DevPod" README sections for
+  the corrected version of this. There's an open, unmerged upstream proposal
+  for an `optional: true` flag on `mounts` entries that would fix this at the
+  spec level instead of pushing it onto every consumer
+  (`devcontainers/spec#132`) — several other projects hit the identical
+  `.aws`/`.kube`-style problem in that thread using the same workaround.
 - **`devcontainer-feature.json` must be plain JSON — no `//` comments.**
   `devcontainers/action` parses it with `JSON.parse`, which chokes on JSONC.
   This broke the release workflow once already (see commit `4e6e5ee`). Put
