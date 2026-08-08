@@ -48,11 +48,21 @@ jobs:
             new_version=$(jq -r '.version' "$manifest")
             old_version=$(git show "${MERGE_BASE}:${manifest}" 2>/dev/null | jq -r '.version' 2>/dev/null || echo "")
 
+            # README-only changes don't require a bump — the README is the
+            # only file where a diff can't change what actually ships. Every
+            # other file (install.sh, the manifest, test.sh, ...) still does.
+            non_readme_touched=$(git diff --name-only "${MERGE_BASE}..HEAD" -- "src/${name}/" \
+              | grep -v "^src/${name}/README\.md$" || true)
+
             if [ -z "$old_version" ]; then
               echo "✅ ${name}: new feature, no bump required"
             elif [ "$old_version" = "$new_version" ]; then
-              echo "❌ ${name}: touched but version unchanged (${new_version})"
-              FAILED=1
+              if [ -z "$non_readme_touched" ]; then
+                echo "ℹ️  ${name}: README-only change, version bump optional (still ${new_version})"
+              else
+                echo "❌ ${name}: touched but version unchanged (${new_version})"
+                FAILED=1
+              fi
             else
               echo "✅ ${name}: ${old_version} → ${new_version}"
             fi
