@@ -55,21 +55,30 @@ devcontainer features test .
 
 **Modifying an existing feature — version bump:**
 
-Any change under `src/<name>/` (`install.sh`, `devcontainer-feature.json`,
-`README.md`, …) must bump that feature's `version` field (patch by default,
-minor/major when warranted) — `release.yml` only tags and publishes a feature
-whose `version` changed between the base branch and HEAD, so an unbumped
-feature change silently never ships. Bump it **once per branch**: if the
-version on the branch already differs from `main`'s, a further commit on that
-same branch/PR must *not* bump it again — check the diff against `main`
-first, don't bump reflexively on every commit.
+Any change under `src/<name>/` that touches `install.sh`,
+`devcontainer-feature.json`, or `test/<name>/test.sh` must bump that
+feature's `version` field (patch by default, minor/major when warranted) —
+`release.yml` only tags and publishes a feature whose `version` changed
+between the base branch and HEAD, so an unbumped change to something that
+actually ships silently never gets published. Bump it **once per branch**:
+if the version on the branch already differs from `main`'s, a further commit
+on that same branch/PR must *not* bump it again — check the diff against
+`main` first, don't bump reflexively on every commit.
+
+A **README-only** change doesn't require a bump — nothing about what ships
+in the image changes. It's still worth bumping when the doc fix is
+safety-relevant (e.g. a corrected `initializeCommand` requirement, like
+`dotfiles-sync` v1.0.8), since `release.yml`'s version-diff gate is also
+what triggers the website docs rebuild — an unbumped README fix never
+reaches the published site. Judgment call, not enforced either way.
 
 Enforced by the `version-bump-check` job in `pr-validation.yml`: it fails the
-PR if a touched feature's `version` is unchanged from `main`. It's a blocking
-check only — it never commits a bump on your behalf (deliberately: no bot
-commits, no push-permission/fork edge cases, consistent with how
-`conventional-commits` already works in this repo). Bump the version yourself
-and push again.
+PR if a touched feature's `version` is unchanged from `main` *and* something
+other than `README.md` changed under that feature's `src/<name>/`. It's a
+blocking check only — it never commits a bump on your behalf (deliberately:
+no bot commits, no push-permission/fork edge cases, consistent with how
+`conventional-commits` already works in this repo). Bump the version
+yourself and push again.
 
 **Verify `version` after merge, not just before.** A real incident: PR#52
 (`playwright-dev`) had its manifest correctly bumped through 1.0.0 → 1.0.1 →
