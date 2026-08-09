@@ -46,7 +46,7 @@ If you have this in your devcontainer.json, you can now remove it:
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | `command` | string | `auto` | Installation command: `install`, `ci`, or `auto` to detect |
-| `packageManager` | string | `auto` | Package manager: `npm`, `yarn`, `pnpm`, or `auto` to detect |
+| `packageManager` | string | `auto` | Package manager: `npm`, `yarn`, `pnpm`, `nub`, or `auto` to detect. `auto` never resolves to `nub` — it's explicit-only, since nub isn't a lockfile format. `nub` runs `nub install` and requires the [`nub`](../nub/) feature to also be installed. |
 | `workingDirectory` | string | `/workspaces/${localWorkspaceFolderBasename}` | Directory where to run install. Overridden by `directories`. Used as fallback scan root when `autoDiscover` finds no workspace files. |
 | `skipIfNodeModulesExists` | boolean | `false` | Skip if node_modules exists |
 | `additionalArgs` | string | `""` | Additional arguments for install command |
@@ -240,6 +240,7 @@ You can manually run the installation script:
 
 ## Version History
 
+- **v1.0.8**: Added `nub` as a `packageManager` value — runs `nub install` (requires the `nub` feature too). `auto` detection is unaffected: it never resolves to `nub` on its own, since nub isn't a lockfile format, only an explicit opt-in.
 - **v1.0.2**: Added `autoDiscover` (scan VS Code/Cursor `.code-workspace` and IntelliJ `.idea/modules.xml`) and `directories` (explicit comma-separated list) options for multi-root workspace support. Each folder runs package manager detection independently.
 - **v1.0.1**: Added corepack support for Node 24+ (`packageManager` field in package.json).
 - **v1.0.0**: Initial release.

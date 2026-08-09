@@ -37,7 +37,7 @@ devcontainer features test .
 | `typescript-dev` | 1.0.5 | TS/JS dev, import management (dependsOn essential-dev) |
 | `angular-dev` | 1.0.6 | Angular dev, port 4200 |
 | `vite-plus` | 1.0.3 | vp CLI, Oxlint/Oxfmt, Vitest |
-| `package-auto-install` | 1.0.7 | Auto-detect and install packages |
+| `package-auto-install` | 1.0.8 | Auto-detect and install packages (npm/yarn/pnpm/nub) |
 | `playwright-dev` | 1.0.1 | Playwright OS deps (Chromium/Firefox/WebKit) + shared browser-binary volume + VS Code extension |
 | `pnpm-store` | 1.0.4 | Shared pnpm store via Docker named volume (dependsOn helpers4-common) |
 | `auto-header` | — | LGPL-3.0 license headers |
