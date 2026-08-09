@@ -61,6 +61,27 @@ This installs peon-ping with the default 5 packs (peon, peasant, sc_kerrigan, sc
 | `ideSetup` | string | `vscode` | IDEs to configure: `all` (vscode + cursor + codex), `none`, or CSV (e.g. `vscode,cursor`) |
 | `volume` | string | `0.5` | Default volume level (0.0–1.0) |
 
+## Choosing a pack
+
+`packs` already accepts a single, simple value (`"glados"`, `"zelda"`, a CSV list, `default`, or `all`) — there's no separate schema knob needed to "just pick one." The actual friction is discovery: the registry has ~165 packs across Warcraft, StarCraft, Red Alert, Portal, Zelda, Dota 2, Helldivers 2, Elder Scrolls, and more, and there's no reliable way to keep a static list of all of them here without it going stale. Use the tools built for exactly this instead of guessing pack names:
+
+```bash
+peon packs search <query>       # e.g. `peon packs search zelda`
+peon packs use --install <name> # try one immediately, install + switch in one step
+```
+
+Or browse with audio previews at [openpeon.com/packs](https://openpeon.com/packs).
+
+The `default` bundle (5 packs, confirmed against the packs actually shipped) is:
+
+| Pack | Franchise |
+|------|-----------|
+| `peon` | Warcraft (Orc Peon) — this feature's own default single pack |
+| `peasant` | Warcraft (Human Peasant) |
+| `sc_kerrigan` | StarCraft (Sarah Kerrigan) |
+| `sc_battlecruiser` | StarCraft (Battlecruiser) |
+| `glados` | Portal (GLaDOS) |
+
 ## Audio in Devcontainers
 
 peon-ping auto-detects devcontainer environments and routes audio to your host machine via a lightweight relay. **You must start the relay on your host:**
@@ -160,4 +181,4 @@ peon packs list           # List installed packs
 
 ## Version History
 
-- **v1.0.4**: Fixed a real `install.sh` bug — the Copilot hooks merge path (`peon-ping-copilot-setup`, used when `.github/hooks/hooks.json` already exists) contained malformed Python (a dict literal missing its `new_entries = {` assignment, plus an orphaned entry outside it) that threw a `SyntaxError` on every run against an existing hooks file. Confirmed with `python3 -m py_compile` before and after. Also corrected the "Audio in Devcontainers" docs, which claimed no port-forwarding configuration was needed — verified from inside a real devcontainer on native Linux Docker that `host.docker.internal` doesn't resolve there without an explicit `runArgs: ["--add-host=host.docker.internal:host-gateway"]` in the consumer's `devcontainer.json` (a Feature can't add `runArgs` itself). Added concrete manual verification steps.
+- **v1.0.4**: Fixed a real `install.sh` bug — the Copilot hooks merge path (`peon-ping-copilot-setup`, used when `.github/hooks/hooks.json` already exists) contained malformed Python (a dict literal missing its `new_entries = {` assignment, plus an orphaned entry outside it) that threw a `SyntaxError` on every run against an existing hooks file. Confirmed with `python3 -m py_compile` before and after. Also corrected the "Audio in Devcontainers" docs, which claimed no port-forwarding configuration was needed — verified from inside a real devcontainer on native Linux Docker that `host.docker.internal` doesn't resolve there without an explicit `runArgs: ["--add-host=host.docker.internal:host-gateway"]` in the consumer's `devcontainer.json` (a Feature can't add `runArgs` itself). Added concrete manual verification steps. Also revisited the ROADMAP.md "simplify pack selection" idea: `packs` is already a single, simple option (no schema change made) — the real friction was discoverability across ~165 packs, addressed with a "Choosing a pack" section pointing at `peon packs search`/`openpeon.com/packs` instead of trying to hand-maintain a pack list here that would go stale.
