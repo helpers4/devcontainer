@@ -63,7 +63,7 @@ This installs peon-ping with the default 5 packs (peon, peasant, sc_kerrigan, sc
 
 ## Choosing a pack
 
-`packs` already accepts a single, simple value (`"glados"`, `"zelda"`, a CSV list, `default`, or `all`) — there's no separate schema knob needed to "just pick one." The actual friction is discovery: the registry has ~165 packs across Warcraft, StarCraft, Red Alert, Portal, Zelda, Dota 2, Helldivers 2, Elder Scrolls, and more, and there's no reliable way to keep a static list of all of them here without it going stale. Use the tools built for exactly this instead of guessing pack names:
+`packs` already takes a single value (`"glados"`, `"zelda"`, a CSV list, `default`, or `all`), so there's no extra option needed to pick one. The actual friction is finding a name among the ~165 packs in the registry (Warcraft, StarCraft, Red Alert, Portal, Zelda, Dota 2, Helldivers 2, Elder Scrolls, and more) — a static list here would just go stale. Use the tools built for that instead:
 
 ```bash
 peon packs search <query>       # e.g. `peon packs search zelda`
@@ -72,11 +72,11 @@ peon packs use --install <name> # try one immediately, install + switch in one s
 
 Or browse with audio previews at [openpeon.com/packs](https://openpeon.com/packs).
 
-The `default` bundle (5 packs, confirmed against the packs actually shipped) is:
+The `default` bundle is 5 packs:
 
 | Pack | Franchise |
 |------|-----------|
-| `peon` | Warcraft (Orc Peon) — this feature's own default single pack |
+| `peon` | Warcraft (Orc Peon) |
 | `peasant` | Warcraft (Human Peasant) |
 | `sc_kerrigan` | StarCraft (Sarah Kerrigan) |
 | `sc_battlecruiser` | StarCraft (Battlecruiser) |
@@ -93,7 +93,7 @@ peon relay --daemon
 
 The container sends audio requests to `host.docker.internal:19998`.
 
-**On native Linux Docker (not Docker Desktop), this needs one more line — `host.docker.internal` doesn't resolve out of the box there.** Docker Desktop (macOS/Windows) injects that DNS entry automatically; plain Linux Docker doesn't. Verified directly from inside a real devcontainer on Linux Docker: `getent hosts host.docker.internal` returns nothing without this. Add to your `devcontainer.json`:
+**On native Linux Docker (not Docker Desktop), this needs one more line — `host.docker.internal` doesn't resolve out of the box there.** Docker Desktop (macOS/Windows) injects that DNS entry automatically; plain Linux Docker doesn't, so `getent hosts host.docker.internal` comes back empty without it. Add to your `devcontainer.json`:
 
 ```jsonc
 {
@@ -101,9 +101,9 @@ The container sends audio requests to `host.docker.internal:19998`.
 }
 ```
 
-This can't be added by the feature itself — `runArgs` is a top-level `devcontainer.json` property, not something a Feature's manifest can inject (same class of limitation as `initializeCommand`, see `helpers4/devcontainer`'s `AGENTS.md`). It's harmless to add unconditionally, including on Docker Desktop where the entry already resolves another way — `--add-host` just adds a redundant, consistent one.
+A Feature can't add this itself — `runArgs` is only read from the consumer's top-level `devcontainer.json`. It's safe to add unconditionally; on Docker Desktop it's just a redundant, harmless duplicate of the entry that's already there.
 
-### Verifying it actually works
+### Testing the audio path
 
 1. On the **host**: `peon relay --daemon`, then `peon relay --status` to confirm it's listening.
 2. Add the `runArgs` line above to `devcontainer.json` and rebuild the container.
@@ -181,4 +181,4 @@ peon packs list           # List installed packs
 
 ## Version History
 
-- **v1.0.4**: Fixed a real `install.sh` bug — the Copilot hooks merge path (`peon-ping-copilot-setup`, used when `.github/hooks/hooks.json` already exists) contained malformed Python (a dict literal missing its `new_entries = {` assignment, plus an orphaned entry outside it) that threw a `SyntaxError` on every run against an existing hooks file. Confirmed with `python3 -m py_compile` before and after. Also corrected the "Audio in Devcontainers" docs, which claimed no port-forwarding configuration was needed — verified from inside a real devcontainer on native Linux Docker that `host.docker.internal` doesn't resolve there without an explicit `runArgs: ["--add-host=host.docker.internal:host-gateway"]` in the consumer's `devcontainer.json` (a Feature can't add `runArgs` itself). Added concrete manual verification steps. Also revisited the ROADMAP.md "simplify pack selection" idea: `packs` is already a single, simple option (no schema change made) — the real friction was discoverability across ~165 packs, addressed with a "Choosing a pack" section pointing at `peon packs search`/`openpeon.com/packs` instead of trying to hand-maintain a pack list here that would go stale.
+- **v1.0.4**: Fixed a Python syntax error in `install.sh`'s Copilot hooks merge path (`peon-ping-copilot-setup`) — it crashed every time it ran against an existing `.github/hooks/hooks.json`. Corrected the "Audio in Devcontainers" docs: `host.docker.internal` doesn't resolve on native Linux Docker without `runArgs: ["--add-host=host.docker.internal:host-gateway"]` in the consumer's `devcontainer.json`, which a Feature can't add on its own. Added a "Choosing a pack" section pointing at `peon packs search` and `openpeon.com/packs` instead of adding a preset option — `packs` was already simple enough.

@@ -15,7 +15,7 @@ It deliberately does **not** install the `playwright` npm package itself — tha
 
 ### Alternative: Microsoft's prebuilt Playwright image
 
-Microsoft publishes `mcr.microsoft.com/playwright:v<version>-<os>`, a Docker image with browsers and OS deps already baked in — zero install time, nothing to cache. If your `devcontainer.json` doesn't need to compose with other `helpers4` features on top of your own base image, using that image directly as `"image"` is a legitimate, simpler alternative to this feature. The tradeoff: it pins your whole devcontainer to Microsoft's base image and its Playwright version/OS combination, rather than letting you add browser support to whatever base image and feature set (`typescript-dev`, `vite-plus`, `pnpm-store`, …) you're already using — which is the reason this feature exists as a feature rather than a documentation note pointing at that image.
+Microsoft publishes `mcr.microsoft.com/playwright:v<version>-<os>`, a Docker image with browsers and OS deps already baked in — zero install time, nothing to cache. If you don't need to compose with other `helpers4` features on top of your own base image, using that image directly as `"image"` is simpler than this feature. The tradeoff is that it pins your whole devcontainer to Microsoft's base image and Playwright version, instead of adding browser support to whatever base image and feature set (`typescript-dev`, `vite-plus`, `pnpm-store`, …) you're already using.
 
 ## Usage
 
@@ -142,7 +142,7 @@ npx playwright install
 
 ## Version History
 
-- **v1.0.1**: Post-release review pass, all fixes verified before applying. (1) Both `npx playwright` calls dropped their `@latest` pin — it was forcing the newest registry release instead of letting npx resolve the project's own pinned `playwright` devDependency once one exists, which contradicted this feature's own stated goal of never drifting from the project's version. (2) `dependsOn` now also includes `ghcr.io/devcontainers/features/node:1` — `typescript-dev` alone does not install Node.js (its `install.sh` is a no-op beyond `essential-dev`), so the feature's own `npm not found` guard was not actually covered by the dependency it named. (3) The browser-cache guard now writes a completion marker (scoped to the current `browsers` selection) instead of treating "directory non-empty" as "fully downloaded" — an interrupted first download no longer gets stuck as a permanently broken, silently-skipped cache. (4) Added an "IDE support" table (VS Code/Cursor/WebStorm/Zed) and documented the `mcr.microsoft.com/playwright` prebuilt-image alternative.
+- **v1.0.1**: Dropped the `@latest` pin from both `npx playwright` calls — it was forcing the newest registry release instead of the project's own pinned version. Added `ghcr.io/devcontainers/features/node:1` to `dependsOn`: `typescript-dev` alone doesn't install Node, so the `npm not found` guard wasn't actually covered. The browser-cache guard now writes a completion marker instead of trusting a non-empty directory, so an interrupted download doesn't get stuck as a permanently broken cache. Added an "IDE support" table and documented the `mcr.microsoft.com/playwright` prebuilt-image alternative.
 - **v1.0.0**: Initial release.
 
 ## License
