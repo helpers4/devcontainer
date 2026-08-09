@@ -108,6 +108,13 @@ jobs:
     permissions:
       contents: write # tags
       packages: write # GHCR
+      # A tag's ref points at a commit; if that commit (or any ancestor in the
+      # push range) touched .github/workflows/*.yml, GitHub refuses the push
+      # without this — even though we're only creating a tag, not editing a
+      # workflow file. Hit this for real: run 31324555689 failed pushing
+      # dotfiles-sync-v1.0.8 because an earlier commit in the same push
+      # touched pr-validation.yml.
+      workflows: write
     steps:
       - uses: actions/checkout@v7
         with:
