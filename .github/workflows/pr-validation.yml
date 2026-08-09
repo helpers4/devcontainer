@@ -119,6 +119,8 @@ jobs:
             baseImage: mcr.microsoft.com/devcontainers/typescript-node:20
           - features: playwright-dev
             baseImage: mcr.microsoft.com/devcontainers/typescript-node:20
+          - features: nub
+            baseImage: mcr.microsoft.com/devcontainers/typescript-node:20
           - features: typescript-dev
             baseImage: mcr.microsoft.com/devcontainers/typescript-node:20
           - features: auto-header

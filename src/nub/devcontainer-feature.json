@@ -1,0 +1,27 @@
+{
+  "id": "nub",
+  "version": "1.0.0",
+  "name": "Nub — Fast TypeScript/Node Toolchain",
+  "description": "Installs nub (nubjs.com): a Rust binary that runs TypeScript/JavaScript files, package.json scripts, and local CLIs directly on the Node.js and package manager already in the container — no new runtime, no lock-in. Does not manage Node versions itself (dependsOn the official node feature), so it never competes with this container's own version-selection mechanism.",
+  "documentationURL": "https://github.com/helpers4/devcontainer/tree/main/src/nub",
+  "licenseURL": "https://github.com/helpers4/devcontainer/blob/main/LICENSE",
+  "keywords": ["helpers4", "nub", "node", "typescript", "package-manager", "cli"],
+  "options": {
+    "version": {
+      "type": "string",
+      "default": "latest",
+      "description": "Version of nub to install (latest, or a specific release like 1.2.3)."
+    },
+    "installGlobally": {
+      "type": "boolean",
+      "default": true,
+      "description": "Symlink nub and nubx into /usr/local/bin so they're available system-wide (all users, root, sudo) without relying on the user's PATH."
+    }
+  },
+  "dependsOn": {
+    "ghcr.io/devcontainers/features/node:1": {}
+  },
+  "installsAfter": [
+    "ghcr.io/devcontainers/features/common-utils"
+  ]
+}
