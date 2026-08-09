@@ -81,17 +81,13 @@ no bot commits, no push-permission/fork edge cases, consistent with how
 `conventional-commits` already works in this repo). Bump the version
 yourself and push again.
 
-**Verify `version` after merge, not just before.** A real incident: PR#52
-(`playwright-dev`) had its manifest correctly bumped through 1.0.0 → 1.0.1 →
-1.0.2 across three commits on the PR branch (verified — the pre-merge commits
-still exist in the object store), but what landed on `main` after merge had
-`version` back down to `1.0.0`, with unrelated JSON array formatting changed
-too (compact → multi-line) — root cause unconfirmed, but the pattern doesn't
-match a normal fast-forward or squash. `version-bump-check` in
-`pr-validation.yml` only validates the PR branch before merge — it can't
-catch corruption introduced by the merge itself. After merging anything that
-touches a `devcontainer-feature.json`, diff `origin/main` against the PR's
-last known-good commit for that file before trusting it.
+**Verify `version` after merge, not just before.** `version-bump-check` only
+validates the PR branch — it can't catch a bump getting lost or reverted
+during the merge itself. PR#52 is a real example: correctly bumped across
+three commits on the branch, landed back at the old version on `main` after
+merge, root cause never pinned down. After merging anything that touches a
+`devcontainer-feature.json`, diff `origin/main` against the branch's last
+commit for that file before trusting it.
 
 **License header (all scripts):**
 
@@ -107,71 +103,47 @@ These are hard requirements, not style preferences — violating them breaks the
 container for users, sometimes silently.
 
 - **A `mounts` entry fails the whole container if the host source doesn't
-  exist — file *or* directory, no exceptions.** Verified against
-  `@devcontainers/cli` directly (decompiled `devContainersSpecCLI.js`):
-  `docker run --mount type=bind,...` is used, which errors out
-  (`bind source path does not exist`) instead of silently creating anything.
-  No feature script can catch this — mounts resolve before `install.sh` /
-  `postCreateCommand` / `postStartCommand` ever run.
-- **A Feature's own `initializeCommand` cannot fix this — it's silently
-  ignored.** Also verified in the CLI source: the lifecycle-command merge
-  step only collects `onCreateCommand`, `updateContentCommand`,
-  `postCreateCommand`, `postStartCommand`, `postAttachCommand` from each
-  Feature (`lv` in the minified bundle) plus `mounts`/`customizations`/etc.
-  (`xV`) — `initializeCommand` is *not* in either list. It only has effect in
-  the **consumer's own top-level `devcontainer.json`**. This was tried on
-  `claude-dev` (v1.0.3, since reverted as dead code) before the real fix
-  landed: document a required `initializeCommand` in the feature's README
-  Example Usage (see `claude-dev`'s and `mistral-dev`'s READMEs) — a Feature
-  cannot inject into the consumer's `devcontainer.json`, so this is the only
-  place it can actually run.
-- **"Out-of-the-box" for a mount-dependent feature means "one documented
-  `initializeCommand` line away," not zero-config.** Given the constraint
-  above, don't chase a fully silent fix for a feature with a hard mount
-  dependency — document the required line prominently instead. If a feature
-  can tolerate a missing/empty source at the file level (many small files,
-  like `dotfiles-sync`), prefer staging into `/mnt/h4dotfiles`-style path and
-  merging at `postStartCommand` over a hard mount dependency — but note that
-  even staged mounts still fail hard if *their* source is missing, so staging
-  only helps once the source is guaranteed to exist (see `dotfiles-sync`'s
-  own `initializeCommand` requirement for exactly the files it can't avoid
-  mounting).
-- **Cloud environments (Codespaces, Gitpod, DevPod-remote) need the exact same
-  `initializeCommand` as local — they are not a separate problem.**
-  `${localEnv:HOME}` resolves against whatever machine orchestrates container
-  creation: on Codespaces/Gitpod that's the cloud VM GitHub/Gitpod provisions
-  for you, never the user's actual laptop, so a mount source is just as likely
-  to be missing there as locally — the same crash risk applies, and the same
-  `initializeCommand` fix works (it runs on that VM too). Don't write cloud
-  handling as if it only concerns *what gets synced* (protected keys, GPG
-  skip) without also covering *whether the mount succeeds at all* — see
-  `dotfiles-sync`'s "GitHub Codespaces"/"Gitpod"/"DevPod" README sections for
-  the corrected version of this. There's an open, unmerged upstream proposal
-  for an `optional: true` flag on `mounts` entries that would fix this at the
-  spec level instead of pushing it onto every consumer
-  (`devcontainers/spec#132`) — several other projects hit the identical
-  `.aws`/`.kube`-style problem in that thread using the same workaround.
+  exist — file or directory, no exceptions.** The devcontainers CLI uses
+  `docker run --mount type=bind,...`, which errors out on a missing source
+  instead of creating it. No feature script can catch this — mounts resolve
+  before `install.sh` / `postCreateCommand` / `postStartCommand` ever run.
+- **A Feature's own `initializeCommand` can't work around that — it's
+  ignored.** Only the consumer's top-level `devcontainer.json` gets its
+  `initializeCommand` executed; a Feature manifest's own `initializeCommand`
+  is silently dropped (tried on `claude-dev` v1.0.3, reverted as dead code).
+  The fix is documenting a required `initializeCommand` in the feature's
+  README instead — see `claude-dev` or `mistral-dev`.
+- **"Out-of-the-box" for a mount-dependent feature means one documented
+  `initializeCommand` line, not zero-config.** Don't chase a silent fix for a
+  feature with a hard mount dependency — document the line. If a feature can
+  tolerate a missing source at the file level (lots of small files, like
+  `dotfiles-sync`), staging into `/mnt/h4dotfiles` and merging at
+  `postStartCommand` is safer than a hard mount — but the staged mount still
+  needs its own source to exist first, so this only helps once that's true.
+- **Cloud environments (Codespaces, Gitpod, DevPod-remote) need the same
+  `initializeCommand` as local.** `${localEnv:HOME}` resolves against
+  whatever machine orchestrates the build — on Codespaces/Gitpod that's the
+  cloud VM, not the user's laptop — so a mount source can be just as missing
+  there. Don't write cloud handling that only covers what gets synced
+  (protected keys, GPG skip) without covering whether the mount succeeds at
+  all; see `dotfiles-sync`'s Codespaces/Gitpod/DevPod README sections. There's
+  an open upstream proposal for an `optional: true` mounts flag
+  (`devcontainers/spec#132`) that would fix this properly — not merged yet.
 - **`devcontainer-feature.json` must be plain JSON — no `//` comments.**
-  `devcontainers/action` parses it with `JSON.parse`, which chokes on JSONC.
-  This broke the release workflow once already (see commit `4e6e5ee`). Put
-  rationale in the README or a neighboring `.sh` file instead.
-- **Must work inside a VS Code multi-root `.code-workspace`** — this repo's own
-  devcontainer bundles 6 sibling repos this way (see the root `.dev/CLAUDE.md`
-  workspace layout). Treat this as a standard case, not an edge case.
-- **Dedicated AI-tool features must cover three things**: CLI install, IDE
-  extension, and settings/configuration — see `claude-dev`, `mistral-dev`,
-  `copilot-dev`. `github-dev` intentionally reimplements `gh` CLI install
-  rather than depending on an upstream feature, because no known existing
-  devcontainer feature bundles the CLI *and* the IDE extension together — that
-  bundling is the actual reason this feature exists.
-- **A shared named `volume` mount must suffix its source with
-  `${devcontainerId}`** — see `pnpm-store` (commit `beb0dcb`) and
-  `playwright-dev`. `devcontainerId` is derived from the workspace's local
-  folder path, so it's stable across rebuilds of *this* workspace but
-  different for an unrelated project on the same machine. A fixed, unsuffixed
-  volume name is a real collision risk between unrelated devcontainer
-  sessions sharing the same Docker daemon, not just a hygiene nicety — this
-  is not the same concern as the bind-mount-source constraints above (which
-  are about `bind` mounts of host *paths*); named `volume` mounts are
-  auto-created by Docker regardless of whether the name previously existed,
-  so they don't share that crash risk, but they do share this scoping one.
+  `devcontainers/action` parses it with `JSON.parse`, which chokes on JSONC —
+  broke the release workflow once (commit `4e6e5ee`). Put rationale in the
+  README or the install script instead.
+- **Must work inside a VS Code multi-root `.code-workspace`** — this repo's
+  own devcontainer bundles 6 sibling repos this way. Treat it as the normal
+  case, not an edge case.
+- **Dedicated AI-tool features cover three things**: CLI install, IDE
+  extension, settings — see `claude-dev`, `mistral-dev`, `copilot-dev`.
+  `github-dev` reimplements `gh` CLI install rather than depending on an
+  upstream feature because no existing feature bundles the CLI and the IDE
+  extension together.
+- **A shared named `volume` mount needs `${devcontainerId}` in its source**
+  — see `pnpm-store` and `playwright-dev`. It's derived from the workspace's
+  local folder path, so it stays stable across rebuilds of one workspace but
+  won't collide with an unrelated project on the same machine. Volumes don't
+  have the missing-source crash risk bind mounts do (Docker creates them),
+  but they do need this scoping.

@@ -46,7 +46,7 @@ Pin a specific release instead of the default `latest`:
 1. Runs the [official installer](https://nubjs.com/install.sh) as the container's target non-root user (not root — the installer resolves its default install location from `$HOME`), with `NUB_INSTALL_DIR=~/.nub` and `NUB_NO_MODIFY_PATH=1` so it never edits `~/.bashrc`/`~/.zshrc` itself.
 2. If `installGlobally` (default), symlinks every binary under `~/.nub/bin/` (`nub` and `nubx`, the latter dispatching on `argv[0]`) into `/usr/local/bin`.
 
-No VS Code extension — nub has none as of this writing (checked). This feature is CLI tooling only.
+No VS Code extension — nub doesn't have one. This feature is CLI tooling only.
 
 ## What this feature does *not* do
 
