@@ -108,13 +108,18 @@ jobs:
     permissions:
       contents: write # tags
       packages: write # GHCR
-      # A tag's ref points at a commit; if that commit (or any ancestor in the
-      # push range) touched .github/workflows/*.yml, GitHub refuses the push
-      # without this — even though we're only creating a tag, not editing a
-      # workflow file. Hit this for real: run 31324555689 failed pushing
-      # dotfiles-sync-v1.0.8 because an earlier commit in the same push
-      # touched pr-validation.yml.
-      workflows: write
+      # NOTE: pushing a tag whose ref history touches .github/workflows/*.yml
+      # can still be rejected by GitHub ("refusing to allow a GitHub App to
+      # create or update workflow ... without workflows permission" — hit for
+      # real in run 31324555689). There is no `workflows` key for the
+      # `permissions:` block below — it's not a valid GITHUB_TOKEN scope (not
+      # in GitHub's own workflow schema) and adding it makes the whole
+      # workflow file schema-invalid, which is worse: every run fails before
+      # any job starts. The actual fix needs a token that has the classic PAT
+      # `workflow` OAuth scope, or a GitHub App installation token with its
+      # `workflows: write` app permission (via actions/create-github-app-token,
+      # used in place of secrets.GITHUB_TOKEN for the tag-push step) — both
+      # require provisioning a credential outside this file. Not done yet.
     steps:
       - uses: actions/checkout@v7
         with:
