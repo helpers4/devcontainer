@@ -3,84 +3,60 @@
 Backlog of future work — not an active plan like the (now-removed) audit `TODO.md` was.
 Items here are ideas or known gaps, not yet scoped or scheduled.
 
-- **OpenSSF Scorecard.** Already set up in `helpers4/typescript`
-  (`.github/workflows/scorecard.yml` + badge in `README.md`) — replicate the same workflow
-  here: weekly cron + `workflow_dispatch`, `ossf/scorecard-action`, SARIF upload to code
-  scanning, badge linking to `securityscorecards.dev/viewer/?uri=github.com/helpers4/devcontainer`.
-  Needs a `SCORECARD_TOKEN` repo secret (check whether the typescript repo's can be reused
-  org-wide or if this repo needs its own PAT).
+## Resolved
 
-- **`peon-ping`: sound forwarding is broken.** Currently relies on
-  `host.docker.internal:19998` for the container → host audio relay (see feature README,
-  "Container sends audio requests to `host.docker.internal:19998` automatically. No port
-  forwarding configuration needed.") — doesn't actually work right now. Needs investigation:
-  confirm whether `host.docker.internal` resolves in the affected environments (Linux Docker
-  without Docker Desktop doesn't get this DNS entry for free), whether the relay listener is
-  actually running/reachable, and whether an explicit `appPort`/`forwardPorts` entry is needed
-  in the feature or documented as a consumer requirement.
+- [x] **`nub` feature.** Shipped as `src/nub/` — see `AGENTS.md` features table. Followed the
+  migration strategy that used to live in this file (now implemented, not just planned):
+  `dependsOn` the official `node` feature, `installGlobally` option mirroring `vite-plus`,
+  no `nub pm shim`/PATH interception forced on consumers. Verified for real: downloaded and
+  ran the actual installer, ran `nub --version`, ran a JS file through `nub`, confirmed the
+  `nubx` symlink dispatches correctly.
+- [x] **`package-auto-install` + `nub` integration.** `packageManager` gained a `nub` value,
+  runs `nub install`. Deliberately excluded from `auto` detection — nub isn't a lockfile
+  format, so auto-detecting it would be guessing at intent rather than reading a real signal.
+- [x] **`peon-ping`: sound forwarding investigated and partially fixed.** Two distinct real
+  bugs found, not one: (1) a genuine `install.sh` Python `SyntaxError` in the Copilot hooks
+  merge path, fixed and verified with `python3 -m py_compile` plus a functional test;
+  (2) the README's "no port forwarding configuration needed" claim was wrong on native Linux
+  Docker — verified empirically from inside a real devcontainer that `host.docker.internal`
+  doesn't resolve there without `runArgs: ["--add-host=host.docker.internal:host-gateway"]`
+  in the *consumer's* `devcontainer.json` (a Feature can't add `runArgs` itself). Documented
+  with concrete manual verification steps. What's **not** verified: whether the host-side
+  `peon relay` actually binds to an interface reachable from a container by default — that's
+  the upstream `peon` CLI's own responsibility, outside what this repo controls or can test
+  without real host audio hardware.
+- [x] **`peon-ping`: simplify pack selection — evaluated, no schema change made.** `packs`
+  was already a single, simple option; the actual friction was discoverability across ~165
+  registry packs, not composition. Added a "Choosing a pack" section pointing at
+  `peon packs search` / `openpeon.com/packs` instead of a redundant preset option or a
+  hand-maintained pack list that would go stale.
+- [x] **`python-dev` — evaluated, decided not to build it.** Checked the official
+  `ghcr.io/devcontainers/features/python:1` feature's manifest directly (not assumed): it
+  already ships `customizations.vscode.extensions` (`ms-python.python`,
+  `ms-python.vscode-pylance`, `ms-python.autopep8`) *and* settings
+  (`python.defaultInterpreterPath`, default formatter), on top of the interpreter/pip/dev-tools
+  install. Unlike `angular-cli` (CLI-only, no IDE layer — the actual reason `angular-dev`
+  exists), there's no gap left for a helpers4 wrapper to fill. Combined with no sibling repo
+  in this org currently using Python, building this now would be speculative work solving a
+  problem the official feature already solves. Revisit only if a real Python repo shows up
+  *and* needs something the official feature genuinely doesn't cover.
 
-- **`peon-ping`: simplify configuration around a single language/pack choice.** Right now
-  config exposes packs, categories, rotation, volume, etc. separately — consider collapsing
-  the common case to "pick a pack, pre-configured for you" instead of composing multiple
-  options by hand. Reference: [openpeon.com](https://openpeon.com) for how the packs are
-  presented there. Needs a concrete design pass before touching `devcontainer-feature.json`'s
-  options schema (backward compatibility with existing option names to consider).
+## Open
 
-- **New feature: `nub`** ([nubjs.com](https://nubjs.com/)) — Rust binary that runs TS/JS
-  directly, runs `package.json` scripts and local CLIs faster, and manages Node versions. It is
-  explicitly **not a new runtime**: "runs on the node and package manager you already have, no
-  lock-in" — it's an acceleration layer on top of the existing node+npm/pnpm/bun setup, not a
-  replacement for it. That framing drives the whole strategy below: this is additive, never a
-  rip-and-replace of `pnpm-store`/`package-auto-install`/the official `node` feature.
+- [ ] **`pnpm-store` compatibility with `nub`** — not yet verified against a real project
+  using both together (item 3 of the original nub strategy: does `nub` delegating to `pnpm`
+  actually respect the `store-dir`/`storeDir` config `pnpm-store` sets up, or does each `nub`
+  invocation end up with a different config?). Don't document the pairing as supported until
+  this is confirmed, not assumed.
 
-  No VS Code extension (checked). Should be its own feature, not folded into `typescript-dev`
-  (IDE-extensions-only today, zero CLI installs — bundling would break that separation) —
-  closest precedent is `vite-plus`'s shape (user-space binary + optional
-  `installGlobally`/symlink-to-`/usr/local/bin` option) or `git-absorb`'s GitHub-releases
-  download pattern; official installer is `curl -fsSL https://nubjs.com/install.sh | bash`,
-  no sudo needed, installs to `~/.nub/bin`. Needs `dependsOn`/`installsAfter` on Node the same
-  way `playwright-dev` now does (see AGENTS.md "Verify version after merge" incident — that
-  PR is also where the dependsOn-node fix pattern to copy lives).
+- [ ] **OpenSSF Scorecard.** Not actually set up anywhere in the org yet — `helpers4/typescript`
+  has the workflow file, but nothing is registered/active on OpenSSF's side there either, so
+  there's no working reference to copy a working secret/setup from. Holding off here until
+  that's sorted out somewhere first, rather than adding a second copy of an inactive workflow.
 
-  **Proposed migration strategy for consuming projects** (opt-in, additive, reversible at every
-  step — nothing here requires abandoning node/pnpm if `nub` doesn't pan out):
-
-  1. **Ship the feature, opt-in only.** `nub` feature added to the registry; no existing
-     `devcontainer.json` changes unless a project explicitly adds it. `dependsOn` the official
-     `node` feature so Node itself stays the single source of truth for the runtime — `nub`
-     wraps it, doesn't replace it. Document explicitly in the README: **don't** use
-     `nub node install` inside these devcontainers, pin Node via the `node` feature's own
-     `version` option instead, to avoid two competing version-selection mechanisms in the same
-     container.
-  2. **`package-auto-install` gains a `nub` value for `packageManager`**, delegating to
-     `nub install` instead of invoking npm/pnpm/yarn directly — safe because `nub install`
-     itself detects and delegates to whichever lockfile is present, so this is a thin
-     pass-through, not new logic to maintain. Keep `auto`/`npm`/`yarn`/`pnpm` as-is for projects
-     that don't opt in.
-  3. **Verify `pnpm-store` compatibility before recommending both together.** `pnpm-store`'s
-     whole job is a shared content-addressable store via a Docker volume — confirm `nub`
-     delegating to the real `pnpm` binary actually respects a custom store-dir the way
-     `pnpm-store` sets it up, rather than each pnpm invocation ending up with a different config.
-     Don't recommend `nub` + `pnpm-store` together in docs until this is actually confirmed
-     working, not assumed.
-  4. **Pilot in one real project before wider rollout** — `typescript` is the best candidate
-     (heaviest TS build/test iteration loop, so it's where `nub`'s speed claims matter most and
-     where compatibility problems would surface fastest). Evaluate for a real period before
-     touching other repos' `devcontainer.json`.
-  5. **CI is a separate decision, out of this repo's scope.** GitHub Actions runners don't use
-     devcontainers, so adopting `nub` there (e.g. via a `setup-nub` action) is independent of
-     this feature and needs its own evaluation — don't conflate "devcontainer has nub available"
-     with "CI uses nub," they're unrelated changes with different risk profiles.
-
-  Project-level adoption (each repo's own choice, not something the feature can force): replace
-  `tsx`/`ts-node` devDependencies with running files via `nub` directly, `npm run`/`pnpm run` →
-  `nub run`, `npx` → `nubx`. Document the recommended aliases in the feature's own README once
-  scaffolded, rather than trying to rewrite every consuming project's scripts from here.
-
-- **New feature: `python-dev`.** Python-specific dev environment + extensions, following the
-  shape of `typescript-dev`/`angular-dev` (dependsOn `essential-dev`, VS Code extensions,
-  relevant settings). Check first whether an existing official/community feature
-  (`ghcr.io/devcontainers/features/python`) already covers the CLI/interpreter install — if so,
-  this feature's job is likely just extensions + settings on top, same pattern as `angular-dev`
-  delegating CLI install to `ghcr.io/devcontainers-extra/features/angular-cli`. Use the
-  `/add-devcontainer-feature` skill once scoped.
+- [ ] **`peon-ping` host relay reachability.** Even after the `host.docker.internal` DNS fix
+  above, whether the relay is actually *reachable* (not just resolvable) depends on what
+  interface `peon relay --daemon` binds to on the host — not something this repo controls.
+  Needs a real end-to-end test with actual host audio hardware, which nothing in this
+  environment can do. See the peon-ping README's "Verifying it actually works" section for
+  the manual steps to run interactively.
