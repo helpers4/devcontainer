@@ -1,11 +1,11 @@
 {
   "id": "package-auto-install",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "name": "Automatic Package Installation",
-  "description": "Automatically detects and runs npm/yarn/pnpm install in non-interactive mode after container creation.",
+  "description": "Automatically detects and runs npm/yarn/pnpm/nub install in non-interactive mode after container creation.",
   "documentationURL": "https://github.com/helpers4/devcontainer/tree/main/src/package-auto-install",
   "licenseURL": "https://github.com/helpers4/devcontainer/blob/main/LICENSE",
-  "keywords": ["helpers4", "pnpm", "npm", "yarn", "install"],
+  "keywords": ["helpers4", "pnpm", "npm", "yarn", "nub", "install"],
   "options": {
     "command": {
       "type": "string",
@@ -23,10 +23,11 @@
         "auto",
         "npm",
         "yarn",
-        "pnpm"
+        "pnpm",
+        "nub"
       ],
       "default": "auto",
-      "description": "Package manager to use. 'auto' detects based on lockfile"
+      "description": "Package manager to use. 'auto' detects based on lockfile (never resolves to 'nub' — that's an explicit opt-in, not auto-detected, since nub isn't itself a lockfile format). 'nub' runs 'nub install', which requires the nub feature to also be installed and delegates internally to whichever of npm/pnpm/bun the project actually uses."
     },
     "workingDirectory": {
       "type": "string",

@@ -227,6 +227,10 @@ _get_install_cmd() {
                 [ -f "yarn.lock" ] && echo "install --frozen-lockfile" || echo "install"
             fi
             ;;
+        # nub install delegates to whichever underlying lockfile is present —
+        # no separate frozen/CI-safe flag documented, so no lockfile branch
+        # here (unlike npm/pnpm/yarn above); revisit if nub adds one.
+        nub) echo "install" ;;
         *) echo "install" ;;
     esac
 }
