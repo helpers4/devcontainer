@@ -63,6 +63,10 @@ jobs:
           - features: playwright-dev
             baseImage: mcr.microsoft.com/devcontainers/typescript-node:20
 
+          # nub — requires Node.js (dependsOn the official node feature)
+          - features: nub
+            baseImage: mcr.microsoft.com/devcontainers/typescript-node:20
+
           # typescript-dev — depends on essential-dev:1 via dependsOn (hard dep)
           - features: typescript-dev
             baseImage: mcr.microsoft.com/devcontainers/typescript-node:20

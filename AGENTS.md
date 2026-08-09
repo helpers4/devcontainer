@@ -33,6 +33,7 @@ devcontainer features test .
 | `copilot-dev` | 1.0.1 | Copilot Chat + AI instructions (commits, PRs, code review) |
 | `claude-dev` | 1.0.5 | Claude Code extension + `~/.claude` bind-mount (credentials + memory persist) |
 | `mistral-dev` | 1.0.3 | Mistral Vibe extension + `~/.vibe` bind-mount |
+| `nub` | 1.0.0 | Fast TS/JS/script runner on top of existing node+package-manager (dependsOn node) |
 | `typescript-dev` | 1.0.5 | TS/JS dev, import management (dependsOn essential-dev) |
 | `angular-dev` | 1.0.6 | Angular dev, port 4200 |
 | `vite-plus` | 1.0.3 | vp CLI, Oxlint/Oxfmt, Vitest |
