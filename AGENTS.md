@@ -43,7 +43,7 @@ devcontainer features test .
 | `auto-header` | — | LGPL-3.0 license headers |
 | `git-absorb` | 1.0.7 | git-absorb from GitHub releases |
 | `dotfiles-sync` | 1.0.8 | Sync Git/SSH/GPG/npm/gh config from host |
-| `peon-ping` | 1.0.3 | AI agent sound notifications |
+| `peon-ping` | 1.0.4 | AI agent sound notifications |
 | `shell-history-per-project` | 1.0.7 | Persistent shell history (zsh/bash/fish) |
 
 **Adding a new feature — checklist:**

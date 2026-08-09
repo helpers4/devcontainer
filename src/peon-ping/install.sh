@@ -255,13 +255,15 @@ hooks = data.setdefault("hooks", {})
 
 # VS Code hook event names (PascalCase, auto-mapped from lowerCamelCase by VS Code).
 # See https://code.visualstudio.com/docs/copilot/customization/hooks#_hook-lifecycle-events
-# VS Code/Copilot hook event names as written in hooks.json.
-    "SessionStart":        [{"type": "command", "bash": "bash ~/.claude/hooks/peon-ping/adapters/copilot.sh SessionStart"}],
-    "UserPromptSubmit":    [{"type": "command", "bash": "bash ~/.claude/hooks/peon-ping/adapters/copilot.sh UserPromptSubmit"}],
-    "PostToolUse":         [{"type": "command", "bash": "bash ~/.claude/hooks/peon-ping/adapters/copilot.sh PostToolUse"}],
-    "Stop":                [{"type": "command", "bash": "bash ~/.claude/hooks/peon-ping/adapters/copilot.sh Stop"}]
+# Mirrors the no-existing-file JSONEOF block below — same four events, kept
+# in sync deliberately since this branch and that one write the same hooks.
+new_entries = {
+    "SessionStart":     [{"type": "command", "bash": "bash ~/.claude/hooks/peon-ping/adapters/copilot.sh SessionStart"}],
+    "UserPromptSubmit": [{"type": "command", "bash": "bash ~/.claude/hooks/peon-ping/adapters/copilot.sh UserPromptSubmit"}],
+    "PostToolUse":      [{"type": "command", "bash": "bash ~/.claude/hooks/peon-ping/adapters/copilot.sh PostToolUse"}],
+    "Stop":             [{"type": "command", "bash": "bash ~/.claude/hooks/peon-ping/adapters/copilot.sh Stop"}],
 }
-    "ErrorOccurred":       [{"type": "command", "bash": "bash ~/.claude/hooks/peon-ping/adapters/copilot.sh ErrorOccurred"}]
+
 for event, entries in new_entries.items():
     event_list = hooks.setdefault(event, [])
     existing_cmds = [e.get("bash", e.get("command", "")) for e in event_list]
