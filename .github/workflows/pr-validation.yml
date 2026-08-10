@@ -218,6 +218,30 @@ jobs:
           fi
           exit $FAILED
 
+      - name: Verify AGENTS.md's feature table matches manifest versions
+        run: |
+          # AGENTS.md hand-maintains a Ver column that duplicates each
+          # feature's own devcontainer-feature.json version, with nothing
+          # else keeping the two in sync — this is exactly the kind of
+          # duplication that let PR#52 drift silently. Catch it here instead.
+          FAILED=0
+          while IFS='|' read -r _ name_field ver_field _; do
+            name=$(echo "$name_field" | tr -d ' `')
+            ver=$(echo "$ver_field" | xargs)
+            [ -z "$name" ] && continue
+            manifest="src/${name}/devcontainer-feature.json"
+            [ -f "$manifest" ] || continue
+            actual=$(jq -r '.version' "$manifest")
+            if [ "$ver" != "$actual" ]; then
+              echo "❌ AGENTS.md says ${name} is ${ver}, manifest says ${actual}"
+              FAILED=1
+            fi
+          done < <(grep -E '^\| `' AGENTS.md)
+          if [ "$FAILED" -eq 0 ]; then
+            echo "✅ AGENTS.md's feature table matches every manifest version"
+          fi
+          exit $FAILED
+
   pr-comment:
     runs-on: ubuntu-latest
     needs: [conventional-commits, version-bump-check, test-features, shellcheck]
