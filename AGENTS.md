@@ -75,8 +75,9 @@ reaches the published site. Judgment call, not enforced either way.
 
 Enforced by the `version-bump-check` job in `pr-validation.yml`: it fails the
 PR if a touched feature's `version` is unchanged from `main` *and* something
-other than `README.md` changed under that feature's `src/<name>/`. It's a
-blocking check only — it never commits a bump on your behalf (deliberately:
+other than `src/<name>/README.md` changed under `src/<name>/` or
+`test/<name>/`. It's a blocking check only — it never commits a bump on your
+behalf (deliberately:
 no bot commits, no push-permission/fork edge cases, consistent with how
 `conventional-commits` already works in this repo). Bump the version
 yourself and push again.
