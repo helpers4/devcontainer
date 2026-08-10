@@ -37,8 +37,13 @@ jobs:
           MERGE_BASE=$(git merge-base "${BASE_SHA}" HEAD)
           echo "::notice::Diff base = ${MERGE_BASE} → HEAD ($(git rev-parse HEAD))"
 
-          mapfile -t names < <(git diff --name-only "${MERGE_BASE}..HEAD" -- src/ \
-            | awk -F/ '{print $2}' | sort -u)
+          # Computed once, reused per-feature below instead of re-running git
+          # diff in the loop. Covers both src/<name>/ (what ships) and
+          # test/<name>/test.sh — a sibling of src/, not nested under it, but
+          # AGENTS.md requires a bump for it too, so it needs its own pathspec.
+          touched_files=$(git diff --name-only "${MERGE_BASE}..HEAD" -- src/ test/)
+
+          mapfile -t names < <(echo "$touched_files" | awk -F/ '{print $2}' | sort -u)
 
           FAILED=0
           for name in "${names[@]}"; do
@@ -50,9 +55,10 @@ jobs:
 
             # README-only changes don't require a bump — the README is the
             # only file where a diff can't change what actually ships. Every
-            # other file (install.sh, the manifest, test.sh, ...) still does.
-            non_readme_touched=$(git diff --name-only "${MERGE_BASE}..HEAD" -- "src/${name}/" \
-              | grep -v "^src/${name}/README\.md$" || true)
+            # other file (install.sh, the manifest, test/<name>/test.sh, ...)
+            # still does.
+            non_readme_touched=$(echo "$touched_files" \
+              | grep -E "^(src|test)/${name}/" | grep -v "^src/${name}/README\.md$" || true)
 
             if [ -z "$old_version" ]; then
               echo "✅ ${name}: new feature, no bump required"
