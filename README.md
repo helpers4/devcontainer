@@ -9,6 +9,7 @@
   <a href="https://github.com/helpers4/devcontainer"><img src="https://img.shields.io/github/last-commit/helpers4/devcontainer" alt="last commit" /></a>
   <a href="https://containers.dev/features"><img src="https://img.shields.io/badge/devcontainer-features-blue?logo=visual-studio-code&logoColor=white" alt="DevContainer Features" /></a>
   <a href="https://deepwiki.com/helpers4/devcontainer"><img src="https://img.shields.io/badge/DeepWiki-helpers4%2Fdevcontainer-blue" alt="Ask DeepWiki" /></a>
+  <a href="https://securityscorecards.dev/viewer/?uri=github.com/helpers4/devcontainer"><img src="https://api.securityscorecards.dev/projects/github.com/helpers4/devcontainer/badge" alt="OpenSSF Scorecard" /></a>
 </p>
 
 ---
