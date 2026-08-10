@@ -96,12 +96,31 @@ NUB_HOME="${USER_HOME}/.nub"
 BIN_DIR="${NUB_HOME}/bin"
 
 echo "📦 Downloading nub (${NUB_VERSION})..."
+# Download to a temp file first — piping curl straight into bash makes a
+# curl failure invisible to the pipeline's exit status (pipefail doesn't
+# survive the su/bash -c boundary below anyway), same reason vite-plus does
+# this. It also lets the version argument reach the installer as a real
+# positional parameter instead of being interpolated into shell source,
+# so a version string containing a quote can't inject commands.
+INSTALLER_SCRIPT="$(mktemp)"
+trap 'rm -f "${INSTALLER_SCRIPT}"' EXIT
+if ! curl -fsSL https://nubjs.com/install.sh -o "${INSTALLER_SCRIPT}"; then
+    echo "❌ Failed to download nub installer."
+    exit 1
+fi
+chmod 644 "${INSTALLER_SCRIPT}"
+
 if [ "${USERNAME}" = "root" ]; then
-    NUB_INSTALL_DIR="${NUB_HOME}" NUB_NO_MODIFY_PATH=1 \
-        bash -c "curl -fsSL https://nubjs.com/install.sh | bash -s -- '${NUB_VERSION}'"
+    NUB_INSTALL_DIR="${NUB_HOME}" NUB_NO_MODIFY_PATH=1 bash "${INSTALLER_SCRIPT}" "${NUB_VERSION}"
 else
+    # `su -c 'cmd' _ arg1 arg2` passes arg1/arg2 as $1/$2 inside cmd — env
+    # vars prefixed on a single command (not a pipeline) propagate correctly,
+    # and NUB_HOME/INSTALLER_SCRIPT/NUB_VERSION reach the child as real
+    # positional params rather than text re-parsed by a shell.
+    # shellcheck disable=SC2016 # single-quoted on purpose: $1/$2/$3 expand in the su'd shell, not here
     su -s /bin/bash "${USERNAME}" -c \
-        "NUB_INSTALL_DIR='${NUB_HOME}' NUB_NO_MODIFY_PATH=1 curl -fsSL https://nubjs.com/install.sh | bash -s -- '${NUB_VERSION}'"
+        'NUB_INSTALL_DIR="$1" NUB_NO_MODIFY_PATH=1 bash "$2" "$3"' \
+        _ "${NUB_HOME}" "${INSTALLER_SCRIPT}" "${NUB_VERSION}"
 fi
 
 if [ ! -x "${BIN_DIR}/nub" ]; then
