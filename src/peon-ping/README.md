@@ -57,6 +57,7 @@ This installs peon-ping with the default 5 packs (peon, peasant, sc_kerrigan, sc
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | `packs` | string | `default` | Sound packs: `default` (5 curated), `all` (165+), or CSV (e.g. `peon,glados,murloc`) |
+| `packsLang` | string | `""` | Restrict pack selection to language(s), e.g. `fr` or `en,fr` — see "Choosing a pack" below |
 | `noRc` | boolean | `true` | Skip `.bashrc`/`.zshrc` modifications (recommended for devcontainers) |
 | `ideSetup` | string | `vscode` | IDEs to configure: `all` (vscode + cursor + codex), `none`, or CSV (e.g. `vscode,cursor`) |
 | `volume` | string | `0.5` | Default volume level (0.0–1.0) |
@@ -71,6 +72,23 @@ peon packs use --install <name> # try one immediately, install + switch in one s
 ```
 
 Or browse with audio previews at [openpeon.com/packs](https://openpeon.com/packs).
+
+Prefer a language over a specific franchise? Set `packsLang` instead of hunting for names:
+
+```jsonc
+{
+    "features": {
+        "ghcr.io/helpers4/devcontainer/peon-ping:1": {
+            "packsLang": "fr"
+        }
+    }
+}
+```
+
+This matches by each pack's own language metadata (e.g. `peon_fr`, `peasant_fr`), not by
+guessing at name patterns — the installer's own `--lang` flag does the filtering. Leaving
+`packs` at its default while setting `packsLang` searches the full registry instead of just
+the 5 franchise picks below, since those 5 don't all have a matching-language variant.
 
 The `default` bundle is 5 packs:
 
@@ -181,4 +199,5 @@ peon packs list           # List installed packs
 
 ## Version History
 
+- **v1.0.5**: Added `packsLang` — restrict pack selection to language(s) instead of naming packs directly, e.g. `packsLang: "fr"`. Passed straight through to the upstream installer's own `--lang` flag, which already understood per-pack language metadata; this just exposes it as a feature option.
 - **v1.0.4**: Fixed a Python syntax error in `install.sh`'s Copilot hooks merge path (`peon-ping-copilot-setup`) — it crashed every time it ran against an existing `.github/hooks/hooks.json`. That helper now shares its merge logic with the same `merge_hooks_json` used for Claude Code/Cursor instead of re-deriving it, and an existing `hooks.json` that isn't valid JSON gets backed up to `.bak` instead of silently discarded. Corrected the "Audio in Devcontainers" docs: `host.docker.internal` doesn't resolve on native Linux Docker without `runArgs: ["--add-host=host.docker.internal:host-gateway"]` in the consumer's `devcontainer.json`, which a Feature can't add on its own. Added a "Choosing a pack" section pointing at `peon packs search` and `openpeon.com/packs` instead of adding a preset option — `packs` was already simple enough.
