@@ -240,6 +240,7 @@ You can manually run the installation script:
 
 ## Version History
 
+- **v1.0.9**: Added `nub` to `installsAfter`, now that the `nub` feature is published — couldn't be added in the same release as `nub` itself, since `installsAfter` has to resolve from the registry and `nub` didn't exist there yet. Doesn't change behavior (package-auto-install only calls `nub` via `postCreateCommand`, which already runs after every feature's `install.sh` completes), just documents the relationship for anyone reading the manifest.
 - **v1.0.8**: Added `nub` as a `packageManager` value — runs `nub install` (requires the `nub` feature too, with its default `installGlobally: true`; nub only understands npm/pnpm/bun lockfiles, not yarn.lock). `auto` detection now validates the `package.json` `packageManager` field against npm/pnpm/yarn before trusting it, so an unrelated value (including `nub`, which doesn't use that field's convention) can't make `auto` resolve somewhere unexpected. `command: ci` is ignored when the resolved package manager is `nub`, since nub has no `ci` subcommand — it always runs `nub install`.
 - **v1.0.2**: Added `autoDiscover` (scan VS Code/Cursor `.code-workspace` and IntelliJ `.idea/modules.xml`) and `directories` (explicit comma-separated list) options for multi-root workspace support. Each folder runs package manager detection independently.
 - **v1.0.1**: Added corepack support for Node 24+ (`packageManager` field in package.json).
