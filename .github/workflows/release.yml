@@ -114,20 +114,8 @@ jobs:
     if: ${{ needs.detect.outputs.count != '0' }}
     runs-on: ubuntu-latest
     permissions:
-      contents: write # tags
+      contents: write # tags, and devcontainers/action's generate-docs commit
       packages: write # GHCR
-      # NOTE: pushing a tag whose ref history touches .github/workflows/*.yml
-      # can still be rejected by GitHub ("refusing to allow a GitHub App to
-      # create or update workflow ... without workflows permission" — hit for
-      # real in run 31324555689). There is no `workflows` key for the
-      # `permissions:` block below — it's not a valid GITHUB_TOKEN scope (not
-      # in GitHub's own workflow schema) and adding it makes the whole
-      # workflow file schema-invalid, which is worse: every run fails before
-      # any job starts. The actual fix needs a token that has the classic PAT
-      # `workflow` OAuth scope, or a GitHub App installation token with its
-      # `workflows: write` app permission (via actions/create-github-app-token,
-      # used in place of secrets.GITHUB_TOKEN for the tag-push step) — both
-      # require provisioning a credential outside this file. Not done yet.
     steps:
       - uses: actions/checkout@v7
         with:
@@ -154,11 +142,35 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Mint tag-push token
+        id: tag_token
+        # A tag whose ref history touches .github/workflows/*.yml gets
+        # rejected by GitHub when pushed with GITHUB_TOKEN ("refusing to
+        # allow a GitHub App to create or update workflow ... without
+        # workflows permission" — hit for real in run 31324555689). There is
+        # no `workflows` key under this job's `permissions:` block above —
+        # it isn't a valid GITHUB_TOKEN scope, and adding it just makes the
+        # whole file schema-invalid (also hit for real, then reverted).
+        # Trigganator is already installed and used by this same repo's
+        # trigger-website job below — reusing it here instead of
+        # provisioning a separate credential, scoped to only what this
+        # specific push needs.
+        uses: actions/create-github-app-token@v3.2.0
+        with:
+          client-id: ${{ vars.TRIGGANATOR_ID }}
+          private-key: ${{ secrets.TRIGGANATOR_KEY }}
+          owner: helpers4
+          repositories: devcontainer
+          permission-contents: write
+          permission-workflows: write
+
       - name: Create per-feature git tags
         env:
           CHANGED: ${{ needs.detect.outputs.changed }}
+          TAG_TOKEN: ${{ steps.tag_token.outputs.token }}
         run: |
           set -euo pipefail
+          git remote set-url origin "https://x-access-token:${TAG_TOKEN}@github.com/${{ github.repository }}.git"
           echo "$CHANGED" | jq -c '.[]' | while read -r row; do
             name=$(jq -r '.name' <<< "$row")
             version=$(jq -r '.version' <<< "$row")
