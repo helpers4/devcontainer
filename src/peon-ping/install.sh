@@ -193,7 +193,15 @@ try:
     else:
         os.makedirs(os.path.dirname(target_path), exist_ok=True)
         data = {"version": 1, "hooks": {}}
-except (json.JSONDecodeError, OSError) as e:
+except json.JSONDecodeError as e:
+    # File exists but isn't valid JSON — back it up instead of silently
+    # discarding whatever the user had in it (could be hooks for other
+    # tools). Only start fresh once the original content is preserved.
+    backup_path = target_path + ".bak"
+    os.replace(target_path, backup_path)
+    print(f"⚠️  {target_path} wasn't valid JSON ({e}); backed up to {backup_path} and starting fresh", file=sys.stderr)
+    data = {"version": 1, "hooks": {}}
+except OSError as e:
     print(f"⚠️  Could not read {target_path}, creating fresh: {e}", file=sys.stderr)
     os.makedirs(os.path.dirname(target_path), exist_ok=True)
     data = {"version": 1, "hooks": {}}
@@ -223,7 +231,11 @@ if ide_enabled vscode; then
     echo "🔧 Configuring GitHub Copilot hooks..."
 
     # Create a helper script that generates .github/hooks/hooks.json in the
-    # current workspace.  Users can call it manually or via postCreateCommand.
+    # current workspace. Users can call it manually or via postCreateCommand.
+    # It runs later, standalone, against a workspace path that doesn't exist
+    # yet at image-build time, so it can't call this install.sh's own
+    # merge_hooks_json — it carries an embedded copy instead (kept identical
+    # on purpose; see merge_hooks_json above).
     cat > /usr/local/bin/peon-ping-copilot-setup << 'SETUPEOF'
 #!/usr/bin/env bash
 # Generate .github/hooks/hooks.json for GitHub Copilot agent mode.
@@ -236,70 +248,66 @@ HOOKS_FILE="${HOOKS_DIR}/hooks.json"
 
 mkdir -p "${HOOKS_DIR}"
 
-if [ -f "${HOOKS_FILE}" ]; then
-    HOOKS_FILE="${HOOKS_FILE}" python3 << 'PYEOF'
+merge_hooks_json() {
+    local target="$1"
+    local new_hooks="$2"
+
+    python3 << PYEOF
 import json, os, sys
 
-path = os.environ.get("HOOKS_FILE", ".github/hooks/hooks.json")
-if not os.path.exists(path):
+target_path = "${target}"
+try:
+    new_hooks = json.loads("""${new_hooks}""")
+except json.JSONDecodeError as e:
+    print(f"⚠️  Invalid hooks JSON: {e}", file=sys.stderr)
     sys.exit(0)
 
 try:
-    with open(path) as f:
-        data = json.load(f)
-except (json.JSONDecodeError, OSError) as e:
-    print(f"⚠️  Could not read {path}: {e}", file=sys.stderr)
+    if os.path.exists(target_path):
+        with open(target_path) as f:
+            data = json.load(f)
+    else:
+        os.makedirs(os.path.dirname(target_path), exist_ok=True)
+        data = {"version": 1, "hooks": {}}
+except json.JSONDecodeError as e:
+    backup_path = target_path + ".bak"
+    os.replace(target_path, backup_path)
+    print(f"⚠️  {target_path} wasn't valid JSON ({e}); backed up to {backup_path} and starting fresh", file=sys.stderr)
+    data = {"version": 1, "hooks": {}}
+except OSError as e:
+    print(f"⚠️  Could not read {target_path}, creating fresh: {e}", file=sys.stderr)
+    os.makedirs(os.path.dirname(target_path), exist_ok=True)
     data = {"version": 1, "hooks": {}}
 
-hooks = data.setdefault("hooks", {})
+existing_hooks = data.setdefault("hooks", {})
 
-# VS Code hook event names (PascalCase, auto-mapped from lowerCamelCase by VS Code).
-# See https://code.visualstudio.com/docs/copilot/customization/hooks#_hook-lifecycle-events
-# Mirrors the no-existing-file JSONEOF block below — same four events, kept
-# in sync deliberately since this branch and that one write the same hooks.
-new_entries = {
-    "SessionStart":     [{"type": "command", "bash": "bash ~/.claude/hooks/peon-ping/adapters/copilot.sh SessionStart"}],
-    "UserPromptSubmit": [{"type": "command", "bash": "bash ~/.claude/hooks/peon-ping/adapters/copilot.sh UserPromptSubmit"}],
-    "PostToolUse":      [{"type": "command", "bash": "bash ~/.claude/hooks/peon-ping/adapters/copilot.sh PostToolUse"}],
-    "Stop":             [{"type": "command", "bash": "bash ~/.claude/hooks/peon-ping/adapters/copilot.sh Stop"}],
-}
-
-for event, entries in new_entries.items():
-    event_list = hooks.setdefault(event, [])
+for event, entries in new_hooks.items():
+    event_list = existing_hooks.setdefault(event, [])
     existing_cmds = [e.get("bash", e.get("command", "")) for e in event_list]
     for entry in entries:
         if not any("peon-ping" in c for c in existing_cmds):
             event_list.append(entry)
 
-data["hooks"] = hooks
+data["hooks"] = existing_hooks
 try:
-    with open(path, "w") as f:
+    with open(target_path, "w") as f:
         json.dump(data, f, indent=2)
         f.write("\n")
 except OSError as e:
-    print(f"⚠️  Could not write {path}: {e}", file=sys.stderr)
+    print(f"⚠️  Could not write {target_path}: {e}", file=sys.stderr)
 PYEOF
-else
-    cat > "${HOOKS_FILE}" << 'JSONEOF'
-{
-  "version": 1,
-  "hooks": {
-    "SessionStart": [
-      { "type": "command", "bash": "bash ~/.claude/hooks/peon-ping/adapters/copilot.sh SessionStart" }
-    ],
-    "UserPromptSubmit": [
-      { "type": "command", "bash": "bash ~/.claude/hooks/peon-ping/adapters/copilot.sh UserPromptSubmit" }
-    ],
-    "PostToolUse": [
-      { "type": "command", "bash": "bash ~/.claude/hooks/peon-ping/adapters/copilot.sh PostToolUse" }
-    ],
-    "Stop": [
-      { "type": "command", "bash": "bash ~/.claude/hooks/peon-ping/adapters/copilot.sh Stop" }
-    ]
-  }
 }
-JSONEOF
-fi
+
+# VS Code hook event names (PascalCase, auto-mapped from lowerCamelCase by VS Code).
+# See https://code.visualstudio.com/docs/copilot/customization/hooks#_hook-lifecycle-events
+HOOKS_JSON='{
+  "SessionStart":     [{"type": "command", "bash": "bash ~/.claude/hooks/peon-ping/adapters/copilot.sh SessionStart"}],
+  "UserPromptSubmit": [{"type": "command", "bash": "bash ~/.claude/hooks/peon-ping/adapters/copilot.sh UserPromptSubmit"}],
+  "PostToolUse":      [{"type": "command", "bash": "bash ~/.claude/hooks/peon-ping/adapters/copilot.sh PostToolUse"}],
+  "Stop":             [{"type": "command", "bash": "bash ~/.claude/hooks/peon-ping/adapters/copilot.sh Stop"}]
+}'
+
+merge_hooks_json "${HOOKS_FILE}" "${HOOKS_JSON}"
 
 echo "✅ Copilot hooks written to ${HOOKS_FILE}"
 SETUPEOF
