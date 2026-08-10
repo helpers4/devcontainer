@@ -181,12 +181,20 @@ _discover_dirs() {
 # ── Package manager helpers ────────────────────────────────────────────────────
 
 _get_pm_from_json() {
+    local pm_field
     if command -v jq >/dev/null 2>&1; then
-        jq -r '.packageManager // empty' package.json 2>/dev/null | cut -d'@' -f1 || true
+        pm_field="$(jq -r '.packageManager // empty' package.json 2>/dev/null | cut -d'@' -f1 || true)"
     else
-        grep -o '"packageManager"[[:space:]]*:[[:space:]]*"[^"]*"' package.json 2>/dev/null \
-            | sed 's/.*"\([^@"]*\)[@"].*/\1/' || true
+        pm_field="$(grep -o '"packageManager"[[:space:]]*:[[:space:]]*"[^"]*"' package.json 2>/dev/null \
+            | sed 's/.*"\([^@"]*\)[@"].*/\1/' || true)"
     fi
+    # Corepack's packageManager field only ever names npm/pnpm/yarn — anything
+    # else (including "nub", which doesn't use this convention) is ignored so
+    # `auto` falls through to lockfile detection instead of silently picking
+    # a package manager the project never asked for.
+    case "$pm_field" in
+        npm | pnpm | yarn) echo "$pm_field" ;;
+    esac
 }
 
 _setup_corepack() {
@@ -227,10 +235,6 @@ _get_install_cmd() {
                 [ -f "yarn.lock" ] && echo "install --frozen-lockfile" || echo "install"
             fi
             ;;
-        # nub install delegates to whichever underlying lockfile is present —
-        # no separate frozen/CI-safe flag documented, so no lockfile branch
-        # here (unlike npm/pnpm/yarn above); revisit if nub adds one.
-        nub) echo "install" ;;
         *) echo "install" ;;
     esac
 }
@@ -261,7 +265,14 @@ _install_in_dir() {
             exit 1
         fi
         cmd="$COMMAND"
-        [ "$cmd" = "auto" ] && cmd="$(_get_install_cmd "$pm")"
+        if [ "$pm" = "nub" ]; then
+            # nub only documents `nub install` — no `ci` subcommand exists, so
+            # the `command` option (install/ci/auto) doesn't apply to it; using
+            # the literal "ci" here would run an unsupported `nub ci` and fail.
+            cmd="install"
+        elif [ "$cmd" = "auto" ]; then
+            cmd="$(_get_install_cmd "$pm")"
+        fi
         echo "   🚀 [$dir] → $pm $cmd ${ADDITIONAL_ARGS}"
         # shellcheck disable=SC2086
         if $pm $cmd $ADDITIONAL_ARGS; then
