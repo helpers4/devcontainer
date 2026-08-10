@@ -1,32 +1,42 @@
 # Roadmap / Ideas — devcontainer
 
-Backlog of future work — not an active plan like the (now-removed) audit `TODO.md` was.
-Items here are ideas or known gaps, not yet scoped or scheduled.
+Backlog of future work — not an active plan. Items here are known gaps or open questions,
+not yet scoped or scheduled.
 
-## Resolved
+- [ ] **release.yml: tag pushes still get rejected when their ref history touches a workflow
+  file.** The actual GitHub restriction here needs a token with the classic PAT `workflow`
+  OAuth scope, or a GitHub App installation token (via `actions/create-github-app-token`) —
+  there's no `permissions:` YAML key for this on the default `GITHUB_TOKEN` (confirmed against
+  GitHub's own workflow schema; a `workflows: write` permission block doesn't exist and just
+  makes the whole file invalid — hit that for real, reverted it). Needs a secret provisioned
+  before this can be fixed properly.
 
-- [x] **`nub` feature.** Shipped as `src/nub/`. Depends on the official `node` feature,
-  `installGlobally` option mirrors `vite-plus`. Doesn't set up `nub pm shim` (npm/npx PATH
-  interception) — that's a bigger call left to consuming projects.
-- [x] **`package-auto-install` + `nub` integration.** `packageManager` gained a `nub` value,
-  runs `nub install`. Not part of `auto` detection — nub isn't a lockfile format, so there's
-  no real signal to detect it from.
-- [x] **`peon-ping`: sound forwarding.** Two separate bugs: the Copilot hooks merge path in
-  `install.sh` had a Python syntax error (a dict literal missing its assignment), and the
-  README's claim that no port forwarding is needed was wrong on native Linux Docker —
-  `host.docker.internal` doesn't resolve there without `runArgs:
-  ["--add-host=host.docker.internal:host-gateway"]` in the consumer's `devcontainer.json`.
-  Both fixed. Still open: whether the host-side `peon relay` binds to an interface reachable
-  from a container — that's the `peon` CLI's own behavior, not something we control.
-- [x] **`peon-ping`: pack selection.** `packs` was already a single option; the real friction
-  was finding a pack among ~165 in the registry, not configuring one. Pointed the README at
-  `peon packs search` and `openpeon.com/packs` instead of adding a redundant preset option.
-- [x] **`python-dev` — not building it.** The official `ghcr.io/devcontainers/features/python:1`
-  already ships VS Code extensions (pylance, autopep8) and settings on top of the interpreter,
-  unlike `angular-cli` which is why `angular-dev` exists as a wrapper. No gap to fill, and no
-  repo here uses Python yet.
+- [ ] **AGENTS.md's "verify version after merge" is still a manual step.** PR#52's root cause
+  (a bump landing back at the old value after merge) was never pinned down, so the only
+  safeguard right now is a human remembering to diff `origin/main` after every merge.
+  `release.yml`'s `detect` job already re-diffs every `devcontainer-feature.json` version on
+  push to `main` for its own purposes — extending it to flag "this looks like a bump that
+  should have landed didn't" would close the gap for real.
 
-## Open
+- [ ] **`peon-ping`'s `host.docker.internal` fix pushes a `runArgs` line onto every consumer**
+  instead of patching `/etc/hosts` automatically at container start. Five other features in
+  this repo already use `postCreateCommand`/`postStartCommand` for exactly this "must act on
+  the live container" problem — worth checking whether the same pattern works here before
+  asking every consumer to edit their own `devcontainer.json`.
+
+- [ ] **AGENTS.md's feature table hand-maintains a `Ver` column** that duplicates each
+  feature's own `devcontainer-feature.json` version, with nothing checking the two stay in
+  sync. Low stakes on its own, but it's the same kind of duplication that let PR#52 drift
+  silently — either generate the column or have the `shellcheck` CI job verify it.
+
+- [ ] **18 git tags still point at pre-rewrite commits.** Remapped locally to their new SHAs
+  after the history rewrite (same trees, just the reworded commit messages) but never pushed —
+  the push loop got blocked mid-session. Needs a decision on whether to push them now or leave
+  the old tags as-is.
+
+- [ ] **`nub`: dedicated feature vs. folded into an existing one.** Asked for, not delivered
+  yet — a real analysis of whether a standalone `nub` feature earns its keep versus, say,
+  extending `package-auto-install` or `typescript-dev` to cover the same ground.
 
 - [ ] **`pnpm-store` compatibility with `nub`.** Does `nub` delegating to `pnpm` respect the
   `store-dir` config `pnpm-store` sets up, or does each invocation end up with its own?
@@ -38,5 +48,5 @@ Items here are ideas or known gaps, not yet scoped or scheduled.
 
 - [ ] **`peon-ping` host relay reachability.** Whether the relay is actually reachable (not
   just DNS-resolvable) depends on what interface `peon relay --daemon` binds to on the host.
-  Needs a real speaker and a real host to test — see the README's "Verifying it actually
-  works" section.
+  Needs a real speaker and a real host to test — see the README's "Testing the audio path"
+  section.
