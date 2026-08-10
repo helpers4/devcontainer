@@ -88,6 +88,14 @@ jobs:
             fi
 
             if [ "${FORCE_ALL}" != "true" ] && [ "$old_version" = "$new_version" ]; then
+              if [ -n "$old_version" ]; then
+                # $f is only in $files because devcontainer-feature.json
+                # changed somehow — if version itself didn't move, a bump
+                # that passed version-bump-check on the PR branch may have
+                # been lost during the merge itself (the PR#52 failure mode;
+                # see AGENTS.md "Verify version after merge").
+                echo "::warning::${name}: devcontainer-feature.json changed but version is still ${new_version} — a version bump may have been lost during merge. See AGENTS.md 'Verify version after merge'."
+              fi
               echo "→ $name unchanged ($new_version), skipping"
               continue
             fi

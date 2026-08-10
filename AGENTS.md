@@ -27,20 +27,20 @@ devcontainer features test .
 
 | Feature | Ver | Description |
 | ------- | --- | ----------- |
-| `helpers4-common` | 1.0.0 | Bootstrap: jq + `common.sh` (user detection, apt helpers) — all features depend on this |
-| `essential-dev` | 1.0.2 | Git visualization, editor enhancements, Markdown |
-| `github-dev` | 1.0.3 | gh CLI, Copilot Chat, PR/Issues/Actions extensions |
-| `copilot-dev` | 1.0.1 | Copilot Chat + AI instructions (commits, PRs, code review) |
+| `helpers4-common` | 1.0.1 | Bootstrap: jq + `common.sh` (user detection, apt helpers) — all features depend on this |
+| `essential-dev` | 1.0.9 | Git visualization, editor enhancements, Markdown |
+| `github-dev` | 1.0.5 | gh CLI, Copilot Chat, PR/Issues/Actions extensions |
+| `copilot-dev` | 1.0.3 | Copilot Chat + AI instructions (commits, PRs, code review) |
 | `claude-dev` | 1.0.5 | Claude Code extension + `~/.claude` bind-mount (credentials + memory persist) |
 | `mistral-dev` | 1.0.3 | Mistral Vibe extension + `~/.vibe` bind-mount |
 | `nub` | 1.0.0 | Fast TS/JS/script runner on top of existing node+package-manager (dependsOn node) |
-| `typescript-dev` | 1.0.5 | TS/JS dev, import management (dependsOn essential-dev) |
+| `typescript-dev` | 1.0.7 | TS/JS dev, import management (dependsOn essential-dev) |
 | `angular-dev` | 1.0.6 | Angular dev, port 4200 |
-| `vite-plus` | 1.0.3 | vp CLI, Oxlint/Oxfmt, Vitest |
+| `vite-plus` | 1.0.7 | vp CLI, Oxlint/Oxfmt, Vitest |
 | `package-auto-install` | 1.0.9 | Auto-detect and install packages (npm/yarn/pnpm/nub) |
 | `playwright-dev` | 1.0.1 | Playwright OS deps (Chromium/Firefox/WebKit) + shared browser-binary volume + VS Code extension |
-| `pnpm-store` | 1.0.4 | Shared pnpm store via Docker named volume (dependsOn helpers4-common) |
-| `auto-header` | — | LGPL-3.0 license headers |
+| `pnpm-store` | 1.0.7 | Shared pnpm store via Docker named volume (dependsOn helpers4-common) |
+| `auto-header` | 1.0.8 | LGPL-3.0 license headers |
 | `git-absorb` | 1.0.7 | git-absorb from GitHub releases |
 | `dotfiles-sync` | 1.0.8 | Sync Git/SSH/GPG/npm/gh config from host |
 | `peon-ping` | 1.0.5 | AI agent sound notifications |
@@ -82,13 +82,19 @@ no bot commits, no push-permission/fork edge cases, consistent with how
 `conventional-commits` already works in this repo). Bump the version
 yourself and push again.
 
-**Verify `version` after merge, not just before.** `version-bump-check` only
-validates the PR branch — it can't catch a bump getting lost or reverted
-during the merge itself. PR#52 is a real example: correctly bumped across
-three commits on the branch, landed back at the old version on `main` after
-merge, root cause never pinned down. After merging anything that touches a
-`devcontainer-feature.json`, diff `origin/main` against the branch's last
-commit for that file before trusting it.
+**A lost version bump after merge gets flagged, not just caught before merge.**
+`version-bump-check` only validates the PR branch — it can't catch a bump
+getting lost or reverted during the merge itself. PR#52 is a real example:
+correctly bumped across three commits on the branch, landed back at the old
+version on `main` after merge, root cause never pinned down. `release.yml`'s
+`detect` job now emits a `::warning::` when a feature's manifest changed in
+a push to `main` but its `version` field didn't move — the same signal
+`version-bump-check` uses, just re-checked against what actually landed.
+It's a warning, not a blocking failure (failing `detect` would also block
+publishing every *other* feature bumped in the same push), so still worth a
+manual `diff origin/main` against the branch's last commit if something
+looks off — the warning just means you don't have to remember to check
+every single time.
 
 **License header (all scripts):**
 
