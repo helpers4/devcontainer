@@ -151,14 +151,13 @@ jobs:
         # no `workflows` key under this job's `permissions:` block above —
         # it isn't a valid GITHUB_TOKEN scope, and adding it just makes the
         # whole file schema-invalid (also hit for real, then reverted).
-        # Trigganator is already installed and used by this same repo's
-        # trigger-website job below — reusing it here instead of
-        # provisioning a separate credential, scoped to only what this
-        # specific push needs.
+        # Trigganator (used by this same repo's trigger-website job below)
+        # doesn't have the Workflows app permission granted. Pushinator does
+        # — scoped here to only what this specific push needs.
         uses: actions/create-github-app-token@v3.2.0
         with:
-          client-id: ${{ vars.TRIGGANATOR_ID }}
-          private-key: ${{ secrets.TRIGGANATOR_KEY }}
+          client-id: ${{ vars.PUSHINATOR_ID }}
+          private-key: ${{ secrets.PUSHINATOR_KEY }}
           owner: helpers4
           repositories: devcontainer
           permission-contents: write
