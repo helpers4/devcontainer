@@ -15,7 +15,7 @@
         "auto"
       ],
       "default": "auto",
-      "description": "Installation command to use: 'install', 'ci' (npm ci/pnpm install --frozen-lockfile), or 'auto' to detect"
+      "description": "Installation command to use: 'install', 'ci' (npm ci/pnpm install --frozen-lockfile), or 'auto' to detect. Ignored when packageManager resolves to 'nub' — nub only has 'install'."
     },
     "packageManager": {
       "type": "string",
@@ -27,7 +27,7 @@
         "nub"
       ],
       "default": "auto",
-      "description": "Package manager to use. 'auto' detects based on lockfile (never resolves to 'nub' — that's an explicit opt-in, not auto-detected, since nub isn't itself a lockfile format). 'nub' runs 'nub install', which requires the nub feature to also be installed and delegates internally to whichever of npm/pnpm/bun the project actually uses."
+      "description": "Package manager to use. 'auto' detects based on lockfile (never resolves to 'nub' — that's an explicit opt-in, not auto-detected, since nub isn't itself a lockfile format). 'nub' runs 'nub install', which requires the nub feature also be installed with its default installGlobally:true (otherwise nub isn't on PATH here), and only understands npm/pnpm/bun lockfiles — not yarn.lock."
     },
     "workingDirectory": {
       "type": "string",
@@ -64,6 +64,7 @@
     "ghcr.io/devcontainers/features/node",
     "ghcr.io/helpers4/devcontainer/angular-dev",
     "ghcr.io/helpers4/devcontainer/vite-plus",
-    "ghcr.io/helpers4/devcontainer/dotfiles-sync"
+    "ghcr.io/helpers4/devcontainer/dotfiles-sync",
+    "ghcr.io/helpers4/devcontainer/nub"
   ]
 }
