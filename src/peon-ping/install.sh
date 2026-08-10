@@ -62,6 +62,7 @@ fi
 
 # Feature options (env vars auto-generated from devcontainer-feature.json)
 PACKS="${PACKS:-"default"}"
+PACKS_LANG="${PACKSLANG:-""}"
 NO_RC="${NORC:-"true"}"
 IDE_SETUP="${IDESETUP:-"vscode"}"
 VOLUME="${VOLUME:-"0.5"}"
@@ -96,6 +97,7 @@ export DEBIAN_FRONTEND=noninteractive
 echo "🎮 Installing peon-ping feature..."
 echo "   Username: ${USERNAME}"
 echo "   Packs: ${PACKS}"
+[ -n "${PACKS_LANG}" ] && echo "   Packs language filter: ${PACKS_LANG}"
 echo "   Volume: ${VOLUME}"
 
 # ── Prerequisites ────────────────────────────────────────────────────────────
@@ -113,6 +115,15 @@ if [ "${PACKS}" = "all" ]; then
     INSTALLER_ARGS="${INSTALLER_ARGS} --all"
 elif [ "${PACKS}" != "default" ]; then
     INSTALLER_ARGS="${INSTALLER_ARGS} --packs=${PACKS}"
+elif [ -n "${PACKS_LANG}" ]; then
+    # packsLang set but packs left at "default" (5 fixed franchise picks) —
+    # search the full registry instead, or --lang would just narrow those
+    # 5 specific pack IDs down to whichever happen to match, likely none.
+    INSTALLER_ARGS="${INSTALLER_ARGS} --all"
+fi
+
+if [ -n "${PACKS_LANG}" ]; then
+    INSTALLER_ARGS="${INSTALLER_ARGS} --lang=${PACKS_LANG}"
 fi
 
 if [ "${NO_RC}" = "true" ]; then

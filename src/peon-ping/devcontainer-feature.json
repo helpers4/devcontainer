@@ -1,6 +1,6 @@
 {
   "id": "peon-ping",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "name": "Peon Ping — AI Agent Sound Notifications",
   "description": "Installs peon-ping and the Peon Pet VS Code extension for game character voice notifications when your AI coding agent finishes or needs permission. Supports VS Code/Copilot, Cursor, and Codex with audio relay for devcontainers.",
   "documentationURL": "https://github.com/helpers4/devcontainer/tree/main/src/peon-ping",
@@ -11,6 +11,11 @@
       "type": "string",
       "default": "default",
       "description": "Sound packs to install: 'default' (peon, peasant, sc_kerrigan, sc_battlecruiser, glados), 'all', or a comma-separated list (e.g. 'peon,glados,murloc')"
+    },
+    "packsLang": {
+      "type": "string",
+      "default": "",
+      "description": "Restrict pack selection to language(s), e.g. 'fr' or 'en,fr' — passed straight through to the installer's own --lang flag, which understands per-pack language metadata (not just name matching, e.g. matches 'peon_fr'). Left empty, no language filtering happens. If set while 'packs' is still 'default', searches the full pack registry instead of just the 5 default franchise picks — those 5 may not all have a matching-language variant."
     },
     "noRc": {
       "type": "boolean",
