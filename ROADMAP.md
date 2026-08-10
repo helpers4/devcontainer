@@ -29,11 +29,6 @@ not yet scoped or scheduled.
   sync. Low stakes on its own, but it's the same kind of duplication that let PR#52 drift
   silently — either generate the column or have the `shellcheck` CI job verify it.
 
-- [ ] **18 git tags still point at pre-rewrite commits.** Remapped locally to their new SHAs
-  after the history rewrite (same trees, just the reworded commit messages) but never pushed —
-  the push loop got blocked mid-session. Needs a decision on whether to push them now or leave
-  the old tags as-is.
-
 - [ ] **`nub`: dedicated feature vs. folded into an existing one.** Asked for, not delivered
   yet — a real analysis of whether a standalone `nub` feature earns its keep versus, say,
   extending `package-auto-install` or `typescript-dev` to cover the same ground.
