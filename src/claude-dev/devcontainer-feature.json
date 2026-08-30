@@ -1,8 +1,8 @@
 {
   "id": "claude-dev",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "name": "Claude Code Development Environment",
-  "description": "Installs the Claude Code IDE extension (anthropic.claude-code) for VS Code and Cursor. Bind-mounts ~/.claude from the host and symlinks it at container start — credentials, config, and memory persist across all rebuilds.",
+  "description": "Installs the Claude Code IDE extension (anthropic.claude-code) for VS Code and Cursor. Persists ~/.claude (credentials, config, memory) across rebuilds and Codespaces via a Docker named volume, shared per host OS user.",
   "documentationURL": "https://github.com/helpers4/devcontainer/tree/main/src/claude-dev",
   "licenseURL": "https://github.com/helpers4/devcontainer/blob/main/LICENSE",
   "keywords": [
@@ -22,9 +22,9 @@
 
   "mounts": [
     {
-      "source": "${localEnv:HOME}/.claude",
+      "source": "helpers4-claude-credentials-${localEnv:USER}",
       "target": "/mnt/h4claude",
-      "type": "bind"
+      "type": "volume"
     }
   ],
   "postStartCommand": "/usr/local/share/claude-dev/setup-credentials.sh",

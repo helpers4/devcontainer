@@ -31,8 +31,8 @@ devcontainer features test .
 | `essential-dev` | 1.0.9 | Git visualization, editor enhancements, Markdown |
 | `github-dev` | 1.0.5 | gh CLI, Copilot Chat, PR/Issues/Actions extensions |
 | `copilot-dev` | 1.0.3 | Copilot Chat + AI instructions (commits, PRs, code review) |
-| `claude-dev` | 1.0.5 | Claude Code extension + `~/.claude` bind-mount (credentials + memory persist) |
-| `mistral-dev` | 1.0.3 | Mistral Vibe extension + `~/.vibe` bind-mount |
+| `claude-dev` | 1.0.6 | Claude Code extension + `~/.claude` named-volume persistence (credentials + memory) |
+| `mistral-dev` | 1.0.4 | Mistral Vibe extension + `~/.vibe` named-volume persistence |
 | `nub` | 1.0.0 | Fast TS/JS/script runner on top of existing node+package-manager (dependsOn node) |
 | `typescript-dev` | 1.0.7 | TS/JS dev, import management (dependsOn essential-dev) |
 | `angular-dev` | 1.0.6 | Angular dev, port 4200 |
@@ -118,8 +118,9 @@ container for users, sometimes silently.
   ignored.** Only the consumer's top-level `devcontainer.json` gets its
   `initializeCommand` executed; a Feature manifest's own `initializeCommand`
   is silently dropped (tried on `claude-dev` v1.0.3, reverted as dead code).
-  The fix is documenting a required `initializeCommand` in the feature's
-  README instead — see `claude-dev` or `mistral-dev`.
+  For a bind-mount-dependent feature, document a required `initializeCommand`
+  in the README instead — see `dotfiles-sync`. A named-volume mount sidesteps
+  this need entirely (see below) — no host path has to exist beforehand.
 - **"Out-of-the-box" for a mount-dependent feature means one documented
   `initializeCommand` line, not zero-config.** Don't chase a silent fix for a
   feature with a hard mount dependency — document the line. If a feature can
@@ -127,15 +128,36 @@ container for users, sometimes silently.
   `dotfiles-sync`), staging into `/mnt/h4dotfiles` and merging at
   `postStartCommand` is safer than a hard mount — but the staged mount still
   needs its own source to exist first, so this only helps once that's true.
-- **Cloud environments (Codespaces, Gitpod, DevPod-remote) need the same
+- **Cloud environments (Gitpod, DevPod-remote) need the same
   `initializeCommand` as local.** `${localEnv:HOME}` resolves against
-  whatever machine orchestrates the build — on Codespaces/Gitpod that's the
+  whatever machine orchestrates the build — on Gitpod/DevPod-remote that's the
   cloud VM, not the user's laptop — so a mount source can be just as missing
   there. Don't write cloud handling that only covers what gets synced
   (protected keys, GPG skip) without covering whether the mount succeeds at
   all; see `dotfiles-sync`'s Codespaces/Gitpod/DevPod README sections. There's
   an open upstream proposal for an `optional: true` mounts flag
   (`devcontainers/spec#132`) that would fix this properly — not merged yet.
+- **GitHub Codespaces doesn't support host bind-mounts at all** — not a
+  missing directory an `initializeCommand` could pre-create, a hard platform
+  limitation ("Mounting the local file system is not supported in GitHub
+  Codespaces" — [VS Code docs](https://code.visualstudio.com/remote/advancedcontainers/add-local-file-mount)).
+  `${localEnv:HOME}` can resolve to an empty string there, turning a mount
+  source like `${localEnv:HOME}/.claude` into the literal path `/.claude`,
+  which doesn't exist, and failing the whole codespace build
+  (`helpers4/devcontainer#66`). The fix is a Docker named volume instead of a
+  bind-mount, not a smarter `initializeCommand`.
+- **A named volume that needs to stay shared across every local project for
+  one identity (credentials, not a per-project cache) should be scoped by
+  `${localEnv:USER}`**, e.g. `helpers4-claude-credentials-${localEnv:USER}`
+  (see `claude-dev`, `mistral-dev`). This is different from the
+  `${devcontainerId}`-scoped volumes below (`pnpm-store`, `playwright-dev`),
+  which intentionally isolate per project — right for a cache, wrong for an
+  identity a bind-mount used to share across every project. Docker creates a
+  named volume automatically, so this also has none of a bind-mount's
+  missing-source crash risk on Codespaces. One tradeoff: on a host where
+  `$USER` is unset, everyone missing it shares one volume — irrelevant on a
+  personal machine or an already-isolated Codespaces VM, worth knowing on a
+  shared multi-user build server.
 - **`devcontainer-feature.json` must be plain JSON — no `//` comments.**
   `devcontainers/action` parses it with `JSON.parse`, which chokes on JSONC —
   broke the release workflow once (commit `4e6e5ee`). Put rationale in the
