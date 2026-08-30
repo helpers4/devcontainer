@@ -2,7 +2,8 @@
 
 Installs the [Claude Code](https://www.anthropic.com/claude-code) IDE extension
 across supported editors and persists `~/.claude` (credentials, config, memory)
-across every devcontainer rebuild via a host bind-mount.
+across every devcontainer rebuild — including GitHub Codespaces — via a Docker
+named volume.
 
 ## Example Usage
 
@@ -14,17 +15,22 @@ across every devcontainer rebuild via a host bind-mount.
 }
 ```
 
-Add `initializeCommand` to your `devcontainer.json` so the host directory is
-guaranteed to exist before Docker tries to bind-mount it:
+No `initializeCommand` required — Docker creates the volume automatically the
+first time it's needed.
 
-```jsonc
-{
-  "initializeCommand": "mkdir -p ~/.claude",
-  "features": {
-    "ghcr.io/helpers4/devcontainer/claude-dev:1": {}
-  }
-}
-```
+## GitHub Codespaces
+
+Works out of the box. A host bind-mount would not: [GitHub Codespaces doesn't
+support mounting the local file system](https://code.visualstudio.com/remote/advancedcontainers/add-local-file-mount)
+at all, so this feature uses a Docker named volume instead. Each codespace
+gets its own volume, populated on your first `/login` there.
+
+The volume name includes `${localEnv:USER}`, so credentials are shared across
+every local devcontainer for the same OS user — matching what a bind-mount to
+`~/.claude` would give you — while staying isolated from other OS users on a
+shared Docker host. On a host where `$USER` isn't set, anyone missing it
+shares one volume; not a concern on a personal machine or a codespace, worth
+knowing on a shared multi-user build server.
 
 ## Options
 
@@ -45,14 +51,15 @@ guaranteed to exist before Docker tries to bind-mount it:
 
 1. **Build time** (`install.sh`): generates `/usr/local/share/claude-dev/setup-credentials.sh`
    with the target user's home path baked in.
-2. **Mount** (`devcontainer-feature.json → mounts`): bind-mounts `$HOME/.claude` from
-   the host to `/mnt/h4claude` inside the container.
+2. **Mount** (`devcontainer-feature.json → mounts`): mounts the Docker named volume
+   `helpers4-claude-credentials-${localEnv:USER}` at `/mnt/h4claude` inside the container.
 3. **Every start** (`postStartCommand`): `setup-credentials.sh` replaces `~/.claude`
    with a symlink to `/mnt/h4claude` — credentials, settings, and Claude Code memory
    all survive rebuilds.
 
-If `/mnt/h4claude` is not mounted (e.g. missing `initializeCommand`, standalone test),
-the script warns and exits cleanly — the container starts normally, just without persistence.
+If `/mnt/h4claude` is not mounted (e.g. a standalone `install.sh` test), the
+script warns and exits cleanly — the container starts normally, just without
+persistence.
 
 ## OS and Architecture Support
 
