@@ -133,7 +133,14 @@ fi
 # Run installer as the target user (peon-ping handles non-interactive detection)
 # The installer may exit non-zero if its sound test fails (no audio device during
 # Docker build).  We tolerate that and verify the actual installation ourselves.
-su - "${USERNAME}" -c "curl -fsSL https://raw.githubusercontent.com/PeonPing/peon-ping/main/install.sh | bash -s -- ${INSTALLER_ARGS}" || \
+#
+# REMOTE_CONTAINERS=true forces peon-ping's own platform detection down its
+# "devcontainer" branch. Without it, a BuildKit RUN sandbox on a WSL2-backed
+# Docker Desktop host has none of `/.dockerenv`/$CODESPACES yet still inherits
+# "microsoft" in /proc/version from the WSL2 kernel, so peon-ping misdetects
+# "wsl" and hard-requires powershell.exe (unavailable in the build sandbox),
+# exiting before the binary is even installed.
+su - "${USERNAME}" -c "curl -fsSL https://raw.githubusercontent.com/PeonPing/peon-ping/main/install.sh | REMOTE_CONTAINERS=true bash -s -- ${INSTALLER_ARGS}" || \
     echo "⚠️  peon-ping installer exited with errors (sound test failure during build is expected)"
 
 # Verify the binary was actually installed (fail now if curl/download truly failed)
