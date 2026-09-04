@@ -133,3 +133,9 @@ This feature is automatically installed when referenced in a `devcontainer.json`
 ## Contributing
 
 This feature is part of the `helpers4/devcontainer-features` repository. Contributions and issues are welcome!
+
+## Version History
+
+- **v1.1.0**: Switched from an inline copy of `helpers4-common`'s bootstrap (user detection, apt
+  helpers) to a direct `dependsOn` on the `helpers4-common` feature — no behavior change, just a
+  single source of truth for that logic instead of a copy every feature had to keep in sync.
