@@ -13,7 +13,7 @@
       "description": "Version of bws to install (latest, or a specific version like '2.1.0' or 'bws-v2.1.0')"
     }
   },
-  "installsAfter": [
-    "ghcr.io/devcontainers/features/common-utils"
-  ]
+  "dependsOn": {
+    "ghcr.io/helpers4/devcontainer/helpers4-common:1": {}
+  }
 }
