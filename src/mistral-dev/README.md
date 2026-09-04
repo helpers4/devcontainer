@@ -94,6 +94,9 @@ When `installCli: true`, the `vibe` command is installed at build time via `uv`
 
 ## Version History
 
+- **v1.1.0**: Switched from an inline copy of `helpers4-common`'s bootstrap (user detection, apt
+  helpers) to a direct `dependsOn` on the `helpers4-common` feature — no behavior change, just a
+  single source of truth for that logic instead of a copy every feature had to keep in sync.
 - **v1.0.6**: Fixed `EACCES` permission errors on a fresh container: the named volume introduced
   in v1.0.4 is created root-owned by Docker, and nothing chowned it to the container's actual
   user before symlinking `~/.vibe` into it. `setup-credentials.sh` now chowns the volume to the
