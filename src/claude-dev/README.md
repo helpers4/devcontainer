@@ -87,6 +87,9 @@ without depending on that user's shell profile already including
 
 ## Version History
 
+- **v1.1.0**: Switched from an inline copy of `helpers4-common`'s bootstrap (user detection, apt
+  helpers) to a direct `dependsOn` on the `helpers4-common` feature — no behavior change, just a
+  single source of truth for that logic instead of a copy every feature had to keep in sync.
 - **v1.0.8**: Fixed `EACCES` errors (e.g. "Failed to retrieve auth status after login",
   `mkdir '.../sessions'` permission denied) on a fresh container: the named volume introduced in
   v1.0.6 is created root-owned by Docker, and nothing chowned it to the container's actual user
