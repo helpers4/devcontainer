@@ -42,10 +42,19 @@ for one that persists host state via a Docker named volume + symlink.
 - **Must be plain JSON — no `//` comments.** `devcontainers/action` parses it with
   `JSON.parse`, which chokes on JSONC; this broke the release workflow once already (commit
   `4e6e5ee`). Put rationale in the README or `install.sh` instead.
-- `installsAfter`: at minimum `["ghcr.io/devcontainers/features/common-utils"]`; add
-  `ghcr.io/helpers4/devcontainer/helpers4-common` or other helpers4 features here if this one
-  needs them ordered first. Never reference a feature id that isn't in `src/` (or the official
-  registry) — it's silently ignored if unresolvable, which hides real typos.
+- `installsAfter`: at minimum `["ghcr.io/devcontainers/features/common-utils"]`. Never
+  reference a feature id that isn't in `src/` (or the official registry) — it's silently
+  ignored if unresolvable, which hides real typos.
+- `dependsOn`: if `install.sh` uses any `h4_*` helper, add
+  `"ghcr.io/helpers4/devcontainer/helpers4-common:1": {}` here — this is a hard dependency
+  (unlike `installsAfter`, a soft ordering hint that only applies among features the *consumer*
+  already selected), so it gets installed automatically even if the consumer's `devcontainer.json`
+  never mentions `helpers4-common`. Verified empirically (2026-09-04) that `devcontainer features
+  test --features <name> .` — the exact invocation this repo's CI uses — resolves `dependsOn`
+  from the local `src/` tree with no GHCR pull needed, so there's no standalone-testing reason to
+  avoid it. Every feature in `src/` depends on `helpers4-common` this way now (directly, or
+  transitively through `essential-dev`/`typescript-dev` — but add it directly anyway for
+  explicitness rather than relying on another feature's dependency chain staying the same).
 - If this feature needs to persist state from the host (credentials, config), read the
   "Design constraints for features" section in `AGENTS.md` **before** adding a `mounts` entry:
   - **Prefer a Docker named volume over a host bind-mount.** A bind-mount source that doesn't
@@ -69,9 +78,8 @@ for one that persists host state via a Docker named volume + symlink.
 
 ### `install.sh`
 
-Pattern (copy the bootstrap block verbatim from `src/helpers4-common/install.sh` or any
-existing feature — a CI check in `pr-validation.yml`'s `shellcheck` job fails the build if a
-copy drifts from the canonical version):
+Declare `dependsOn: helpers4-common` in the manifest (see above) and source the shared library
+directly — no inline copy, no existence check, no standalone fallback:
 
 ```bash
 #!/usr/bin/env bash
@@ -84,19 +92,6 @@ copy drifts from the canonical version):
 
 set -euo pipefail
 
-# Bootstrap helpers4 shared library. helpers4-common installs it; if running
-# standalone (e.g. devcontainer features test), create it inline so the feature
-# is self-contained without a GHCR pull.
-if [ ! -f /usr/local/share/helpers4/common.sh ]; then
-    mkdir -p /usr/local/share/helpers4
-    cat > /usr/local/share/helpers4/common.sh << 'H4_COMMON'
-# shellcheck shell=bash
-h4_detect_user() { ... }   # copy the exact body from an existing feature
-h4_resolve_home() { ... }
-h4_apt_update() { ... }
-h4_ensure_packages() { ... }
-H4_COMMON
-fi
 # shellcheck source=/dev/null
 . /usr/local/share/helpers4/common.sh
 
@@ -115,8 +110,12 @@ cleanup() { rm -rf /tmp/<name>-* ; }
 #     download/install to /usr/local/bin/ ...
 ```
 
-Read the actual bootstrap block out of an existing `install.sh` rather than retyping it from
-this skill — copy it byte-for-byte so the CI drift check passes.
+The `dependsOn` on `helpers4-common` guarantees `/usr/local/share/helpers4/common.sh` exists
+before this script runs — see `essential-dev/install.sh` for the reference shape. Don't inline
+a copy of `h4_detect_user`/`h4_resolve_home`/`h4_apt_update`/`h4_ensure_packages`: every feature
+used to (a since-removed pattern, dropped in the `refactor/helpers4-common-dependson` migration)
+and it needed a dedicated CI step just to catch copies drifting from the canonical version —
+`dependsOn` makes that duplication, and the check, unnecessary.
 
 ### `README.md`
 

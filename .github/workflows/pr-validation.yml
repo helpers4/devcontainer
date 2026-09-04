@@ -203,29 +203,6 @@ jobs:
           # and gh-auth.sh have never been linted here and may have pre-existing issues.
           ignore_names: "path-keys.sh sync-files.sh gh-auth.sh"
 
-      - name: Verify bootstrap copies match helpers4-common canonical
-        run: |
-          # Extract the H4_COMMON heredoc body — same delimiter used by both
-          # helpers4-common/install.sh (canonical) and every feature's bootstrap.
-          CANONICAL=$(sed -n "/<< 'H4_COMMON'/,/^H4_COMMON$/p" \
-            src/helpers4-common/install.sh | sed '1d;$d')
-          FAILED=0
-          for f in src/*/install.sh; do
-            [ "$f" = "src/helpers4-common/install.sh" ] && continue
-            COPY=$(sed -n "/<< 'H4_COMMON'/,/^H4_COMMON$/p" \
-              "$f" | sed '1d;$d')
-            [ -z "$COPY" ] && continue
-            if [ "$CANONICAL" != "$COPY" ]; then
-              echo "❌ Bootstrap in $f differs from src/helpers4-common/install.sh"
-              diff <(echo "$CANONICAL") <(echo "$COPY") || true
-              FAILED=1
-            fi
-          done
-          if [ "$FAILED" -eq 0 ]; then
-            echo "✅ All bootstrap copies match the canonical helpers4-common version"
-          fi
-          exit $FAILED
-
       - name: Verify AGENTS.md's feature table matches manifest versions
         run: |
           # AGENTS.md hand-maintains a Ver column that duplicates each
