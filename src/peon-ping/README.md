@@ -199,6 +199,9 @@ peon packs list           # List installed packs
 
 ## Version History
 
+- **v1.1.0**: Switched from an inline copy of `helpers4-common`'s bootstrap (user detection, apt
+  helpers) to a direct `dependsOn` on the `helpers4-common` feature — no behavior change, just a
+  single source of truth for that logic instead of a copy every feature had to keep in sync.
 - **v1.0.6**: Fixed a build failure on WSL2-backed Docker Desktop hosts: the upstream installer's platform detection misreads a BuildKit `RUN` sandbox as raw WSL (no `/.dockerenv` yet, but the kernel still reports "microsoft") and then hard-requires `powershell.exe`, which isn't available in that sandbox. `install.sh` now sets `REMOTE_CONTAINERS=true` for the installer subshell, forcing correct devcontainer detection.
 - **v1.0.5**: Added `packsLang` — restrict pack selection to language(s) instead of naming packs directly, e.g. `packsLang: "fr"`. Passed straight through to the upstream installer's own `--lang` flag, which already understood per-pack language metadata; this just exposes it as a feature option.
 - **v1.0.4**: Fixed a Python syntax error in `install.sh`'s Copilot hooks merge path (`peon-ping-copilot-setup`) — it crashed every time it ran against an existing `.github/hooks/hooks.json`. That helper now shares its merge logic with the same `merge_hooks_json` used for Claude Code/Cursor instead of re-deriving it, and an existing `hooks.json` that isn't valid JSON gets backed up to `.bak` instead of silently discarded. Corrected the "Audio in Devcontainers" docs: `host.docker.internal` doesn't resolve on native Linux Docker without `runArgs: ["--add-host=host.docker.internal:host-gateway"]` in the consumer's `devcontainer.json`, which a Feature can't add on its own. Added a "Choosing a pack" section pointing at `peon packs search` and `openpeon.com/packs` instead of adding a preset option — `packs` was already simple enough.
