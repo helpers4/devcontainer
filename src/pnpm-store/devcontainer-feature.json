@@ -1,6 +1,6 @@
 {
   "id": "pnpm-store",
-  "version": "1.0.7",
+  "version": "1.1.0",
   "name": "pnpm Store (shared)",
   "description": "Shares a single pnpm content-addressable store across every repo and across rebuilds via a Docker named volume, so no stray .pnpm-store folders pollute your repos. Zero-config and autonomous: the volume is created automatically, with no host directory to pre-create.",
   "documentationURL": "https://github.com/helpers4/devcontainer/tree/main/src/pnpm-store",
@@ -17,5 +17,8 @@
   "installsAfter": [
     "ghcr.io/devcontainers/features/common-utils",
     "ghcr.io/devcontainers/features/node"
-  ]
+  ],
+  "dependsOn": {
+    "ghcr.io/helpers4/devcontainer/helpers4-common:1": {}
+  }
 }
