@@ -80,9 +80,11 @@ jobs:
           # claude-dev — IDE-config-only feature
           - features: claude-dev
             baseImage: ubuntu:latest
-          # ...and on a non-root base image (h4_detect_user falls back to
-          # root on ubuntu:latest, which can never hit the named-volume
-          # EACCES regression the write-test in test.sh guards against).
+          # ...and on a base image where the container's own default process
+          # user matches what h4_detect_user resolves for the feature (test.sh
+          # itself always runs as root otherwise, regardless of which user
+          # postStartCommand ran as — that mismatch can't exercise the
+          # named-volume EACCES regression the write-test guards against).
           - features: claude-dev
             baseImage: mcr.microsoft.com/devcontainers/base:ubuntu
 
