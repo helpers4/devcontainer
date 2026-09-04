@@ -128,13 +128,18 @@ if [ "${INSTALL_CLI}" = "true" ]; then
     echo "Installing Claude Code CLI..."
 
     if command -v curl >/dev/null 2>&1; then
-        su - "${USERNAME}" -c "curl -fsSL https://claude.ai/install.sh | bash"
-        CLI_BIN="${USER_HOME}/.local/bin/claude"
-        if [ -x "${CLI_BIN}" ]; then
-            ln -sf "${CLI_BIN}" /usr/local/bin/claude
-            echo "  ✅ claude CLI installed and linked to /usr/local/bin/claude"
+        # A transient network failure here must not abort the whole feature
+        # build — degrade gracefully like the "curl not found" branch below.
+        if su - "${USERNAME}" -c "curl -fsSL https://claude.ai/install.sh | bash"; then
+            CLI_BIN="${USER_HOME}/.local/bin/claude"
+            if [ -x "${CLI_BIN}" ]; then
+                ln -sf "${CLI_BIN}" /usr/local/bin/claude
+                echo "  ✅ claude CLI installed and linked to /usr/local/bin/claude"
+            else
+                echo "  ⚠️  Claude Code CLI install finished but ${CLI_BIN} wasn't found — check the installer output above." >&2
+            fi
         else
-            echo "  ⚠️  Claude Code CLI install finished but ${CLI_BIN} wasn't found — check the installer output above." >&2
+            echo "  ⚠️  Claude Code CLI installer failed — skipping (network issue or claude.ai unreachable?)." >&2
         fi
     else
         echo "  ⚠️  curl not found — skipping Claude Code CLI install." >&2
