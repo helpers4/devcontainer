@@ -112,17 +112,6 @@ jobs:
       - name: Install latest devcontainer CLI
         run: npm install -g @devcontainers/cli
 
-      - name: Create mount sources for claude-dev
-        if: matrix.features == 'claude-dev'
-        # The bind mount source ~/.claude must exist on the host or `docker run` aborts
-        # before the test runs (same pattern as dotfiles-sync below).
-        run: mkdir -p ~/.claude
-
-      - name: Create mount sources for mistral-dev
-        if: matrix.features == 'mistral-dev'
-        # The bind mount source ~/.vibe must exist on the host or `docker run` aborts.
-        run: mkdir -p ~/.vibe
-
       - name: Create mount sources for dotfiles-sync
         if: matrix.features == 'dotfiles-sync'
         # All bind sources declared in src/dotfiles-sync/devcontainer-feature.json

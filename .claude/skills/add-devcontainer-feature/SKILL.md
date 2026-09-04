@@ -33,7 +33,7 @@ test/<name>/test.sh
 ```
 
 Use `src/git-absorb/` as a reference for a simple binary-install feature, or `src/claude-dev/`
-for one that persists host state via a bind-mount + symlink.
+for one that persists host state via a Docker named volume + symlink.
 
 ### `devcontainer-feature.json`
 
@@ -48,14 +48,24 @@ for one that persists host state via a bind-mount + symlink.
   registry) — it's silently ignored if unresolvable, which hides real typos.
 - If this feature needs to persist state from the host (credentials, config), read the
   "Design constraints for features" section in `AGENTS.md` **before** adding a `mounts` entry:
-  - A `mounts` source that doesn't exist on the host — file *or* directory — fails the whole
-    container at start, unconditionally. No feature script can catch this.
-  - A Feature-level `initializeCommand` **does not work** — verified against the
-    devcontainers CLI source; it's silently ignored. The only place `initializeCommand` has
-    effect is the *consumer's* top-level `devcontainer.json`. So: add the `mounts` +
-    `postStartCommand` to the feature as usual, but the required `mkdir -p`/`touch` line goes
-    in the feature's own README "Example Usage" as something the consumer must add — see
-    `claude-dev`'s or `mistral-dev`'s README for the exact pattern to copy.
+  - **Prefer a Docker named volume over a host bind-mount.** A bind-mount source that doesn't
+    exist on the host — file *or* directory — fails the whole container at start,
+    unconditionally, and GitHub Codespaces doesn't support host bind-mounts *at all* (not a
+    missing-path edge case — a hard platform limitation). A named volume has neither problem:
+    Docker creates it automatically. For state that should stay shared across every local
+    project for one identity (credentials, not a per-project cache), scope it by
+    `${localEnv:USER}` — e.g. `helpers4-<name>-credentials-${localEnv:USER}` — see
+    `claude-dev`/`mistral-dev`. For a per-project cache instead, scope it by `${devcontainerId}`
+    — see `pnpm-store`/`playwright-dev`. Both patterns and the reasoning behind the split are
+    documented in `AGENTS.md`'s "Design constraints for features" section.
+  - A raw host bind-mount is still occasionally the right call (e.g. syncing many small,
+    already-present dotfiles — see `dotfiles-sync`), but accept that it won't work on
+    Codespaces, and document that in the feature's README. If you do add one: a Feature-level
+    `initializeCommand` **does not work** — verified against the devcontainers CLI source; it's
+    silently ignored. The only place `initializeCommand` has effect is the *consumer's*
+    top-level `devcontainer.json`, so the required `mkdir -p`/`touch` line goes in the feature's
+    own README "Example Usage" as something the consumer must add — see `dotfiles-sync`'s
+    README for the exact pattern to copy.
 
 ### `install.sh`
 
@@ -134,10 +144,11 @@ echo "✅ PASS: ..."
 
 Keep it about **build-time artifacts** (binary present, file generated, config written) — it
 can't exercise `postStartCommand`/mount-dependent behavior, since `devcontainer features test`
-doesn't wire up bind mounts from a real host. If the feature declares `mounts`, add a
-"Create mount sources for `<name>`" step to `pr-validation.yml`'s `test-features` job (see the
-existing steps for `claude-dev`/`mistral-dev`/`dotfiles-sync`) so the test job's own container
-build doesn't fail on a missing source.
+doesn't wire up mounts from a real host. A named-volume mount (the preferred kind — see above)
+needs no extra CI setup, since Docker creates the volume itself. Only a host bind-mount needs a
+"Create mount sources for `<name>`" step in `pr-validation.yml`'s `test-features` job (see the
+existing step for `dotfiles-sync`) so the test job's own container build doesn't fail on a
+missing source.
 
 ## 3. Wire it into the repo
 
