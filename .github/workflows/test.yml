@@ -74,6 +74,11 @@ jobs:
           # claude-dev — IDE-config-only feature
           - features: claude-dev
             baseImage: ubuntu:latest
+          # ...and on a non-root base image (h4_detect_user falls back to
+          # root on ubuntu:latest, which can never hit the named-volume
+          # EACCES regression the write-test in test.sh guards against).
+          - features: claude-dev
+            baseImage: mcr.microsoft.com/devcontainers/base:ubuntu
 
           # mistral-dev — IDE-config-only feature
           - features: mistral-dev

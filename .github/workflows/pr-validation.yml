@@ -117,6 +117,12 @@ jobs:
             baseImage: ubuntu:latest
           - features: claude-dev
             baseImage: ubuntu:latest
+          - features: claude-dev
+            # h4_detect_user falls back to root on ubuntu:latest (no vscode/node
+            # user present), which can never hit the named-volume EACCES
+            # regression below — this image has the non-root "vscode" user that
+            # actually exercises it.
+            baseImage: mcr.microsoft.com/devcontainers/base:ubuntu
           - features: pnpm-store
             baseImage: mcr.microsoft.com/devcontainers/typescript-node:20
           - features: pnpm-store
