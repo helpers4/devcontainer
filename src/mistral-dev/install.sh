@@ -110,8 +110,8 @@ STAGED="/mnt/h4vibe"
 TARGET="${TARGET_HOME}/.vibe"
 
 if [ ! -d "${STAGED}" ]; then
-    echo "[mistral-dev] ERROR: ${STAGED} is not mounted — cannot link ~/.vibe" >&2
-    exit 1
+    echo "[mistral-dev] WARN: ${STAGED} not mounted — ~/.vibe not linked, no persistence across rebuilds" >&2
+    exit 0
 fi
 
 rm -rf "${TARGET}"
