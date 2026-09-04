@@ -1,6 +1,6 @@
 {
   "id": "mistral-dev",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "name": "Mistral Vibe Development Environment",
   "description": "Installs the Mistral Vibe IDE extension (mistralai.mistral-vibe-code) for VS Code and Cursor. Persists ~/.vibe (credentials, config) across rebuilds and Codespaces via a Docker named volume, shared per host OS user.",
   "documentationURL": "https://github.com/helpers4/devcontainer/tree/main/src/mistral-dev",

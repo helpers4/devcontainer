@@ -80,7 +80,8 @@ This means:
 - `VIBE_HOME` is not required — the symlink is transparent to Mistral Vibe.
 
 If `/mnt/h4vibe` is not mounted (e.g. a standalone `install.sh` test), the
-script errors out.
+script warns and exits cleanly — the container starts normally, just without
+persistence.
 
 ### CLI (optional)
 When `installCli: true`, the `vibe` command is installed at build time via `uv`
@@ -90,3 +91,16 @@ When `installCli: true`, the `vibe` command is installed at build time via `uv`
 
 - **OS:** Linux (Debian/Ubuntu-based images)
 - **Architectures:** amd64, arm64
+
+## Version History
+
+- **v1.0.5**: A missing `/mnt/h4vibe` mount now warns and exits cleanly instead of erroring out
+  — the container starts normally, just without persistence, matching `claude-dev`'s behavior
+  for the structurally identical situation.
+- **v1.0.4**: Switched credential persistence from a host bind-mount to a Docker named volume
+  to fix GitHub Codespaces, which doesn't support host bind-mounts at all (#66). **If you're
+  upgrading from v1.0.3 or earlier**, this is a breaking change: the new volume starts empty —
+  your old host-bound `~/.vibe` isn't copied in automatically. Re-authenticate once after
+  upgrading, or manually copy your old `~/.vibe` content into the new volume (e.g. `docker cp`
+  into a throwaway container mounting `helpers4-mistral-credentials-${USER}`) if you want to
+  keep it.
