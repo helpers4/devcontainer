@@ -1,6 +1,6 @@
 {
   "id": "package-auto-install",
-  "version": "1.0.9",
+  "version": "1.1.0",
   "name": "Automatic Package Installation",
   "description": "Automatically detects and runs npm/yarn/pnpm/nub install in non-interactive mode after container creation.",
   "documentationURL": "https://github.com/helpers4/devcontainer/tree/main/src/package-auto-install",
@@ -66,5 +66,8 @@
     "ghcr.io/helpers4/devcontainer/vite-plus",
     "ghcr.io/helpers4/devcontainer/dotfiles-sync",
     "ghcr.io/helpers4/devcontainer/nub"
-  ]
+  ],
+  "dependsOn": {
+    "ghcr.io/helpers4/devcontainer/helpers4-common:1": {}
+  }
 }
