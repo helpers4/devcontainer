@@ -145,6 +145,8 @@ jobs:
             baseImage: mcr.microsoft.com/devcontainers/base:ubuntu
           - features: mistral-dev
             baseImage: ubuntu:latest
+          - features: cline-dev
+            baseImage: ubuntu:latest
 
     steps:
       - name: Checkout
