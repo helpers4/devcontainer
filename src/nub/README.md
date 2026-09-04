@@ -61,4 +61,7 @@ No VS Code extension — nub doesn't have one. This feature is CLI tooling only.
 
 ## Version History
 
+- **v1.1.0**: Switched from an inline copy of `helpers4-common`'s bootstrap (user detection, apt
+  helpers) to a direct `dependsOn` on the `helpers4-common` feature — no behavior change, just a
+  single source of truth for that logic instead of a copy every feature had to keep in sync.
 - **v1.0.0**: Initial release.
