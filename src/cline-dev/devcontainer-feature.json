@@ -1,0 +1,26 @@
+{
+  "id": "cline-dev",
+  "version": "1.0.0",
+  "name": "Cline Development Environment",
+  "description": "Installs the Cline AI coding agent extension (saoudrizwan.claude-dev) for VS Code and Cursor, and optionally the cline CLI.",
+  "documentationURL": "https://github.com/helpers4/devcontainer/tree/main/src/cline-dev",
+  "licenseURL": "https://github.com/helpers4/devcontainer/blob/main/LICENSE",
+  "keywords": ["helpers4", "cline", "ai", "vscode", "cli"],
+  "options": {
+    "installCli": {
+      "type": "boolean",
+      "default": false,
+      "description": "Install the Cline CLI (cline command) via npm. Requires Node.js/npm to be present in the container. Skipped with a warning if npm is not found."
+    }
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "saoudrizwan.claude-dev"
+      ]
+    }
+  },
+  "installsAfter": [
+    "ghcr.io/devcontainers/features/common-utils"
+  ]
+}
