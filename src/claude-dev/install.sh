@@ -14,6 +14,8 @@ if [ "$(id -u)" -ne 0 ]; then
     exit 1
 fi
 
+INSTALL_CLI="${_BUILD_ARG_INSTALLCLI:-${INSTALLCLI:-false}}"
+
 # Bootstrap helpers4 shared library. helpers4-common installs it; if running
 # standalone (e.g. devcontainer features test), create it inline so the feature
 # is self-contained without a GHCR pull.
@@ -73,8 +75,9 @@ h4_detect_user
 h4_resolve_home
 
 echo "🔧 Configuring claude-dev feature..."
-echo "  Username:  ${USERNAME}"
-echo "  Home:      ${USER_HOME}"
+echo "  Username:    ${USERNAME}"
+echo "  Home:        ${USER_HOME}"
+echo "  Install CLI: ${INSTALL_CLI}"
 
 # Generate the runtime credentials script with TARGET_HOME baked in via printf %q.
 # Generating rather than copying means postStartCommand always targets the correct
@@ -114,4 +117,29 @@ EOF
 
 chmod +x "${SCRIPT}"
 echo "  ✅ Installed ${SCRIPT}"
+
+# Optionally install the Claude Code CLI via the official native installer.
+# Runs as the target user so it lands in their own home (root's home is
+# usually 0700, which would make a root-owned install unreachable for
+# anyone else); symlinked into /usr/local/bin so it's on PATH without
+# relying on that user's shell profile already including ~/.local/bin.
+if [ "${INSTALL_CLI}" = "true" ]; then
+    echo ""
+    echo "Installing Claude Code CLI..."
+
+    if command -v curl >/dev/null 2>&1; then
+        su - "${USERNAME}" -c "curl -fsSL https://claude.ai/install.sh | bash"
+        CLI_BIN="${USER_HOME}/.local/bin/claude"
+        if [ -x "${CLI_BIN}" ]; then
+            ln -sf "${CLI_BIN}" /usr/local/bin/claude
+            echo "  ✅ claude CLI installed and linked to /usr/local/bin/claude"
+        else
+            echo "  ⚠️  Claude Code CLI install finished but ${CLI_BIN} wasn't found — check the installer output above." >&2
+        fi
+    else
+        echo "  ⚠️  curl not found — skipping Claude Code CLI install." >&2
+    fi
+fi
+
+echo ""
 echo "🎉 claude-dev configuration complete!"

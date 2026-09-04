@@ -31,7 +31,7 @@ devcontainer features test .
 | `essential-dev` | 1.0.9 | Git visualization, editor enhancements, Markdown |
 | `github-dev` | 1.0.5 | gh CLI, Copilot Chat, PR/Issues/Actions extensions |
 | `copilot-dev` | 1.0.3 | Copilot Chat + AI instructions (commits, PRs, code review) |
-| `claude-dev` | 1.0.6 | Claude Code extension + `~/.claude` named-volume persistence (credentials + memory) |
+| `claude-dev` | 1.0.7 | Claude Code extension + CLI + `~/.claude` named-volume persistence (credentials + memory) |
 | `mistral-dev` | 1.0.4 | Mistral Vibe extension + `~/.vibe` named-volume persistence |
 | `nub` | 1.0.0 | Fast TS/JS/script runner on top of existing node+package-manager (dependsOn node) |
 | `typescript-dev` | 1.0.7 | TS/JS dev, import management (dependsOn essential-dev) |
