@@ -83,6 +83,8 @@ jobs:
           # mistral-dev — IDE-config-only feature
           - features: mistral-dev
             baseImage: ubuntu:latest
+          - features: mistral-dev
+            baseImage: mcr.microsoft.com/devcontainers/base:ubuntu
 
           # cline-dev — IDE-config-only feature
           - features: cline-dev

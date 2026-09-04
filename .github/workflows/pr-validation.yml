@@ -151,6 +151,10 @@ jobs:
             baseImage: mcr.microsoft.com/devcontainers/base:ubuntu
           - features: mistral-dev
             baseImage: ubuntu:latest
+          - features: mistral-dev
+            # Same rationale as claude-dev above — exercises the named-volume
+            # EACCES regression on a base image with a non-root default user.
+            baseImage: mcr.microsoft.com/devcontainers/base:ubuntu
           - features: cline-dev
             baseImage: ubuntu:latest
 
