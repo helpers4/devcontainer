@@ -84,3 +84,14 @@ without depending on that user's shell profile already including
 
 - **OS:** any (no OS-level installation — pure IDE configuration)
 - **Architectures:** amd64, arm64
+
+## Version History
+
+- **v1.0.7**: Added `installCli` to install the `claude` CLI alongside the extension.
+- **v1.0.6**: Switched credential persistence from a host bind-mount to a Docker named volume
+  to fix GitHub Codespaces, which doesn't support host bind-mounts at all (#66). **If you're
+  upgrading from v1.0.5 or earlier**, this is a breaking change: the new volume starts empty —
+  your old host-bound `~/.claude` isn't copied in automatically. Re-authenticate once after
+  upgrading, or manually copy your old `~/.claude` content into the new volume (e.g. `docker cp`
+  into a throwaway container mounting `helpers4-claude-credentials-${USER}`) if you want to
+  keep it.
