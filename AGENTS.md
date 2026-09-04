@@ -43,6 +43,7 @@ devcontainer features test .
 | `pnpm-store` | 1.0.7 | Shared pnpm store via Docker named volume (dependsOn helpers4-common) |
 | `auto-header` | 1.0.8 | LGPL-3.0 license headers |
 | `git-absorb` | 1.0.7 | git-absorb from GitHub releases |
+| `bitwarden-secrets-manager` | 1.0.0 | `bws` CLI from bitwarden/sdk-sm GitHub releases, token-only auth, no persisted state |
 | `dotfiles-sync` | 1.0.8 | Sync Git/SSH/GPG/npm/gh config from host |
 | `peon-ping` | 1.0.6 | AI agent sound notifications |
 | `shell-history-per-project` | 1.0.7 | Persistent shell history (zsh/bash/fish) |

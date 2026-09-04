@@ -107,6 +107,10 @@ jobs:
             baseImage: ubuntu:latest
           - features: git-absorb
             baseImage: mcr.microsoft.com/devcontainers/base:ubuntu
+          - features: bitwarden-secrets-manager
+            baseImage: ubuntu:latest
+          - features: bitwarden-secrets-manager
+            baseImage: mcr.microsoft.com/devcontainers/base:ubuntu
           - features: angular-dev
             baseImage: mcr.microsoft.com/devcontainers/javascript-node:20
           - features: package-auto-install
