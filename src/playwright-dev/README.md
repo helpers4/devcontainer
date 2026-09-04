@@ -142,6 +142,9 @@ npx playwright install
 
 ## Version History
 
+- **v1.1.0**: Switched from an inline copy of `helpers4-common`'s bootstrap (user detection, apt
+  helpers) to a direct `dependsOn` on the `helpers4-common` feature — no behavior change, just a
+  single source of truth for that logic instead of a copy every feature had to keep in sync.
 - **v1.0.1**: Dropped the `@latest` pin from both `npx playwright` calls — it was forcing the newest registry release instead of the project's own pinned version. Added `ghcr.io/devcontainers/features/node:1` to `dependsOn`: `typescript-dev` alone doesn't install Node, so the `npm not found` guard wasn't actually covered. The browser-cache guard now writes a completion marker instead of trusting a non-empty directory, so an interrupted download doesn't get stuck as a permanently broken cache. Added an "IDE support" table and documented the `mcr.microsoft.com/playwright` prebuilt-image alternative.
 - **v1.0.0**: Initial release.
 
