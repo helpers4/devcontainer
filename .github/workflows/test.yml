@@ -41,6 +41,12 @@ jobs:
           - features: git-absorb
             baseImage: mcr.microsoft.com/devcontainers/base:ubuntu
 
+          # bitwarden-secrets-manager - works on any base image
+          - features: bitwarden-secrets-manager
+            baseImage: ubuntu:latest
+          - features: bitwarden-secrets-manager
+            baseImage: mcr.microsoft.com/devcontainers/base:ubuntu
+
           # angular-dev - requires Node.js
           - features: angular-dev
             baseImage: mcr.microsoft.com/devcontainers/javascript-node:20

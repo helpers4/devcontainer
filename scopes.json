@@ -1,6 +1,7 @@
 [
   "angular-dev",
   "auto-header",
+  "bitwarden-secrets-manager",
   "CI-CD",
   "claude-dev",
   "cline-dev",
