@@ -163,3 +163,9 @@ If `ng` command is not available:
 - Check if another process is using port 4200
 - Verify the dev server is running: `ng serve`
 - Check VS Code's Ports panel for forwarding status
+
+## Version History
+
+- **v1.1.0**: Switched from an inline copy of `helpers4-common`'s bootstrap (user detection, apt
+  helpers) to a direct `dependsOn` on the `helpers4-common` feature — no behavior change, just a
+  single source of truth for that logic instead of a copy every feature had to keep in sync.
