@@ -87,6 +87,11 @@ without depending on that user's shell profile already including
 
 ## Version History
 
+- **v1.0.8**: Fixed `EACCES` errors (e.g. "Failed to retrieve auth status after login",
+  `mkdir '.../sessions'` permission denied) on a fresh container: the named volume introduced in
+  v1.0.6 is created root-owned by Docker, and nothing chowned it to the container's actual user
+  before symlinking `~/.claude` into it. `setup-credentials.sh` now chowns the volume to the
+  current user when needed, same pattern `pnpm-store`'s guard script already used.
 - **v1.0.7**: Added `installCli` to install the `claude` CLI alongside the extension.
 - **v1.0.6**: Switched credential persistence from a host bind-mount to a Docker named volume
   to fix GitHub Codespaces, which doesn't support host bind-mounts at all (#66). **If you're

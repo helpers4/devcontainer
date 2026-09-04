@@ -1,6 +1,6 @@
 {
   "id": "claude-dev",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "name": "Claude Code Development Environment",
   "description": "Installs the Claude Code IDE extension (anthropic.claude-code) for VS Code and Cursor, and optionally the claude CLI. Persists ~/.claude (credentials, config, memory) across rebuilds and Codespaces via a Docker named volume, shared per host OS user.",
   "documentationURL": "https://github.com/helpers4/devcontainer/tree/main/src/claude-dev",

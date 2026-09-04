@@ -31,8 +31,8 @@ devcontainer features test .
 | `essential-dev` | 1.0.9 | Git visualization, editor enhancements, Markdown |
 | `github-dev` | 1.0.5 | gh CLI, Copilot Chat, PR/Issues/Actions extensions |
 | `copilot-dev` | 1.0.3 | Copilot Chat + AI instructions (commits, PRs, code review) |
-| `claude-dev` | 1.0.7 | Claude Code extension + CLI + `~/.claude` named-volume persistence (credentials + memory) |
-| `mistral-dev` | 1.0.5 | Mistral Vibe extension + `~/.vibe` named-volume persistence |
+| `claude-dev` | 1.0.8 | Claude Code extension + CLI + `~/.claude` named-volume persistence (credentials + memory) |
+| `mistral-dev` | 1.0.6 | Mistral Vibe extension + `~/.vibe` named-volume persistence |
 | `cline-dev` | 1.0.0 | Cline extension (`saoudrizwan.claude-dev`) + optional CLI, no credential persistence |
 | `nub` | 1.0.0 | Fast TS/JS/script runner on top of existing node+package-manager (dependsOn node) |
 | `typescript-dev` | 1.0.7 | TS/JS dev, import management (dependsOn essential-dev) |
@@ -159,6 +159,19 @@ container for users, sometimes silently.
   `$USER` is unset, everyone missing it shares one volume — irrelevant on a
   personal machine or an already-isolated Codespaces VM, worth knowing on a
   shared multi-user build server.
+- **Docker creates a fresh named volume root-owned — the non-root
+  `postStartCommand`/`postCreateCommand` user can't write to it until
+  something chowns it.** Missed on `claude-dev`/`mistral-dev` when they first
+  switched from a bind-mount to a volume (v1.0.6/v1.0.4): the generated
+  credentials script symlinked `~/.claude`/`~/.vibe` straight into the
+  root-owned volume with no chown step, so every write under it (session
+  state, settings, memory) failed with `EACCES` for the container's real
+  user. `pnpm-store`'s guard script already had this solved —
+  `stat -c '%u'` the volume, `sudo chown -R "$(id -u):$(id -g)"` it if it
+  doesn't already belong to the current user (skip the chown when it does;
+  a recursive chown on a populated, shared-across-rebuilds volume isn't
+  free) — `claude-dev`/`mistral-dev` v1.0.8/v1.0.6 copy that pattern. Any
+  new named-volume feature needs this same chown step, not just the mount.
 - **`devcontainer-feature.json` must be plain JSON — no `//` comments.**
   `devcontainers/action` parses it with `JSON.parse`, which chokes on JSONC —
   broke the release workflow once (commit `4e6e5ee`). Put rationale in the
