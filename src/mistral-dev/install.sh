@@ -96,9 +96,9 @@ mkdir -p "$(dirname "${SCRIPT}")"
 # Copyright (C) 2025 baxyz
 # SPDX-License-Identifier: LGPL-3.0-or-later
 #
-# Runs at container START (postStartCommand) — bind mounts are available.
-# Replaces TARGET_HOME/.vibe with a symlink to the host-mounted directory
-# so credentials and all Mistral Vibe config persist across rebuilds.
+# Runs at container START (postStartCommand) — the named volume is mounted.
+# Replaces TARGET_HOME/.vibe with a symlink to it so credentials and all
+# Mistral Vibe config persist across rebuilds.
 set -euo pipefail
 HEADER
     printf 'TARGET_HOME=%q\n' "${USER_HOME}"
@@ -112,6 +112,20 @@ TARGET="${TARGET_HOME}/.vibe"
 if [ ! -d "${STAGED}" ]; then
     echo "[mistral-dev] WARN: ${STAGED} not mounted — ~/.vibe not linked, no persistence across rebuilds" >&2
     exit 0
+fi
+
+# Docker creates a named volume root-owned; hand it to the current user so
+# Mistral Vibe can write into it. Only chown when needed — a recursive chown
+# on a populated volume shared across rebuilds isn't free. (Same pattern as
+# pnpm-store's guard script.)
+staged_owner="$(stat -c '%u' "${STAGED}" 2>/dev/null || echo 'unknown')"
+if [ "${staged_owner}" != "$(id -u)" ]; then
+    if command -v sudo >/dev/null 2>&1; then
+        sudo chown -R "$(id -u):$(id -g)" "${STAGED}" \
+            || echo "[mistral-dev] WARN: chown of ${STAGED} failed — writes may fail (EACCES)" >&2
+    else
+        echo "[mistral-dev] WARN: ${STAGED} is owned by uid ${staged_owner} and sudo is unavailable; writes will fail (EACCES)" >&2
+    fi
 fi
 
 rm -rf "${TARGET}"

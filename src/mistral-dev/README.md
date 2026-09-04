@@ -94,6 +94,10 @@ When `installCli: true`, the `vibe` command is installed at build time via `uv`
 
 ## Version History
 
+- **v1.0.6**: Fixed `EACCES` permission errors on a fresh container: the named volume introduced
+  in v1.0.4 is created root-owned by Docker, and nothing chowned it to the container's actual
+  user before symlinking `~/.vibe` into it. `setup-credentials.sh` now chowns the volume to the
+  current user when needed, same pattern `pnpm-store`'s guard script already used.
 - **v1.0.5**: A missing `/mnt/h4vibe` mount now warns and exits cleanly instead of erroring out
   — the container starts normally, just without persistence, matching `claude-dev`'s behavior
   for the structurally identical situation.
