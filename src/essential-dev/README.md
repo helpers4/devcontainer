@@ -2,6 +2,11 @@
 
 Core development environment with Git integration, GitHub Copilot, Markdown support, and essential editor enhancements. Perfect base for all development projects.
 
+> **Also included automatically:** `helpers4-common`'s git-config self-heal — fixes a stale
+> `credential.helper` or a missing SSH commit-signing key in `~/.gitconfig` on every container
+> attach, no setup required. You never add `helpers4-common` yourself; every helpers4 feature
+> pulls it in.
+
 ## Features
 
 - **Git Integration**: History, graph visualization, PR support, conventional commits
@@ -118,3 +123,8 @@ All shells are automatically detected and configured when available.
 
 **Testing**
 - Vitest - Use `vite-plus` feature instead
+
+## Version History
+
+- **v1.1.0**: Documentation only, no functional change — mentions that `helpers4-common`'s
+  automatic git-config self-heal (see above) comes along with this feature.
