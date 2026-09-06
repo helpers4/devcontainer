@@ -64,9 +64,35 @@ h4_ensure_packages() {
         apt-get install -y -q --no-install-recommends "${missing[@]}"
     fi
 }
+h4_detect_cloud_env() {
+    IS_CLOUD_ENV=false
+    ENV_LABEL="local"
+    if [ "${CODESPACES:-}" = "true" ] || [ -n "${CODESPACE_NAME:-}" ]; then
+        IS_CLOUD_ENV=true
+        ENV_LABEL="GitHub Codespaces"
+    elif [ -n "${GITPOD_WORKSPACE_ID:-}" ] || [ -n "${GITPOD_INSTANCE_ID:-}" ]; then
+        IS_CLOUD_ENV=true
+        ENV_LABEL="Gitpod"
+    elif [ "${DEVPOD:-}" = "true" ] || [ -n "${DEVPOD_WORKSPACE_ID:-}" ]; then
+        IS_CLOUD_ENV=true
+        ENV_LABEL="DevPod"
+    elif grep -qi "microsoft\|wsl" /proc/version 2>/dev/null; then
+        ENV_LABEL="WSL"
+    fi
+    export IS_CLOUD_ENV ENV_LABEL
+}
 H4_COMMON
 
 chmod 644 "${COMMON_SH}"
 echo "  ✅ Installed ${COMMON_SH}"
+
+# ── Install the git-config self-heal script ──────────────────────────────────
+# Fully generic at runtime (reads whatever's in $HOME/.gitconfig when it
+# actually runs) — nothing to bake in at build time, so a plain file drop is
+# enough; see the script's own header for what it does and why.
+SELF_HEAL_SH="${COMMON_DIR}/git-config-self-heal.sh"
+cp "$(dirname "$0")/git-config-self-heal.sh" "${SELF_HEAL_SH}"
+chmod 755 "${SELF_HEAL_SH}"
+echo "  ✅ Installed ${SELF_HEAL_SH}"
 
 echo "🎉 helpers4-common ready."
