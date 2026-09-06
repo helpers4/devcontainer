@@ -44,7 +44,7 @@ devcontainer features test .
 | `auto-header` | 1.1.0 | LGPL-3.0 license headers |
 | `git-absorb` | 1.1.0 | git-absorb from GitHub releases |
 | `bitwarden-secrets-manager` | 1.0.0 | `bws` CLI from bitwarden/sdk-sm GitHub releases, token-only auth, no persisted state |
-| `dotfiles-sync` | 1.0.8 | Sync Git/SSH/GPG/npm/gh config from host |
+| `dotfiles-sync` | 1.1.0 | Sync Git/SSH/GPG/npm/gh config from host; SSH key files opt-in (dependsOn helpers4-common) |
 | `peon-ping` | 1.1.0 | AI agent sound notifications |
 | `shell-history-per-project` | 1.1.0 | Persistent shell history (zsh/bash/fish) |
 
