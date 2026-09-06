@@ -14,6 +14,7 @@ USERNAME="${_BUILD_ARG_USERNAME:-"${USERNAME:-"node"}"}"
 SYNC_AWS_CONFIG="${_BUILD_ARG_DOTFILES_SYNC_SYNCAWSCONFIG:-"${SYNCAWSCONFIG:-"false"}"}"
 SYNC_KUBE_CONFIG="${_BUILD_ARG_DOTFILES_SYNC_SYNCKUBECONFIG:-"${SYNCKUBECONFIG:-"false"}"}"
 SYNC_DOCKER_CONFIG="${_BUILD_ARG_DOTFILES_SYNC_SYNCDOCKERCONFIG:-"${SYNCDOCKERCONFIG:-"false"}"}"
+SYNC_SSH_KEYS="${_BUILD_ARG_DOTFILES_SYNC_SYNCSSHKEYS:-"${SYNCSSHKEYS:-"false"}"}"
 SOURCE_HOME="/mnt/h4dotfiles"
 
 # Resolve target home robustly
@@ -30,6 +31,7 @@ echo "   Mount staging: ${SOURCE_HOME}"
 echo "   Sync AWS config: ${SYNC_AWS_CONFIG}"
 echo "   Sync kube config: ${SYNC_KUBE_CONFIG}"
 echo "   Sync Docker config: ${SYNC_DOCKER_CONFIG}"
+echo "   Sync SSH keys: ${SYNC_SSH_KEYS}"
 echo ""
 
 # ============================================================================
@@ -73,10 +75,10 @@ DOTFILES_SYNC_TARGET="${TARGET_HOME}"
 DOTFILES_SYNC_AWS_CONFIG="${SYNC_AWS_CONFIG}"
 DOTFILES_SYNC_KUBE_CONFIG="${SYNC_KUBE_CONFIG}"
 DOTFILES_SYNC_DOCKER_CONFIG="${SYNC_DOCKER_CONFIG}"
+DOTFILES_SYNC_SSH_KEYS="${SYNC_SSH_KEYS}"
 CONF_EOF
 
 cp "$(dirname "$0")/sync-files.sh" /usr/local/share/dotfiles-sync/sync-files.sh
-cp "$(dirname "$0")/path-keys.sh" /usr/local/share/dotfiles-sync/path-keys.sh
 chmod +x /usr/local/share/dotfiles-sync/sync-files.sh
 
 echo "Runtime sync script installed (/usr/local/share/dotfiles-sync/sync-files.sh)"
@@ -146,7 +148,8 @@ echo ""
 echo "Targets:"
 echo "   Git config       -> ${TARGET_HOME}/.gitconfig"
 echo "   Git ignore/attrs -> ${TARGET_HOME}/.config/git/"
-echo "   SSH keys         -> ${TARGET_HOME}/.ssh/"
+echo "   SSH config/hosts -> ${TARGET_HOME}/.ssh/"
+echo "   SSH key files    -> ${TARGET_HOME}/.ssh/                     [opt-in: ${SYNC_SSH_KEYS}]"
 echo "   GPG keys         -> ${TARGET_HOME}/.gnupg/"
 echo "   npm tokens       -> ${TARGET_HOME}/.npmrc"
 echo "   yarn config      -> ${TARGET_HOME}/.yarnrc.yml"
