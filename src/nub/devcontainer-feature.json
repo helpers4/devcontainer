@@ -1,8 +1,8 @@
 {
   "id": "nub",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "name": "Nub — Fast TypeScript/Node Toolchain",
-  "description": "Installs nub (nubjs.com): a Rust binary that runs TypeScript/JavaScript files, package.json scripts, and local CLIs directly on the Node.js and package manager already in the container — no new runtime, no lock-in. Does not manage Node versions itself (dependsOn the official node feature), so it never competes with this container's own version-selection mechanism.",
+  "description": "Installs nub (nubjs.com): a Rust binary that runs TypeScript/JavaScript files, package.json scripts, and local CLIs directly on the Node.js and package manager already in the container — no new runtime, no lock-in. Does not manage Node versions itself (dependsOn the official node feature), so it never competes with this container's own version-selection mechanism. Also includes helpers4's automatic git-config self-heal.",
   "documentationURL": "https://github.com/helpers4/devcontainer/tree/main/src/nub",
   "licenseURL": "https://github.com/helpers4/devcontainer/blob/main/LICENSE",
   "keywords": ["helpers4", "nub", "node", "typescript", "package-manager", "cli"],
