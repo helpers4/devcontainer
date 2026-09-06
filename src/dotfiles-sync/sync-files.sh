@@ -12,18 +12,22 @@
 #   .gitconfig  -> merge via `git config`: source keys applied only when absent
 #                  in target; protected keys (credential.helper, user.*, gpg.*)
 #                  never overwritten on cloud environments (managed by platform).
-#                  Bare-path values (user.signingkey, http.ssl*) that point
-#                  inside the synced .ssh/.gnupg dirs are rewritten to the
-#                  container's TARGET_HOME (see path-keys.sh). After the
-#                  .ssh/.gnupg syncs below have run, path-like keys (signingkey,
-#                  gpg.program, gpg.ssh.program, core.editor, credential.helper,
-#                  http.ssl*) are checked for existence in the container and a
-#                  WARN is printed (not fatal) if a host-specific path didn't
-#                  survive.
+#                  Host-specific path values that don't survive the merge
+#                  verbatim (user.signingkey, credential.helper, gpg.program,
+#                  ...) are NOT rewritten here — that's helpers4-common's
+#                  git-config-self-heal.sh (postAttachCommand), which actively
+#                  fixes them at attach time regardless of whether dotfiles-sync
+#                  is even in use.
 #   .npmrc      -> merge line-by-line (key=value): source entries appended only
 #                  when the key is absent from the target.
 #   .ssh/config -> merge Host blocks: source blocks appended when Host absent.
-#   .ssh keys   -> copy only when destination file does not exist yet.
+#   .ssh keys   -> copy only when destination file does not exist yet, and only
+#                  when syncSshKeys is enabled (default: off — private key
+#                  material never touches the container filesystem unless
+#                  explicitly opted in; SSH auth normally works fine through
+#                  the client's own forwarded ssh-agent with no local file at
+#                  all). .ssh/config and known_hosts always sync regardless —
+#                  agent forwarding doesn't provide either of those.
 #   .gnupg      -> skipped on cloud environments (GPG handled natively there).
 #   known_hosts -> merge line-by-line (append missing host entries).
 #   ── extra files (v1.0.1+) — copy-if-absent strategy:
@@ -36,22 +40,20 @@
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 CONFIG_FILE="${SCRIPT_DIR}/config"
-PATH_KEYS_FILE="${SCRIPT_DIR}/path-keys.sh"
 
 if [ ! -r "${CONFIG_FILE}" ]; then
     echo "dotfiles-sync: config file ${CONFIG_FILE} not found or not readable, aborting sync"
     exit 1
 fi
 
-if [ ! -r "${PATH_KEYS_FILE}" ]; then
-    echo "dotfiles-sync: path-keys file ${PATH_KEYS_FILE} not found or not readable, aborting sync"
-    exit 1
-fi
-
 # shellcheck source=/dev/null
 . "${CONFIG_FILE}"
+
+# h4_detect_cloud_env comes from helpers4-common (dependsOn) — shared with
+# helpers4-common's own git-config-self-heal.sh so the two can't silently
+# disagree on what counts as a cloud environment.
 # shellcheck source=/dev/null
-. "${PATH_KEYS_FILE}"
+. /usr/local/share/helpers4/common.sh
 
 USERNAME="${DOTFILES_SYNC_USERNAME}"
 SOURCE_HOME="${DOTFILES_SYNC_SOURCE}"
@@ -59,6 +61,7 @@ TARGET_HOME="${DOTFILES_SYNC_TARGET}"
 SYNC_AWS_CONFIG="${DOTFILES_SYNC_AWS_CONFIG:-false}"
 SYNC_KUBE_CONFIG="${DOTFILES_SYNC_KUBE_CONFIG:-false}"
 SYNC_DOCKER_CONFIG="${DOTFILES_SYNC_DOCKER_CONFIG:-false}"
+SYNC_SSH_KEYS="${DOTFILES_SYNC_SSH_KEYS:-false}"
 
 if [ -z "${USERNAME}" ] || [ -z "${SOURCE_HOME}" ] || [ -z "${TARGET_HOME}" ]; then
     echo "dotfiles-sync: config is missing required values, aborting sync"
@@ -69,21 +72,7 @@ fi
 # IS_CLOUD_ENV=true means: the platform manages git auth and GPG signing.
 # In that case we use a stricter merge (more protected keys, skip .gnupg).
 
-IS_CLOUD_ENV=false
-ENV_LABEL="local"
-
-if [ "${CODESPACES}" = "true" ] || [ -n "${CODESPACE_NAME}" ]; then
-    IS_CLOUD_ENV=true
-    ENV_LABEL="GitHub Codespaces"
-elif [ -n "${GITPOD_WORKSPACE_ID}" ] || [ -n "${GITPOD_INSTANCE_ID}" ]; then
-    IS_CLOUD_ENV=true
-    ENV_LABEL="Gitpod"
-elif [ "${DEVPOD}" = "true" ] || [ -n "${DEVPOD_WORKSPACE_ID}" ]; then
-    IS_CLOUD_ENV=true
-    ENV_LABEL="DevPod"
-elif grep -qi "microsoft" /proc/version 2>/dev/null || grep -qi "wsl" /proc/version 2>/dev/null; then
-    ENV_LABEL="WSL"
-fi
+h4_detect_cloud_env
 
 echo "dotfiles-sync: environment detected: ${ENV_LABEL}"
 
@@ -119,6 +108,16 @@ _gitconfig_get() {
     git config --file "$1" --get "$2" 2>/dev/null || true
 }
 
+# Membership test for a space-separated allowlist string (e.g. PROTECTED_KEYS).
+# Args: <needle> <space-separated list>
+_key_in_list() {
+    local _needle="$1" _item
+    for _item in ${2}; do
+        [ "${_needle}" = "${_item}" ] && return 0
+    done
+    return 1
+}
+
 # ── Merge .gitconfig ──────────────────────────────────────────────────────────
 
 if [ -L "${SOURCE_HOME}/.gitconfig" ]; then
@@ -132,21 +131,12 @@ elif [ -f "${SOURCE_HOME}/.gitconfig" ] && [ -s "${SOURCE_HOME}/.gitconfig" ]; t
         # Smart merge via git config
         PROTECTED_KEYS="credential.helper user.name user.email user.signingkey gpg.program gpg.format commit.gpgsign tag.gpgsign"
 
-        # REHOMEABLE_PATH_KEYS / VERIFY_ONLY_PATH_KEYS / VERIFY_PATH_KEYS and
-        # the _rehome_path_value/_warn_if_missing_path helpers come from
-        # path-keys.sh (sourced above) — shared with test.sh so the allowlists
-        # and rewrite/verify logic can't silently drift apart.
-
         MERGED=0
         SKIPPED=0
         while IFS= read -r line; do
             KEY="${line%%=*}"
             VAL="${line#*=}"
             [ -z "${KEY}" ] && continue
-
-            if _key_in_list "${KEY}" "${REHOMEABLE_PATH_KEYS}"; then
-                VAL="$(_rehome_path_value "${VAL}")"
-            fi
 
             existing="$(_gitconfig_get "${TARGET_GIT}" "${KEY}")"
 
@@ -212,15 +202,22 @@ fi
 if [ -d "${SOURCE_HOME}/.ssh" ]; then
     mkdir -p "${TARGET_HOME}/.ssh"
 
-    # Copy key files — skip if destination already exists
-    find "${SOURCE_HOME}/.ssh" -maxdepth 1 -type f ! -name "config" ! -name "known_hosts" \
-        | while IFS= read -r src_file; do
-        fname="$(basename "${src_file}")"
-        dest="${TARGET_HOME}/.ssh/${fname}"
-        if [ ! -f "${dest}" ]; then
-            cp -f "${src_file}" "${dest}"
-        fi
-    done
+    # Key files (private and public) — opt-in only. SSH auth normally works
+    # fine through the client's own forwarded ssh-agent with no local key
+    # file at all; copying them puts private key material on the container's
+    # filesystem, which most setups relying on agent forwarding deliberately
+    # avoid. .ssh/config and known_hosts below are unconditional — the agent
+    # doesn't provide either of those.
+    if [ "${SYNC_SSH_KEYS}" = "true" ]; then
+        find "${SOURCE_HOME}/.ssh" -maxdepth 1 -type f ! -name "config" ! -name "known_hosts" \
+            | while IFS= read -r src_file; do
+            fname="$(basename "${src_file}")"
+            dest="${TARGET_HOME}/.ssh/${fname}"
+            if [ ! -f "${dest}" ]; then
+                cp -f "${src_file}" "${dest}"
+            fi
+        done
+    fi
 
     # Merge known_hosts (append missing entries)
     if [ -f "${SOURCE_HOME}/.ssh/known_hosts" ]; then
@@ -276,7 +273,11 @@ ${line}"
     [ -f "${TARGET_HOME}/.ssh/known_hosts" ] && chmod 644 "${TARGET_HOME}/.ssh/known_hosts"
 
     FILE_COUNT=$(find "${TARGET_HOME}/.ssh" -maxdepth 1 -type f | wc -l)
-    echo "   .ssh: merged (${FILE_COUNT} files total)"
+    if [ "${SYNC_SSH_KEYS}" = "true" ]; then
+        echo "   .ssh: merged (${FILE_COUNT} files total)"
+    else
+        echo "   .ssh: config/known_hosts merged (${FILE_COUNT} files total); key files skipped (opt-in: set 'syncSshKeys' to enable)"
+    fi
 else
     echo "   .ssh: not found in staging"
 fi
@@ -309,21 +310,10 @@ else
     echo "   .gnupg: not found in staging"
 fi
 
-# ── Verify .gitconfig path-like values ─────────────────────────────────────────
-# Runs only now — after the .ssh/.gnupg syncs above have actually copied any
-# rehomed files into place. Running this earlier (right after the .gitconfig
-# merge) flagged a freshly-rewritten user.signingkey as missing on every first
-# sync, because the key file hadn't been copied into TARGET_HOME/.ssh yet.
-# Best-effort: warn, never fail.
-if [ "${HAS_GIT}" = "true" ] && [ -n "${TARGET_GIT:-}" ] && [ -f "${TARGET_GIT}" ]; then
-    while IFS= read -r line; do
-        vkey="${line%%=*}"
-        vval="${line#*=}"
-        [ -z "${vkey}" ] && continue
-        _key_in_list "${vkey}" "${VERIFY_PATH_KEYS}" || continue
-        _warn_if_missing_path "${vkey}" "${vval}"
-    done < <(git config --file "${TARGET_GIT}" --list 2>/dev/null)
-fi
+# Path-like .gitconfig values (user.signingkey, credential.helper, ...) are
+# no longer verified/warned about here — helpers4-common's
+# git-config-self-heal.sh actively fixes them instead, on every attach,
+# whether or not dotfiles-sync ran at all.
 
 # ── Helper: copy-if-absent ────────────────────────────────────────────────────
 # Copies a single source file to target only if target does not already exist.

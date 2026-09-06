@@ -1,6 +1,8 @@
 # Dotfiles Sync (dotfiles-sync)
 
-Syncs local Git, SSH, GPG, npm, and yarn config files into the devcontainer. Optionally syncs cloud credentials (AWS, kube, Docker) — opt-in only. Works on macOS, Linux, Windows (WSL and native), GitHub Codespaces, Gitpod, and DevPod. Uses a **merge strategy** for established files and a **copy-if-absent** strategy for new ones — never overwrites existing values, safe alongside cloud platform native auth and GPG signing.
+Syncs local Git, SSH, GPG, npm, and yarn config files into the devcontainer. Optionally syncs cloud credentials (AWS, kube, Docker) and SSH private key files — opt-in only. Works on macOS, Linux, Windows (WSL and native), GitHub Codespaces, Gitpod, and DevPod. Uses a **merge strategy** for established files and a **copy-if-absent** strategy for new ones — never overwrites existing values, safe alongside cloud platform native auth and GPG signing.
+
+> **Recommended**: if you use this feature, disable VS Code's own automatic `.gitconfig` copy (`"dev.containers.copyGitConfig": false`, a client-side VS Code setting — not something a `devcontainer.json` can control). VS Code's copy runs earlier and writes every key verbatim; this feature's merge only fills in whatever's still absent by the time it runs, so with both active, VS Code's raw copy silently wins for every key it touched and this feature's smarter merge does nothing for those. Either way, [`helpers4-common`](../helpers4-common)'s automatic git-config self-heal (every helpers4 consumer gets it, unconditionally) repairs host-specific paths left over by whichever one actually wrote them.
 
 ## Usage
 
@@ -55,6 +57,7 @@ exist are no-ops, so this is always safe to add.
 | `syncAwsConfig` | boolean | `false` | Sync `~/.aws/config` (profiles only — `~/.aws/credentials` is **never** synced). |
 | `syncKubeConfig` | boolean | `false` | Sync `~/.kube/config` (cluster credentials and tokens). Skipped on cloud environments. |
 | `syncDockerConfig` | boolean | `false` | Sync `~/.docker/config.json` (registry auth tokens). Skipped on cloud environments. |
+| `syncSshKeys` | boolean | `false` | Sync SSH private/public key files themselves (`~/.ssh/id_*`). `~/.ssh/config` and `known_hosts` always sync regardless — see [SSH key files](#ssh-key-files-opt-in) below. |
 
 ## What Gets Synced
 
@@ -66,7 +69,8 @@ exist are no-ops, so this is always safe to add.
 | `~/.config/git/ignore` | `~/.config/git/ignore` | Copy-if-absent | XDG global gitignore |
 | `~/.config/git/attributes` | `~/.config/git/attributes` | Copy-if-absent | XDG global gitattributes |
 | `~/.config/git/config-*` | `~/.config/git/config-*` | Copy-if-absent | Modular git includes |
-| `~/.ssh` | `~/.ssh` | Per-file merge | SSH keys, config, known_hosts |
+| `~/.ssh/config` | `~/.ssh/config` | Merge `Host` blocks | SSH host aliases — not provided by agent forwarding |
+| `~/.ssh/known_hosts` | `~/.ssh/known_hosts` | Merge line-by-line | Trusted host fingerprints — not provided by agent forwarding |
 | `~/.gnupg` | `~/.gnupg` | Copy-if-absent (skipped on cloud) | GPG keys for commit signing |
 | `~/.npmrc` | `~/.npmrc` | Merge line-by-line | npm registry auth |
 | `~/.yarnrc.yml` | `~/.yarnrc.yml` | Copy-if-absent | yarn registries / settings |
@@ -87,6 +91,26 @@ machine) — the `initializeCommand` in "Usage" covers those too.
 | `~/.aws/config` | `syncAwsConfig` | AWS profiles. `~/.aws/credentials` (long-lived access keys) is **not bind-mounted** and never synced. |
 | `~/.kube/config` | `syncKubeConfig` | Kubernetes cluster credentials. Skipped on cloud environments. |
 | `~/.docker/config.json` | `syncDockerConfig` | Docker registry auth tokens. Skipped on cloud environments. |
+| `~/.ssh/id_*` (private + public key files) | `syncSshKeys` | See [SSH key files](#ssh-key-files-opt-in) below. |
+
+### SSH key files (opt-in)
+
+Off by default, on purpose. The client's own forwarded `ssh-agent` already covers normal SSH
+authentication (`git clone`/`push` over SSH, `ssh user@host`) with **no local key file needed at
+all** — the agent supplies public-key identities and performs signing challenges live, over the
+socket, without a file ever touching the container's disk. Copying the actual key files here
+would put private key material on the container's filesystem for something that already works
+without it.
+
+The one thing agent forwarding *doesn't* cover is `user.signingkey` for `gpg.format=ssh` commit
+signing — `ssh-keygen -Y sign` (what git delegates SSH-format signing to) needs an actual public
+key **file** path, not just "ask the agent live". You don't need `syncSshKeys` for that either:
+[`helpers4-common`](../helpers4-common)'s automatic self-heal derives that one file from the
+forwarded agent (matched against `user.email`) on its own, with nothing to enable.
+
+Turn `syncSshKeys` on only if you have a specific reason to want the actual key files present
+inside the container (a tool that reads a private key file directly rather than going through
+an agent, for instance).
 
 ### Never synced
 
@@ -125,14 +149,19 @@ machine) — the `initializeCommand` in "Usage" covers those too.
 | `.gnupg` | Copied on local/WSL; **skipped on cloud environments** (see below) |
 | All other files (git/ignore, git/attributes, yarnrc.yml, …) | **Copy-if-absent** — never overwrites an existing target |
 
-### Host-path rewriting and verification
+### Host-specific paths in `.gitconfig`
 
-The host's `.gitconfig` can reference files by absolute path (e.g. `user.signingkey` for SSH-based commit signing). Those paths are meaningless inside the container — the host's home directory isn't mounted, only specific dotfiles are. Two safeguards handle this, defined once in `path-keys.sh` and shared by both the runtime script and the feature's tests (so they can't silently drift apart):
+The host's `.gitconfig` can reference files or binaries by absolute host path (`user.signingkey`
+for SSH-based commit signing; `credential.helper`, `gpg.program` shelling out to a host-specific
+tool location). Those paths are frequently meaningless inside the container — a tool installed
+at a different path here, or a file that was never copied in.
 
-- **Rewrite**: for a set of keys known to hold a bare filesystem path (`user.signingkey`, `http.sslCert`, `http.sslKey`, `http.sslCAInfo`), if the value points inside `.ssh/` or `.gnupg/` — written as an absolute path, a `~/`-relative path, or a bare relative path (`.ssh/id_ed25519`) — it's rewritten to `TARGET_HOME/.ssh/<relative-path>` or `TARGET_HOME/.gnupg/<relative-path>`, matching where the SSH/GPG sync steps actually re-home those files (subdirectories under `.gnupg/` are preserved, since that sync is recursive).
-- **Verify**: after the `.ssh`/`.gnupg` syncs have actually run (not before — checking earlier would flag a file the rewrite just pointed at correctly as "missing", since it hadn't been copied yet), the same keys plus `gpg.program`, `gpg.ssh.program`, `core.editor`, and `credential.helper` (paths the rewrite can't fix, since they point at host binaries/scripts with no deterministic container equivalent — e.g. a macOS Homebrew prefix, or a custom credential helper script) are checked for existence. A leading `!` (credential.helper's shell-invocation prefix) and a leading `~/` (resolved against `TARGET_HOME`) are handled; the full value is checked first so a path containing spaces (e.g. a Windows path surfaced via WSL) isn't falsely flagged, then each whitespace-separated token that looks like a path is checked individually, so a script invoked through an always-present interpreter (`!/usr/bin/python3 /host/only/helper.py`) isn't hidden behind the interpreter. A `WARN` is printed for anything missing — sync never fails, but you get a visible signal instead of a commit silently failing to sign weeks later. On cloud environments, a missing path under `TARGET_HOME/.gnupg` gets a WARN that names the real cause (`.gnupg` sync is deliberately skipped there) instead of a generic "host-specific path?".
-
-Note: `git config --list` always lowercases the key portion of a name (`http.sslCert` becomes `http.sslcert`), so the internal allowlists this relies on are matched in lowercase — this is transparent to you as a user, but matters if you're reading the script's source.
+This feature's own merge (above) does **not** rewrite or verify any of that anymore — as of
+v1.1.0 that responsibility moved to [`helpers4-common`](../helpers4-common)'s automatic
+`postAttachCommand` self-heal, which actively repairs it (not just warns) on every attach,
+whether or not this feature is even in use, and whether the broken value came from this
+feature's own merge or from a client's own automatic `.gitconfig` copy. See that feature's
+README for exactly what it fixes.
 
 ### Cloud environment protection
 
@@ -274,6 +303,14 @@ ssh-add -l
 
 ## Version History
 
+- **v1.1.0**: SSH private/public key file copying is now opt-in (`syncSshKeys`, default `false`)
+  — `~/.ssh/config` and `known_hosts` still always sync (agent forwarding doesn't provide
+  either), but actual key files no longer land on the container's filesystem unless explicitly
+  requested; normal SSH auth already works through the forwarded agent with no local file
+  needed. Also removed this feature's own `.gitconfig` path-rewriting and verification
+  (`path-keys.sh`) — that responsibility moved to `helpers4-common`'s new automatic
+  `postAttachCommand` self-heal, which fixes it for every consumer regardless of whether this
+  feature is even in use, and now depends on `helpers4-common` accordingly.
 - **v1.0.8**: Corrected the Codespaces/Gitpod/DevPod notes — the `initializeCommand` requirement from "Usage" applies to cloud environments too, since `${localEnv:HOME}` resolves against the cloud VM, not your laptop. Even with it, there's nothing to sync without a Codespaces dotfiles repository configured separately. Previously these sections only covered what gets merged, not whether the mount succeeds. Docs only, no behavior change.
 - **v1.0.7**: Documented the required `initializeCommand` in "Usage" (pre-creates every bind-mount source, mandatory and opt-in) so a container can't fail to start on a machine missing one of these files — a Feature's own `initializeCommand` is silently ignored by the devcontainers CLI, so this has to live in the consumer's `devcontainer.json`, not the feature. No behavior change to `sync-files.sh`.
 - **v1.0.4**: Removed bind-mounts for files that are frequently absent on host machines and have little value inside a devcontainer: `~/.gitignore_global` (redundant with `~/.config/git/` directory mount), `~/.config/pnpm/rc` (pnpm store-dir is counter-productive in a container), `~/.config/gh/config.yml` and `~/.config/gh/hosts.yml` (gh CLI auth managed separately), `~/.cargo/config.toml` (cargo not relevant in most containers), `~/.config/pip/pip.conf` (too environment-specific). Docker file bind-mounts fail hard if the source path doesn't exist on the host, which was causing containers to fail to start. The `syncGhAuth` option is removed.

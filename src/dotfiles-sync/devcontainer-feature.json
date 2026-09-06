@@ -1,8 +1,8 @@
 {
   "id": "dotfiles-sync",
-  "version": "1.0.8",
+  "version": "1.1.0",
   "name": "Dotfiles Sync",
-  "description": "Syncs local Git, SSH, GPG, npm, yarn config files into the devcontainer. Optionally syncs cloud credentials (AWS, kube, Docker) — opt-in only. Works on macOS, Linux, Windows (WSL), Codespaces, Gitpod, DevPod. Merges instead of overwriting.",
+  "description": "Syncs local Git, SSH, GPG, npm, yarn config files into the devcontainer. Optionally syncs cloud credentials (AWS, kube, Docker) and SSH private key files — opt-in only. Works on macOS, Linux, Windows (WSL), Codespaces, Gitpod, DevPod. Merges instead of overwriting.",
   "documentationURL": "https://github.com/helpers4/devcontainer/tree/main/src/dotfiles-sync",
   "licenseURL": "https://github.com/helpers4/devcontainer/blob/main/LICENSE",
   "keywords": ["helpers4", "dotfiles", "git", "ssh", "sync"],
@@ -26,6 +26,11 @@
       "type": "boolean",
       "default": false,
       "description": "Sync ~/.docker/config.json (registry auth tokens). Skipped on cloud environments."
+    },
+    "syncSshKeys": {
+      "type": "boolean",
+      "default": false,
+      "description": "Sync SSH private/public key files themselves (~/.ssh/id_*). Off by default: SSH auth normally works through the client's own forwarded ssh-agent with no local key file needed, and enabling this puts private key material on the container's filesystem. ~/.ssh/config and known_hosts always sync regardless — agent forwarding doesn't provide either of those."
     }
   },
   "mounts": [
@@ -81,5 +86,8 @@
   "postStartCommand": "/usr/local/share/dotfiles-sync/sync-files.sh",
   "installsAfter": [
     "ghcr.io/devcontainers/features/common-utils"
-  ]
+  ],
+  "dependsOn": {
+    "ghcr.io/helpers4/devcontainer/helpers4-common:1": {}
+  }
 }
