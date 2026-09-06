@@ -2,6 +2,11 @@
 
 OS-level dependencies for headless Chromium, Firefox, and WebKit, a browser-binary cache shared across rebuilds via a Docker named volume, and the official Playwright Test VS Code extension — pre-configured so `npx playwright test` and `npx playwright install` just work, without re-downloading browsers on every rebuild.
 
+> **Also included automatically:** `helpers4-common`'s git-config self-heal — fixes a stale
+> `credential.helper` or a missing SSH commit-signing key in `~/.gitconfig` on every container
+> attach, no setup required. You never add `helpers4-common` yourself; every helpers4 feature
+> pulls it in.
+
 ## Why this feature exists
 
 Headless browser automation (Playwright, and anything built on Chromium's DevTools Protocol — including `WebAuthn.addVirtualAuthenticator`, useful for testing passkey/WebAuthn flows without physical hardware) needs a real browser binary plus a long list of OS shared libraries. `npx playwright install --with-deps` can fetch both, but:
@@ -142,6 +147,8 @@ npx playwright install
 
 ## Version History
 
+- **v1.2.0**: Documentation only, no functional change — mentions that `helpers4-common`'s
+  automatic git-config self-heal (see above) now comes along with this feature.
 - **v1.1.0**: Switched from an inline copy of `helpers4-common`'s bootstrap (user detection, apt
   helpers) to a direct `dependsOn` on the `helpers4-common` feature — no behavior change, just a
   single source of truth for that logic instead of a copy every feature had to keep in sync.
