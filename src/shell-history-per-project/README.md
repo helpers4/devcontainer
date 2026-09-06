@@ -2,6 +2,11 @@
 
 This DevContainer feature provides shell history persistence per project by mounting a shell directory and creating symbolic links internally. This ensures that your shell history is preserved across container rebuilds and is isolated per project.
 
+> **Also included automatically:** `helpers4-common`'s git-config self-heal — fixes a stale
+> `credential.helper` or a missing SSH commit-signing key in `~/.gitconfig` on every container
+> attach, no setup required. You never add `helpers4-common` yourself; every helpers4 feature
+> pulls it in.
+
 ## Features
 
 - **Per-project history isolation**: Each project maintains its own shell history
@@ -136,6 +141,8 @@ This feature is part of the `helpers4/devcontainer-features` repository. Contrib
 
 ## Version History
 
+- **v1.2.0**: Documentation only, no functional change — mentions that `helpers4-common`'s
+  automatic git-config self-heal (see above) now comes along with this feature.
 - **v1.1.0**: Switched from an inline copy of `helpers4-common`'s bootstrap (user detection, apt
   helpers) to a direct `dependsOn` on the `helpers4-common` feature — no behavior change, just a
   single source of truth for that logic instead of a copy every feature had to keep in sync.
