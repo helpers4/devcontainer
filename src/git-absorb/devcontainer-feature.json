@@ -1,8 +1,8 @@
 {
   "id": "git-absorb",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "name": "git absorb — Automatic Fixup Commits",
-  "description": "Installs git-absorb, a tool to automatically absorb staged changes into their logical commits. Like 'git commit --fixup' but automatic.",
+  "description": "Installs git-absorb, a tool to automatically absorb staged changes into their logical commits. Like 'git commit --fixup' but automatic. Also includes helpers4's automatic git-config self-heal.",
   "documentationURL": "https://github.com/helpers4/devcontainer/tree/main/src/git-absorb",
   "licenseURL": "https://github.com/helpers4/devcontainer/blob/main/LICENSE",
   "keywords": ["helpers4", "git", "absorb", "commits"],
