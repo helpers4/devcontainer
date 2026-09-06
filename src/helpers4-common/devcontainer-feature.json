@@ -1,11 +1,12 @@
 {
   "id": "helpers4-common",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "name": "helpers4 Common Library",
-  "description": "Minimal bootstrap for helpers4 features: installs the shared /usr/local/share/helpers4/common.sh library (user detection, home resolution, apt helpers via h4_ensure_packages). Features that need specific packages install them via h4_ensure_packages.",
+  "description": "Shared bootstrap for helpers4 features: the /usr/local/share/helpers4/common.sh library (user detection, home resolution, apt helpers via h4_ensure_packages), plus an automatic git-config self-heal on every attach that repairs host-specific paths a client's automatic ~/.gitconfig copy or SSH agent forwarding leaves broken (stale credential.helper/gpg.program paths, missing SSH-format signing keys).",
   "documentationURL": "https://github.com/helpers4/devcontainer/tree/main/src/helpers4-common",
   "licenseURL": "https://github.com/helpers4/devcontainer/blob/main/LICENSE",
-  "keywords": ["helpers4", "bootstrap", "jq", "common", "base"],
+  "keywords": ["helpers4", "bootstrap", "common", "base", "git"],
+  "postAttachCommand": "/usr/local/share/helpers4/git-config-self-heal.sh",
   "installsAfter": [
     "ghcr.io/devcontainers/features/common-utils"
   ]
