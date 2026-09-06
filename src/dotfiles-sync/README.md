@@ -303,6 +303,9 @@ ssh-add -l
 
 ## Version History
 
+- **v1.2.0**: Documentation only, no functional change — description now mentions
+  `helpers4-common`'s automatic git-config self-heal alongside the existing "Recommended" note
+  above.
 - **v1.1.0**: SSH private/public key file copying is now opt-in (`syncSshKeys`, default `false`)
   — `~/.ssh/config` and `known_hosts` still always sync (agent forwarding doesn't provide
   either), but actual key files no longer land on the container's filesystem unless explicitly
