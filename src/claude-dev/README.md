@@ -5,6 +5,11 @@ across supported editors and persists `~/.claude` (credentials, config, memory)
 across every devcontainer rebuild — including GitHub Codespaces — via a Docker
 named volume. Optionally installs the `claude` CLI too.
 
+> **Also included automatically:** `helpers4-common`'s git-config self-heal — fixes a stale
+> `credential.helper` or a missing SSH commit-signing key in `~/.gitconfig` on every container
+> attach, no setup required. You never add `helpers4-common` yourself; every helpers4 feature
+> pulls it in.
+
 ## Example Usage
 
 ```jsonc
@@ -87,6 +92,8 @@ without depending on that user's shell profile already including
 
 ## Version History
 
+- **v1.2.0**: Documentation only, no functional change — mentions that `helpers4-common`'s
+  automatic git-config self-heal (see above) now comes along with this feature.
 - **v1.1.0**: Switched from an inline copy of `helpers4-common`'s bootstrap (user detection, apt
   helpers) to a direct `dependsOn` on the `helpers4-common` feature — no behavior change, just a
   single source of truth for that logic instead of a copy every feature had to keep in sync.
