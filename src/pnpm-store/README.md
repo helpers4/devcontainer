@@ -4,6 +4,11 @@ Shares a single [pnpm](https://pnpm.io) content-addressable store across **every
 repo and across rebuilds** via a Docker **named volume**, so no stray
 `.pnpm-store` folders pollute your repos.
 
+> **Also included automatically:** `helpers4-common`'s git-config self-heal — fixes a stale
+> `credential.helper` or a missing SSH commit-signing key in `~/.gitconfig` on every container
+> attach, no setup required. You never add `helpers4-common` yourself; every helpers4 feature
+> pulls it in.
+
 ## Why a named volume?
 
 A named volume is created automatically by Docker, so the feature is fully
@@ -68,6 +73,8 @@ to ensure it runs before `pnpm-store`.
 
 ## Version History
 
+- **v1.2.0**: Documentation only, no functional change — mentions that `helpers4-common`'s
+  automatic git-config self-heal (see above) now comes along with this feature.
 - **v1.1.0**: Switched from an inline copy of `helpers4-common`'s bootstrap (user detection, apt
   helpers) to a direct `dependsOn` on the `helpers4-common` feature — no behavior change, just a
   single source of truth for that logic instead of a copy every feature had to keep in sync.
