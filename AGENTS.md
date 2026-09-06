@@ -27,7 +27,7 @@ devcontainer features test .
 
 | Feature | Ver | Description |
 | ------- | --- | ----------- |
-| `helpers4-common` | 1.0.1 | Bootstrap: jq + `common.sh` (user detection, apt helpers) — all features depend on this |
+| `helpers4-common` | 1.1.0 | Bootstrap: `common.sh` (user detection, apt helpers, cloud-env detection) + automatic git-config self-heal on every attach — all features depend on this |
 | `essential-dev` | 1.0.9 | Git visualization, editor enhancements, Markdown |
 | `github-dev` | 1.0.5 | gh CLI, Copilot Chat, PR/Issues/Actions extensions |
 | `copilot-dev` | 1.0.3 | Copilot Chat + AI instructions (commits, PRs, code review) |
@@ -173,6 +173,36 @@ container for users, sometimes silently.
   a recursive chown on a populated, shared-across-rebuilds volume isn't
   free) — `claude-dev`/`mistral-dev` v1.0.8/v1.0.6 copy that pattern. Any
   new named-volume feature needs this same chown step, not just the mount.
+- **A client's own automatic behavior (VS Code copying `~/.gitconfig`, SSH
+  agent forwarding) happens outside any Feature's control, and copies/forwards
+  host-specific values verbatim — a `credential.helper` shelling out to a
+  path that doesn't exist here, a `gpg.format=ssh` `user.signingkey` pointing
+  at a file that only ever existed on the host.** `helpers4-common`
+  (v1.1.0) fixes this generically for every consumer via a `postAttachCommand`
+  self-heal (`git-config-self-heal.sh`) — PATH-search a same-named binary for
+  broken shell-out keys, derive a missing SSH signing pubkey from the
+  forwarded agent matched by `user.email`. This lives in `helpers4-common`,
+  not a dedicated feature or `dotfiles-sync`, specifically *because*
+  `helpers4-common` is the one dependency every feature already has —
+  putting it anywhere opt-in would mean every project has to remember to add
+  it, the same gap that caused this in the first place. `git config <key>
+  <value>` refuses outright (exit 5) the moment a key already has more than
+  one value (e.g. a legitimate blank "reset" `credential.helper` entry
+  followed by a real one) — any config-writing self-heal logic must target
+  one specific value via `--replace-all <key> <new> <old-as-anchored-regex>`,
+  not a plain set, or the write silently fails while still claiming success.
+  **Testing note**: `devcontainer features test --features <consumer> .`
+  resolves a `dependsOn` reference like `ghcr.io/helpers4/devcontainer/
+  helpers4-common:1` from the *published GHCR registry*, not this repo's
+  local `src/` tree — only the feature passed directly via `--features` gets
+  freshly-built local content. A consumer feature that needs brand-new,
+  not-yet-published `helpers4-common` behavior will fail its own CI test
+  until `helpers4-common`'s version bump actually merges to `main` and
+  `release.yml` publishes it — this isn't a bug in the consumer, it's this
+  repo's test harness validating an intermediate state that never exists in
+  production (both features release atomically on the same merge). Land the
+  `helpers4-common` change in its own PR first when a consumer's test would
+  otherwise depend on unreleased behavior.
 - **`devcontainer-feature.json` must be plain JSON — no `//` comments.**
   `devcontainers/action` parses it with `JSON.parse`, which chokes on JSONC —
   broke the release workflow once (commit `4e6e5ee`). Put rationale in the
