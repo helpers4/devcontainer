@@ -2,10 +2,10 @@
 
 Installs [nub](https://nubjs.com/): a single Rust binary that runs TypeScript/JavaScript files, `package.json` scripts, and local CLIs directly on top of the Node.js and package manager already in the container — no new runtime, no lock-in.
 
-> **Also included automatically:** `helpers4-common`'s git-config self-heal — fixes a stale
-> `credential.helper` or a missing SSH commit-signing key in `~/.gitconfig` on every container
-> attach, no setup required. You never add `helpers4-common` yourself; every helpers4 feature
-> pulls it in.
+> **Also included automatically:** helpers4's self-heal mechanism, working on both local and
+> cloud containers. It does its best to fix broken paths and a missing commit-signing key, with
+> nothing to set up on your end. It comes from this feature's dependency on `helpers4-common` —
+> you never need to add that feature yourself.
 
 ## Why this feature exists
 
