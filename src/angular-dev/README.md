@@ -1,5 +1,7 @@
 # Angular Development Environment
 
+> Code name: `angular-dev`
+
 Angular-specific development environment with VS Code extensions and CLI autocompletion.
 
 > **Also included automatically:** helpers4's self-heal mechanism, working on both local and

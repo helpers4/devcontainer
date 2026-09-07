@@ -1,5 +1,7 @@
 # helpers4 Common Library
 
+> Code name: `helpers4-common`
+
 Shared bootstrap library for helpers4 DevContainer features. It installs a single
 `/usr/local/share/helpers4/common.sh` script providing user detection, home directory
 resolution, and apt package helpers — logic that most other helpers4 features need and

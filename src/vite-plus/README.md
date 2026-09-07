@@ -1,5 +1,7 @@
 # Vite+ Development Environment
 
+> Code name: `vite-plus`
+
 Complete Vite+ unified toolchain setup with the `vp` CLI, integrating Vite, Vitest, Oxlint, Oxfmt, Rolldown, tsdown, and Vite Task into a single development experience with VS Code extensions pre-configured.
 
 > **Also included automatically:** helpers4's self-heal mechanism, working on both local and

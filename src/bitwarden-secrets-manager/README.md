@@ -1,5 +1,7 @@
 # Bitwarden Secrets Manager CLI
 
+> Code name: `bitwarden-secrets-manager`
+
 This DevContainer feature installs [`bws`](https://github.com/bitwarden/sdk-sm), the official Bitwarden Secrets Manager CLI, directly from Bitwarden's own GitHub releases. It's scoped to non-interactive, machine-account-token access only — no vault login, no unlock flow, no persisted state, no host bind-mounts. Everything it does stays inside the container.
 
 This is deliberately **not** a general Bitwarden feature: it installs `bws` (Secrets Manager) only, not `bw` (the password-vault CLI, which needs an interactive login/session model this feature doesn't address). If you need the vault CLI, look for a dedicated `bw` feature instead.

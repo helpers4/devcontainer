@@ -1,5 +1,7 @@
 # Automatic File Headers
 
+> Code name: `auto-header`
+
 Automatically configures VS Code with customizable file headers based on your project's license, company, and team information.
 
 > **Also included automatically:** helpers4's self-heal mechanism, working on both local and

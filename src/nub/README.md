@@ -1,5 +1,7 @@
 # Nub — Fast TypeScript/Node Toolchain
 
+> Code name: `nub`
+
 Installs [nub](https://nubjs.com/): a single Rust binary that runs TypeScript/JavaScript files, `package.json` scripts, and local CLIs directly on top of the Node.js and package manager already in the container — no new runtime, no lock-in.
 
 > **Also included automatically:** helpers4's self-heal mechanism, working on both local and

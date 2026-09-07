@@ -1,5 +1,7 @@
 # pnpm Store (shared)
 
+> Code name: `pnpm-store`
+
 Shares a single [pnpm](https://pnpm.io) content-addressable store across **every
 repo and across rebuilds** via a Docker **named volume**, so no stray
 `.pnpm-store` folders pollute your repos.
