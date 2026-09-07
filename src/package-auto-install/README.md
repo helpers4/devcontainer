@@ -2,10 +2,10 @@
 
 Automatically detects and runs npm/yarn/pnpm install in non-interactive mode after container creation.
 
-> **Also included automatically:** `helpers4-common`'s git-config self-heal — fixes a stale
-> `credential.helper` or a missing SSH commit-signing key in `~/.gitconfig` on every container
-> attach, no setup required. You never add `helpers4-common` yourself; every helpers4 feature
-> pulls it in.
+> **Also included automatically:** helpers4's self-heal mechanism, working on both local and
+> cloud containers. It does its best to fix broken paths and a missing commit-signing key, with
+> nothing to set up on your end. It comes from this feature's dependency on `helpers4-common` —
+> you never need to add that feature yourself.
 
 ## Features
 
@@ -158,7 +158,8 @@ For any IDE that does not have a parseable workspace file (Zed, Neovim, etc.) or
 `directories` takes precedence over both `workingDirectory` and `autoDiscover`.
 
 ## How It Works
-Corepack Support (Node 24+)
+
+### Corepack Support (Node 24+)
 
 If your `package.json` contains a `packageManager` field (e.g., `"packageManager": "pnpm@9.0.0"`):
 
@@ -167,9 +168,9 @@ If your `package.json` contains a `packageManager` field (e.g., `"packageManager
 3. Enables corepack with `corepack enable`
 4. Corepack then automatically installs and uses the exact package manager version specified
 
-This is particularly important for Node 24+ where corepack is no longer included by default.
+Node 24+ dropped corepack from the default install, so this step is what makes the
+`packageManager` field still work there without you installing corepack yourself.
 
-### 
 ### Package Manager Detection
 
 The feature detects the package manager in this order:
