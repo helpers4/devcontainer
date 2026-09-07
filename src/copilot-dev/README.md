@@ -1,5 +1,7 @@
 # GitHub Copilot Development Environment
 
+> Code name: `copilot-dev`
+
 Installs the [GitHub Copilot Chat](https://marketplace.visualstudio.com/items?itemName=GitHub.copilot-chat)
 VS Code extension, the `gh copilot` CLI extension, and shared instructions for
 commit messages, pull-request descriptions, and code reviews

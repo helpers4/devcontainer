@@ -1,5 +1,7 @@
 # Claude Code Development Environment
 
+> Code name: `claude-dev`
+
 Installs the [Claude Code](https://www.anthropic.com/claude-code) IDE extension
 across supported editors and persists `~/.claude` (credentials, config, memory)
 across every devcontainer rebuild — including GitHub Codespaces — via a Docker
