@@ -2,10 +2,10 @@
 
 Automatically configures VS Code with customizable file headers based on your project's license, company, and team information.
 
-> **Also included automatically:** `helpers4-common`'s git-config self-heal — fixes a stale
-> `credential.helper` or a missing SSH commit-signing key in `~/.gitconfig` on every container
-> attach, no setup required. You never add `helpers4-common` yourself; every helpers4 feature
-> pulls it in.
+> **Also included automatically:** helpers4's self-heal mechanism, working on both local and
+> cloud containers. It does its best to fix broken paths and a missing commit-signing key, with
+> nothing to set up on your end. It comes from this feature's dependency on `helpers4-common` —
+> you never need to add that feature yourself.
 
 ## Features
 
@@ -33,7 +33,7 @@ If you use a minimal base image (e.g. `ubuntu:latest`), add `common-utils` first
 {
   "features": {
     "ghcr.io/devcontainers/features/common-utils:2": {},
-    "ghcr.io/helpers4/devcontainer/auto-header:latest": { ... }
+    "ghcr.io/helpers4/devcontainer/auto-header:1": { ... }
   }
 }
 ```
@@ -47,7 +47,7 @@ Add to your `.devcontainer/devcontainer.json`:
 ```json
 {
   "features": {
-    "ghcr.io/helpers4/devcontainer/auto-header:latest": {
+    "ghcr.io/helpers4/devcontainer/auto-header:1": {
       "projectName": "my-awesome-project",
       "license": "MIT",
       "company": "Acme Corp",
@@ -70,7 +70,7 @@ This generates headers like:
 ```json
 {
   "features": {
-    "ghcr.io/helpers4/devcontainer/auto-header:latest": {
+    "ghcr.io/helpers4/devcontainer/auto-header:1": {
       "headerType": "custom",
       "projectName": "my-awesome-project",
       "customHeaderLines": "/**\n * @project my-awesome-project\n * @author Team\n * @license MIT\n */"
@@ -111,7 +111,7 @@ This command:
 ```json
 {
   "features": {
-    "ghcr.io/helpers4/devcontainer/auto-header:latest": {
+    "ghcr.io/helpers4/devcontainer/auto-header:1": {
       "projectName": "helpers4-typescript",
       "license": "LGPL-3.0",
       "company": "helpers4",
@@ -127,7 +127,7 @@ This command:
 ```json
 {
   "features": {
-    "ghcr.io/helpers4/devcontainer/auto-header:latest": {
+    "ghcr.io/helpers4/devcontainer/auto-header:1": {
       "projectName": "enterprise-app",
       "license": "Apache-2.0",
       "company": "ACME Industries",
@@ -142,7 +142,7 @@ This command:
 ```json
 {
   "features": {
-    "ghcr.io/helpers4/devcontainer/auto-header:latest": {
+    "ghcr.io/helpers4/devcontainer/auto-header:1": {
       "headerType": "custom",
       "projectName": "my-lib",
       "license": "LGPL-3.0-or-later",
@@ -182,7 +182,7 @@ Add `postCreateCommand` to auto-initialize:
 ```json
 {
   "features": {
-    "ghcr.io/helpers4/devcontainer/auto-header:latest": {
+    "ghcr.io/helpers4/devcontainer/auto-header:1": {
       "projectName": "my-project",
       "license": "MIT"
     }
