@@ -4,10 +4,10 @@ This DevContainer feature installs [`bws`](https://github.com/bitwarden/sdk-sm),
 
 This is deliberately **not** a general Bitwarden feature: it installs `bws` (Secrets Manager) only, not `bw` (the password-vault CLI, which needs an interactive login/session model this feature doesn't address). If you need the vault CLI, look for a dedicated `bw` feature instead.
 
-> **Also included automatically:** `helpers4-common`'s git-config self-heal — fixes a stale
-> `credential.helper` or a missing SSH commit-signing key in `~/.gitconfig` on every container
-> attach, no setup required. You never add `helpers4-common` yourself; every helpers4 feature
-> pulls it in.
+> **Also included automatically:** helpers4's self-heal mechanism, working on both local and
+> cloud containers. It does its best to fix broken paths and a missing commit-signing key, with
+> nothing to set up on your end. It comes from this feature's dependency on `helpers4-common` —
+> you never need to add that feature yourself.
 
 ## Usage
 
@@ -54,6 +54,6 @@ Supported architectures: `x86_64` and `aarch64`/`arm64` (e.g. Oracle Cloud Amper
 
 ## Version History
 
-- **v1.1.0**: Documentation only, no functional change — mentions that `helpers4-common`'s
+- **v1.2.0**: Documentation only, no functional change — mentions that `helpers4-common`'s
   automatic git-config self-heal (see above) comes along with this feature.
 - **v1.0.0**: Initial release.
