@@ -1,4 +1,4 @@
-# Peon Ping — AI Agent Sound Notifications (peon-ping)
+# Peon Ping — AI Agent Sound Notifications
 
 Installs [peon-ping](https://peonping.com/) and the [Peon Pet](https://marketplace.visualstudio.com/items?itemName=smcqueen.vscode-peon-pet) VS Code extension for game character voice notifications when your AI coding agent finishes or needs permission.
 

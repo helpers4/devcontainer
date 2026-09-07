@@ -1,4 +1,4 @@
-# GitHub Development Environment (github-dev)
+# GitHub Development Environment
 
 Installs the **GitHub CLI (`gh`)** and the essential GitHub VS Code **platform** extensions (Pull Requests & Issues, GitHub Actions, RemoteHub). Automatically authenticates `gh` if a token is available in the environment.
 

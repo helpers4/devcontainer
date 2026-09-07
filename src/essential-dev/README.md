@@ -1,4 +1,4 @@
-# Essential Development Environment (essential-dev)
+# Essential Development Environment
 
 Core development environment with Git integration, GitHub Copilot, Markdown support, and essential editor enhancements. Perfect base for all development projects.
 
