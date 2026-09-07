@@ -28,7 +28,7 @@ devcontainer features test .
 | Feature | Ver | Description |
 | ------- | --- | ----------- |
 | `helpers4-common` | 1.1.0 | Bootstrap: `common.sh` (user detection, apt helpers, cloud-env detection) + automatic git-config self-heal on every attach — all features depend on this |
-| `essential-dev` | 1.1.0 | Git visualization, editor enhancements, Markdown |
+| `essential-dev` | 1.2.0 | Git visualization, editor enhancements, Markdown |
 | `github-dev` | 1.0.5 | gh CLI, Copilot Chat, PR/Issues/Actions extensions |
 | `copilot-dev` | 1.0.3 | Copilot Chat + AI instructions (commits, PRs, code review) |
 | `claude-dev` | 1.2.0 | Claude Code extension + CLI + `~/.claude` named-volume persistence (credentials + memory) |
@@ -43,7 +43,7 @@ devcontainer features test .
 | `pnpm-store` | 1.2.0 | Shared pnpm store via Docker named volume (dependsOn helpers4-common) |
 | `auto-header` | 1.2.0 | LGPL-3.0 license headers |
 | `git-absorb` | 1.2.0 | git-absorb from GitHub releases |
-| `bitwarden-secrets-manager` | 1.1.0 | `bws` CLI from bitwarden/sdk-sm GitHub releases, token-only auth, no persisted state |
+| `bitwarden-secrets-manager` | 1.2.0 | `bws` CLI from bitwarden/sdk-sm GitHub releases, token-only auth, no persisted state |
 | `dotfiles-sync` | 1.2.0 | Sync Git/SSH/GPG/npm/gh config from host; SSH key files opt-in (dependsOn helpers4-common) |
 | `peon-ping` | 1.2.0 | AI agent sound notifications |
 | `shell-history-per-project` | 1.2.0 | Persistent shell history (zsh/bash/fish) |
