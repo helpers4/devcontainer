@@ -1,4 +1,4 @@
-# Automatic Package Installation (package-auto-install)
+# Automatic Package Installation
 
 Automatically detects and runs npm/yarn/pnpm install in non-interactive mode after container creation.
 

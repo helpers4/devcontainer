@@ -1,4 +1,4 @@
-# Playwright Development Environment (playwright-dev)
+# Playwright Development Environment
 
 OS-level dependencies for headless Chromium, Firefox, and WebKit, a browser-binary cache shared across rebuilds via a Docker named volume, and the official Playwright Test VS Code extension — pre-configured so `npx playwright test` and `npx playwright install` just work, without re-downloading browsers on every rebuild.
 

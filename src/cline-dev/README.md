@@ -1,4 +1,4 @@
-# Cline Development Environment (cline-dev)
+# Cline Development Environment
 
 Installs the [Cline](https://cline.bot) AI coding agent extension for VS Code
 and Cursor, and optionally the `cline` CLI.

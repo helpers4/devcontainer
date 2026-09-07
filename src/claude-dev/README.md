@@ -1,4 +1,4 @@
-# Claude Code Development Environment (claude-dev)
+# Claude Code Development Environment
 
 Installs the [Claude Code](https://www.anthropic.com/claude-code) IDE extension
 across supported editors and persists `~/.claude` (credentials, config, memory)

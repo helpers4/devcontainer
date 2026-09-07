@@ -1,4 +1,4 @@
-# Angular Development Environment (angular-dev)
+# Angular Development Environment
 
 Angular-specific development environment with VS Code extensions and CLI autocompletion.
 

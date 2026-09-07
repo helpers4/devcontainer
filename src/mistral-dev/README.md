@@ -1,4 +1,4 @@
-# Mistral Vibe Development Environment (mistral-dev)
+# Mistral Vibe Development Environment
 
 Installs the [Mistral Vibe](https://docs.mistral.ai/vibe/code/overview) IDE extension
 across supported editors so every devcontainer gets AI-assisted coding powered
