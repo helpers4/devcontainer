@@ -2,7 +2,7 @@
   "id": "playwright-dev",
   "version": "1.2.0",
   "name": "Playwright Development Environment",
-  "description": "Playwright E2E/browser-automation toolchain: OS-level dependencies for headless Chromium, Firefox, and WebKit (via the official `playwright install-deps`), a browser-binary cache shared across rebuilds through a Docker named volume, and the official Playwright Test VS Code extension. Also includes helpers4's automatic git-config self-heal.",
+  "description": "Playwright E2E/browser-automation toolchain: OS-level dependencies for headless Chromium, Firefox, and WebKit (via the official `playwright install-deps`), a browser-binary cache shared across rebuilds through a Docker named volume, and the official Playwright Test VS Code extension. Also includes helpers4's self-heal.",
   "documentationURL": "https://github.com/helpers4/devcontainer/tree/main/src/playwright-dev",
   "licenseURL": "https://github.com/helpers4/devcontainer/blob/main/LICENSE",
   "keywords": ["helpers4", "playwright", "e2e", "chromium", "firefox", "webkit", "testing", "webauthn"],
