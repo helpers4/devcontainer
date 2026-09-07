@@ -1,4 +1,4 @@
-# helpers4-common
+# helpers4 Common Library
 
 Shared bootstrap library for helpers4 DevContainer features. It installs a single
 `/usr/local/share/helpers4/common.sh` script providing user detection, home directory

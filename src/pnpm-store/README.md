@@ -1,4 +1,4 @@
-# pnpm Store
+# pnpm Store (shared)
 
 Shares a single [pnpm](https://pnpm.io) content-addressable store across **every
 repo and across rebuilds** via a Docker **named volume**, so no stray
