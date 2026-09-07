@@ -2,10 +2,10 @@
 
 Complete Vite+ unified toolchain setup with the `vp` CLI, integrating Vite, Vitest, Oxlint, Oxfmt, Rolldown, tsdown, and Vite Task into a single development experience with VS Code extensions pre-configured.
 
-> **Also included automatically:** `helpers4-common`'s git-config self-heal — fixes a stale
-> `credential.helper` or a missing SSH commit-signing key in `~/.gitconfig` on every container
-> attach, no setup required. You never add `helpers4-common` yourself; every helpers4 feature
-> pulls it in.
+> **Also included automatically:** helpers4's self-heal mechanism, working on both local and
+> cloud containers. It does its best to fix broken paths and a missing commit-signing key, with
+> nothing to set up on your end. It comes from this feature's dependency on `helpers4-common` —
+> you never need to add that feature yourself.
 
 ## Features
 
@@ -197,7 +197,7 @@ Combine with other features for a complete development environment:
   "features": {
     "ghcr.io/helpers4/devcontainer/vite-plus:1": {},
     "ghcr.io/helpers4/devcontainer/package-auto-install:1": {},
-    "ghcr.io/helpers4/devcontainer/local-mounts:1": {},
+    "ghcr.io/helpers4/devcontainer/dotfiles-sync:1": {},
     "ghcr.io/helpers4/devcontainer/shell-history-per-project:1": {},
     "ghcr.io/helpers4/devcontainer/git-absorb:1": {}
   }
