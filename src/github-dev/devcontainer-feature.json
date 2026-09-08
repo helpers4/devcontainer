@@ -1,6 +1,6 @@
 {
   "id": "github-dev",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "name": "GitHub Development Environment",
   "description": "GitHub CLI (gh) and GitHub VS Code platform extensions (Pull Requests & Issues, GitHub Actions, RemoteHub). For Copilot Chat and AI generation instructions use the copilot-dev feature.",
   "documentationURL": "https://github.com/helpers4/devcontainer/tree/main/src/github-dev",

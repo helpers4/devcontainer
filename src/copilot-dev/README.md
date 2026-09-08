@@ -68,3 +68,12 @@ explicitly to `[]` in your settings.
 
 - **OS:** Linux (Debian/Ubuntu-based images) for the CLI install; any for IDE-only use
 - **Architectures:** amd64, arm64
+
+## Version History
+
+- **v1.0.4**: Internal cleanup, no behavior change — dropped a dead `_BUILD_ARG_INSTALLCLI`
+  fallback in `install.sh`. That prefix is only ever set for the legacy
+  `internalVersion: "1"` manifest shape, which this feature (and every other one in this
+  repo) never declared — the fallback never fired, `${INSTALLCLI:-true}` alone always
+  resolved the same value.
+- **v1.0.3**: See commit history for earlier changes.

@@ -69,3 +69,12 @@ your API key (or run `cline auth` for the CLI) after a rebuild.
 
 - **OS:** any (no OS-level installation — pure IDE configuration)
 - **Architectures:** amd64, arm64
+
+## Version History
+
+- **v1.0.1**: Internal cleanup, no behavior change — dropped a dead `_BUILD_ARG_INSTALLCLI`
+  fallback in `install.sh`. That prefix is only ever set for the legacy
+  `internalVersion: "1"` manifest shape, which this feature (and every other one in this
+  repo) never declared — the fallback never fired, `${INSTALLCLI:-false}` alone always
+  resolved the same value.
+- **v1.0.0**: Initial release.

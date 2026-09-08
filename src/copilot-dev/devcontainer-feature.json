@@ -1,6 +1,6 @@
 {
   "id": "copilot-dev",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "name": "GitHub Copilot Development Environment",
   "description": "GitHub Copilot Chat VS Code extension, gh copilot CLI extension, and shared instructions for commit messages, pull-request descriptions, and code reviews (Conventional Commits + gitmoji + active repo PR template).",
   "documentationURL": "https://github.com/helpers4/devcontainer/tree/main/src/copilot-dev",

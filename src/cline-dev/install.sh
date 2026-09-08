@@ -13,7 +13,7 @@ if [ "$(id -u)" -ne 0 ]; then
     exit 1
 fi
 
-INSTALL_CLI="${_BUILD_ARG_INSTALLCLI:-${INSTALLCLI:-false}}"
+INSTALL_CLI="${INSTALLCLI:-false}"
 
 echo "🔧 Configuring cline-dev feature..."
 echo "  Install CLI: ${INSTALL_CLI}"

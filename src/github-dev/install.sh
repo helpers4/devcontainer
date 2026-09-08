@@ -9,7 +9,7 @@
 
 set -e
 
-GH_VERSION="${_BUILD_ARG_GHVERSION:-"${GHVERSION:-"latest"}"}"
+GH_VERSION="${GHVERSION:-"latest"}"
 
 echo "Setting up github-dev devcontainer feature..."
 echo "   gh version requested: ${GH_VERSION}"
