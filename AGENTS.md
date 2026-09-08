@@ -27,7 +27,7 @@ devcontainer features test .
 
 | Feature | Ver | Description |
 | ------- | --- | ----------- |
-| `helpers4-common` | 1.2.0 | Bootstrap: `common.sh` (user detection, apt helpers, cloud-env detection) + automatic git-config self-heal on every attach — all features depend on this |
+| `helpers4-common` | 1.3.0 | Bootstrap: `common.sh` (user detection, apt helpers, cloud-env detection) + automatic git-config self-heal on every attach — all features depend on this |
 | `essential-dev` | 1.2.4 | Git visualization, editor enhancements, Markdown |
 | `github-dev` | 1.0.6 | gh CLI, Copilot Chat, PR/Issues/Actions extensions |
 | `copilot-dev` | 1.0.4 | Copilot Chat + AI instructions (commits, PRs, code review) |

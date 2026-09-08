@@ -116,6 +116,41 @@ else
     rm -rf "${TEST_HOME}"
     exit 1
 fi
+
+# Test 9: a missing core.hooksPath / includeIf target gets warned about, not fixed —
+# there's nothing to $PATH-search or derive from an agent for a missing directory or
+# included file, and self-heal must still exit 0 (best-effort, never fails the attach).
+git config --file "${TEST_HOME}/.gitconfig" core.hooksPath "/does/not/exist/hooks"
+git config --file "${TEST_HOME}/.gitconfig" "includeIf.gitdir:/some/path/.path" "/does/not/exist/included.gitconfig"
+
+HOME="${TEST_HOME}" PATH="${TEST_BIN}:${PATH}" "${SELF_HEAL}" >/tmp/self-heal-test9.log 2>&1
+SELF_HEAL_EXIT=$?
+
+if [ "${SELF_HEAL_EXIT}" -ne 0 ]; then
+    echo "❌ FAIL: self-heal exited ${SELF_HEAL_EXIT} instead of 0 on an unfixable path"
+    cat /tmp/self-heal-test9.log
+    rm -rf "${TEST_HOME}"
+    exit 1
+fi
+
+if grep -qF "core.hooksPath=/does/not/exist/hooks does not exist" /tmp/self-heal-test9.log; then
+    echo "✅ PASS: self-heal warned about a missing core.hooksPath without failing"
+else
+    echo "❌ FAIL: self-heal did not warn about the missing core.hooksPath"
+    cat /tmp/self-heal-test9.log
+    rm -rf "${TEST_HOME}"
+    exit 1
+fi
+
+if grep -qF "includeif.gitdir:/some/path/.path=/does/not/exist/included.gitconfig does not exist" /tmp/self-heal-test9.log; then
+    echo "✅ PASS: self-heal warned about a missing includeIf target without failing"
+else
+    echo "❌ FAIL: self-heal did not warn about the missing includeIf target"
+    cat /tmp/self-heal-test9.log
+    rm -rf "${TEST_HOME}"
+    exit 1
+fi
+
 rm -rf "${TEST_HOME}"
 
 echo ""
