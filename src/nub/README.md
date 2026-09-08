@@ -69,7 +69,8 @@ No VS Code extension — nub doesn't have one. This feature is CLI tooling only.
 
 - **v1.2.2**: Documentation only, no functional change — the previous wording sweep made the
   JSON `description` field far too long, shifting focus away from the feature itself onto the
-  self-heal side benefit. Shortened to 5 words, matching the original's brevity.
+  self-heal side benefit. Shortened to 5 words and kept generic (no implementation detail like
+  "git config"), matching the original's brevity and level of detail.
 - **v1.2.1**: Documentation only, no functional change — the self-heal callout above (and the
   JSON `description` field) led with internal jargon ("helpers4's self-heal") instead of the
   actual benefit; reworded to lead with what it does, with the full mechanism staying in
