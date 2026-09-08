@@ -45,7 +45,7 @@ devcontainer features test .
 | `git-absorb` | 1.2.2 | git-absorb from GitHub releases |
 | `bitwarden-secrets-manager` | 1.2.2 | `bws` CLI from bitwarden/sdk-sm GitHub releases, token-only auth, no persisted state |
 | `dotfiles-sync` | 1.2.2 | Sync Git/SSH/GPG/npm/gh config from host; SSH key files opt-in (dependsOn helpers4-common) |
-| `peon-ping` | 1.3.0 | AI agent sound notifications |
+| `peon-ping` | 1.2.3 | AI agent sound notifications |
 | `shell-history-per-project` | 1.2.2 | Persistent shell history (zsh/bash/fish) |
 
 **Adding a new feature — checklist:**
