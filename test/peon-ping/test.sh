@@ -70,5 +70,24 @@ else
     exit 1
 fi
 
+# Test 8: Check that the host.docker.internal patch script is installed
+PATCH_HOSTS="/usr/local/share/peon-ping/patch-hosts.sh"
+if [ -x "${PATCH_HOSTS}" ]; then
+    echo "✅ PASS: patch-hosts.sh installed and executable"
+else
+    echo "❌ FAIL: ${PATCH_HOSTS} not found or not executable"
+    exit 1
+fi
+
+# Test 9: host.docker.internal should resolve — either postStartCommand already patched
+# /etc/hosts by the time this test runs, or Docker Desktop already provides it. A WARN
+# rather than a hard FAIL: whether the test harness actually runs postStartCommand before
+# test.sh isn't guaranteed here, so this isn't proof of a real bug either way.
+if getent hosts host.docker.internal >/dev/null 2>&1; then
+    echo "✅ PASS: host.docker.internal resolves"
+else
+    echo "⚠️  WARN: host.docker.internal does not resolve yet — re-run ${PATCH_HOSTS} manually if the test harness doesn't trigger postStartCommand"
+fi
+
 echo ""
 echo "✅ All peon-ping feature tests passed!"

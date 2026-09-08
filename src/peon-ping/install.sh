@@ -328,6 +328,12 @@ EOF
     echo "   ✅ Codex hooks written to ${CODEX_CONFIG}"
 fi
 
+# ── host.docker.internal patch (postStartCommand) ───────────────────────────
+
+mkdir -p /usr/local/share/peon-ping
+cp "$(dirname "$0")/patch-hosts.sh" /usr/local/share/peon-ping/patch-hosts.sh
+chmod +x /usr/local/share/peon-ping/patch-hosts.sh
+
 # ── Verify installation ─────────────────────────────────────────────────────
 
 echo ""

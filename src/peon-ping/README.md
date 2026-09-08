@@ -15,7 +15,7 @@ Supports **Claude Code**, **GitHub Copilot**, **Cursor**, **OpenAI Codex**, and 
 - **Sound notifications**: Warcraft, StarCraft, Portal, Zelda and 165+ sound packs
 - **Multi-IDE hooks**: Claude Code (built-in), Copilot, Cursor, Codex via adapters
 - **Peon Pet extension**: Animated orc sidebar companion reacting to agent events
-- **Devcontainer-aware**: Routes audio to host via relay (`host.docker.internal:19998`) — needs a `runArgs` addition on native Linux Docker, see "Audio in Devcontainers" below
+- **Devcontainer-aware**: Routes audio to host via relay (`host.docker.internal:19998`), automatically patched to resolve on native Linux Docker too — see "Audio in Devcontainers" below
 - **Non-interactive**: Fully automated, idempotent installation
 
 ## Usage
@@ -117,7 +117,17 @@ peon relay --daemon
 
 The container sends audio requests to `host.docker.internal:19998`.
 
-**On native Linux Docker (not Docker Desktop), this needs one more line — `host.docker.internal` doesn't resolve out of the box there.** Docker Desktop (macOS/Windows) injects that DNS entry automatically; plain Linux Docker doesn't, so `getent hosts host.docker.internal` comes back empty without it. Add to your `devcontainer.json`:
+**On native Linux Docker (not Docker Desktop), `host.docker.internal` doesn't resolve out of the
+box** — Docker Desktop (macOS/Windows) injects that DNS entry automatically, plain Linux Docker
+doesn't. This feature patches it automatically on every container start (`postStartCommand`):
+it reads the container's own default gateway from `/proc/net/route` — the same IP
+`--add-host=host.docker.internal:host-gateway` would have resolved to — and adds it to the
+container's `/etc/hosts` directly. Nothing to configure; on Docker Desktop it's a no-op, since
+`host.docker.internal` already resolves there.
+
+If that patch can't run for some reason (`/etc/hosts` not writable, `sudo` unavailable — check the
+container's startup log for a `peon-ping: could not write /etc/hosts` warning), fall back to
+adding this to your `devcontainer.json` and rebuilding:
 
 ```jsonc
 {
@@ -125,17 +135,23 @@ The container sends audio requests to `host.docker.internal:19998`.
 }
 ```
 
-A Feature can't add this itself — `runArgs` is only read from the consumer's top-level `devcontainer.json`. It's safe to add unconditionally; on Docker Desktop it's just a redundant, harmless duplicate of the entry that's already there.
+A Feature can't add `runArgs` itself — it's only read from the consumer's top-level
+`devcontainer.json` — which is exactly why the automatic `/etc/hosts` patch above exists.
 
 ### Testing the audio path
 
 1. On the **host**: `peon relay --daemon`, then `peon relay --status` to confirm it's listening.
-2. Add the `runArgs` line above to `devcontainer.json` and rebuild the container.
-3. Inside the **container**: `getent hosts host.docker.internal` should now print an IP (previously empty on native Linux Docker).
-4. Inside the **container**: check the relay port is actually reachable, not just the hostname resolving — e.g. `(echo > /dev/tcp/host.docker.internal/19998) 2>&1 && echo reachable || echo unreachable`. If this says `unreachable` even after step 3 resolves, the relay on the host is likely bound to `127.0.0.1` only (not visible from the container's network) rather than a devcontainer/Feature-side problem — check `peon relay --status` output on the host for its bind address.
-5. Trigger a real notification (finish an agent turn) and confirm you hear it.
+2. Inside the **container**: `getent hosts host.docker.internal` should print an IP (previously
+   empty on native Linux Docker before this feature's `postStartCommand` patch runs).
+3. Inside the **container**: check the relay port is actually reachable, not just the hostname
+   resolving — e.g. `(echo > /dev/tcp/host.docker.internal/19998) 2>&1 && echo reachable || echo unreachable`.
+   If this says `unreachable` even after step 2 resolves, the relay on the host is likely bound to
+   `127.0.0.1` only (not visible from the container's network) rather than a devcontainer/Feature-side
+   problem — check `peon relay --status` output on the host for its bind address.
+4. Trigger a real notification (finish an agent turn) and confirm you hear it.
 
-If step 4 fails, that's outside what this feature (or any devcontainer Feature) can fix — it's the host-side relay's own bind address, controlled by the `peon` CLI itself, not this repo.
+If step 3 fails, that's outside what this feature (or any devcontainer Feature) can fix — it's the
+host-side relay's own bind address, controlled by the `peon` CLI itself, not this repo.
 
 ### Relay Commands
 
@@ -205,6 +221,12 @@ peon packs list           # List installed packs
 
 ## Version History
 
+- **v1.3.0**: `host.docker.internal` now resolves automatically on native Linux Docker — a new
+  `postStartCommand` (`patch-hosts.sh`) derives the container's default gateway from
+  `/proc/net/route` (the same IP `--add-host=host.docker.internal:host-gateway` would have
+  resolved to) and adds it to the container's own `/etc/hosts` directly, entirely inside the
+  container. No more manual `runArgs` edit needed in the common case — that stays documented as a
+  fallback for the rare case where `/etc/hosts` isn't writable and `sudo` isn't available either.
 - **v1.2.2**: Documentation only, no functional change — the previous wording sweep made the
   JSON `description` field far too long, shifting focus away from the feature itself onto the
   self-heal side benefit. Shortened to 5 words and kept generic (no implementation detail like
