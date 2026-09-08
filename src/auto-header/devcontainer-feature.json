@@ -1,8 +1,8 @@
 {
   "id": "auto-header",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "name": "Automatic File Headers",
-  "description": "Automatically configures VS Code file headers with customizable templates based on project, license, company, and contributors information. Also includes helpers4's self-heal.",
+  "description": "Automatically configures VS Code file headers with customizable templates based on project, license, company, and contributors information. Also automatically repairs broken host paths in your git config and restores your SSH commit-signing key on every attach.",
   "documentationURL": "https://github.com/helpers4/devcontainer/tree/main/src/auto-header",
   "licenseURL": "https://github.com/helpers4/devcontainer/blob/main/LICENSE",
   "keywords": ["helpers4", "license", "header", "lgpl", "copyright"],

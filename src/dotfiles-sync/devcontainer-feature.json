@@ -1,8 +1,8 @@
 {
   "id": "dotfiles-sync",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "name": "Dotfiles Sync",
-  "description": "Syncs local Git, SSH, GPG, npm, yarn config files into the devcontainer. Optionally syncs cloud credentials (AWS, kube, Docker) and SSH private key files — opt-in only. Works on macOS, Linux, Windows (WSL), Codespaces, Gitpod, DevPod. Merges instead of overwriting. Also includes helpers4's self-heal.",
+  "description": "Syncs local Git, SSH, GPG, npm, yarn config files into the devcontainer. Optionally syncs cloud credentials (AWS, kube, Docker) and SSH private key files — opt-in only. Works on macOS, Linux, Windows (WSL), Codespaces, Gitpod, DevPod. Merges instead of overwriting. Also automatically repairs broken host paths in your git config and restores your SSH commit-signing key on every attach.",
   "documentationURL": "https://github.com/helpers4/devcontainer/tree/main/src/dotfiles-sync",
   "licenseURL": "https://github.com/helpers4/devcontainer/blob/main/LICENSE",
   "keywords": ["helpers4", "dotfiles", "git", "ssh", "sync"],

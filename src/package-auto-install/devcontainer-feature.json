@@ -1,8 +1,8 @@
 {
   "id": "package-auto-install",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "name": "Automatic Package Installation",
-  "description": "Automatically detects and runs npm/yarn/pnpm/nub install in non-interactive mode after container creation. Also includes helpers4's self-heal.",
+  "description": "Automatically detects and runs npm/yarn/pnpm/nub install in non-interactive mode after container creation. Also automatically repairs broken host paths in your git config and restores your SSH commit-signing key on every attach.",
   "documentationURL": "https://github.com/helpers4/devcontainer/tree/main/src/package-auto-install",
   "licenseURL": "https://github.com/helpers4/devcontainer/blob/main/LICENSE",
   "keywords": ["helpers4", "pnpm", "npm", "yarn", "nub", "install"],
