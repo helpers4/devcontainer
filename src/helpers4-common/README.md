@@ -41,10 +41,10 @@ that only ever existed on the host.
 stale as installed tools move around):
 
 - `credential.helper` (including per-URL scopes), `gpg.program`, `gpg.ssh.program`,
-  `core.editor` — when the value shells out to an absolute path that doesn't resolve here, it's
-  rewritten to the bare command name once a same-named binary is found on `$PATH`. Bare, not a
-  freshly-resolved absolute path again: it never goes stale a second time even if the tool moves
-  on a future rebuild.
+  `core.editor`, `core.sshCommand` — when the value shells out to an absolute path that doesn't
+  resolve here, it's rewritten to the bare command name once a same-named binary is found on
+  `$PATH`. Bare, not a freshly-resolved absolute path again: it never goes stale a second time
+  even if the tool moves on a future rebuild.
 - `user.signingkey` (only when `gpg.format=ssh`) — if the file is missing, tries a same-basename
   file under `~/.ssh`/`~/.gnupg` first (covers a case like `dotfiles-sync` having already placed
   the real file under a different absolute path than the host's), then falls back to recovering
@@ -53,6 +53,13 @@ stale as installed tools move around):
   local `ssh-agent` at all, this can't be derived automatically — the warning points at
   Codespaces secrets and notes that Codespaces signs GPG-format commits natively via its own
   managed proxy, as an alternative.
+
+**What it can only flag, never fix**: `core.hooksPath`, `core.excludesfile`,
+`core.attributesfile`, and `include.path`/`includeIf.*.path` all point at a file or directory
+that only ever existed on the host, with no `$PATH` search or forwarded-agent equivalent to fall
+back to — a warning names the gap, nothing more. `git config --file` also never follows
+includes, so an included file's own contents (if it even exists) stay invisible to every check
+above; this can only confirm whether the included file itself is present.
 
 Anything it can't fix itself is a warning, never a failure — it never blocks the attach.
 
@@ -93,6 +100,12 @@ every dependent feature picks it up on its next install.
 
 ## Version History
 
+- **v1.3.0**: The git-config self-heal now also warns (never fixes) about `core.hooksPath`,
+  `core.excludesfile`, `core.attributesfile`, and `include.path`/`includeIf.*.path` pointing at
+  a file or directory missing in this container — none of those have a `$PATH` search or
+  forwarded-agent equivalent to recover from, so this only names the gap. Fixed the
+  `core.editor`/`core.sshCommand` listing above, which had drifted from the actual shell-out key
+  list since `core.sshCommand` was added.
 - **v1.2.0**: Added `h4_ensure_volume_writable`, extracted from four features
   (`pnpm-store`, `playwright-dev`, `claude-dev`, `mistral-dev`) that each carried their own
   copy of the same named-volume ownership logic — including the subtler `--shared` case

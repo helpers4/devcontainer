@@ -13,7 +13,9 @@
 # `gh` at a revision-pinned path, or a gpg.format=ssh signingkey pointing at
 # a public key file that only ever existed on the host. This repairs both
 # classes of breakage, generically — no per-tool/per-feature knowledge baked
-# in here, so it doesn't go stale as installed tools move around.
+# in here, so it doesn't go stale as installed tools move around. A third
+# class (core.hooksPath, core.excludesfile, core.attributesfile, include
+# paths) can only be flagged, never fixed — see that section below for why.
 #
 # Best-effort and idempotent: safe to run on every attach, never fails the
 # attach, only ever warns when it can't fix something itself.
@@ -169,6 +171,43 @@ if [ "${GPG_FORMAT}" = "ssh" ]; then
         fi
     fi
 fi
+
+# ── Host-bound paths: flagged, never fixed ─────────────────────────────────────
+# core.hooksPath, core.excludesfile, core.attributesfile, and include.path /
+# includeIf.*.path all point at a file or directory that only ever existed on
+# the host. Unlike a shell-out key (PATH-searchable) or an SSH signing key
+# (derivable from the forwarded agent), there's nothing to search for or
+# recover here — a missing hooks directory or gitignore file has no
+# in-container equivalent to fall back to, so this can only name the gap.
+#
+# `git config --file` also never follows includes — an included file's own
+# contents (if it even exists) are invisible to every _get() call in this
+# script, above and below this point. This section can only confirm whether
+# the included file itself is present, not inspect what it sets.
+_warn_missing_path() {
+    local _key="$1" _path="$2" _kind="$3"
+    _path="${_path/#\~/${HOME}}"
+    if [ ! -e "${_path}" ]; then
+        echo "   ⚠️  ${_key}=${_path} does not exist in this container (host-bound ${_kind}, cannot be derived automatically)"
+        WARNED=$((WARNED + 1))
+    fi
+}
+
+HOOKS_PATH="$(_get core.hooksPath)"
+[ -n "${HOOKS_PATH}" ] && _warn_missing_path "core.hooksPath" "${HOOKS_PATH}" "hooks directory"
+
+EXCLUDES_FILE="$(_get core.excludesfile)"
+[ -n "${EXCLUDES_FILE}" ] && _warn_missing_path "core.excludesfile" "${EXCLUDES_FILE}" "file"
+
+ATTRIBUTES_FILE="$(_get core.attributesfile)"
+[ -n "${ATTRIBUTES_FILE}" ] && _warn_missing_path "core.attributesfile" "${ATTRIBUTES_FILE}" "file"
+
+while IFS= read -r line; do
+    key="${line%%=*}"
+    val="${line#*=}"
+    [ -z "${key}" ] && continue
+    _warn_missing_path "${key}" "${val}" "included config file"
+done < <(git config --file "${GITCONFIG}" --get-regexp '^include\.path$|^includeif\..*\.path$' 2>/dev/null | sed 's/ /=/')
 
 if [ "${FIXED}" -gt 0 ] || [ "${WARNED}" -gt 0 ]; then
     echo "helpers4: git config self-heal — ${FIXED} fixed, ${WARNED} still need attention"
