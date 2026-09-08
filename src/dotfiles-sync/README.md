@@ -305,6 +305,9 @@ ssh-add -l
 
 ## Version History
 
+- **v1.2.2**: Documentation only, no functional change — the previous wording sweep made the
+  JSON `description` field far too long, shifting focus away from the feature itself onto the
+  self-heal side benefit. Shortened to 5 words, matching the original's brevity.
 - **v1.2.1**: Documentation only, no functional change — the JSON `description` field led with
   internal jargon ("helpers4's self-heal") instead of the actual benefit; reworded to lead with
   what it does. This README's own "Recommended" note above already described the benefit
