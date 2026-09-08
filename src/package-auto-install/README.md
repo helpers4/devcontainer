@@ -54,11 +54,17 @@ If you have this in your devcontainer.json, you can now remove it:
 |--------|------|---------|-------------|
 | `command` | string | `auto` | Installation command: `install`, `ci`, or `auto` to detect |
 | `packageManager` | string | `auto` | Package manager: `npm`, `yarn`, `pnpm`, `nub`, or `auto` to detect. `auto` never resolves to `nub` — it's explicit-only, since nub isn't a lockfile format. `nub` runs `nub install` and requires the [`nub`](../nub/) feature to also be installed. |
-| `workingDirectory` | string | `/workspaces/${localWorkspaceFolderBasename}` | Directory where to run install. Overridden by `directories`. Used as fallback scan root when `autoDiscover` finds no workspace files. |
+| `workingDirectory` | string | `/workspaces/${localWorkspaceFolderBasename}`[^1] | Directory where to run install. Overridden by `directories`. Used as fallback scan root when `autoDiscover` finds no workspace files. |
 | `skipIfNodeModulesExists` | boolean | `false` | Skip if node_modules exists |
 | `additionalArgs` | string | `""` | Additional arguments for install command |
 | `directories` | string | `""` | Comma-separated list of directories to install in. Overrides `workingDirectory` and `autoDiscover`. |
 | `autoDiscover` | boolean | `false` | Scan `/workspaces` for VS Code/Cursor `.code-workspace` and IntelliJ `.idea/modules.xml` files and install in every discovered folder with a `package.json`. |
+
+[^1]: `install.sh` itself falls back to plain `/workspaces` (not
+`/workspaces/${localWorkspaceFolderBasename}`) when `WORKINGDIRECTORY` isn't set in its
+environment. That's intentional, not a mismatch to fix: the devcontainer CLI always resolves
+and passes the real default (or your override) at install time, so `install.sh`'s own fallback
+only ever applies when it runs standalone, outside that pipeline — e.g. local testing.
 
 ## Examples
 
@@ -248,6 +254,11 @@ You can manually run the installation script:
 
 ## Version History
 
+- **v1.2.1**: Documentation only, no functional change — `workingDirectory`'s manifest default
+  (`/workspaces/${localWorkspaceFolderBasename}`) and `install.sh`'s own fallback (plain
+  `/workspaces`, used only when it runs standalone without the devcontainer CLI resolving that
+  option) had diverged with no explanation. Both are intentional; added cross-referencing
+  comments in `install.sh` and a footnote here instead of unifying them.
 - **v1.2.0**: Documentation only, no functional change — mentions that `helpers4-common`'s
   automatic git-config self-heal (see above) now comes along with this feature.
 - **v1.1.0**: Switched from an inline copy of `helpers4-common`'s bootstrap (user detection, apt
