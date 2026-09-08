@@ -107,6 +107,8 @@ GUARD="/usr/local/bin/devcontainer-pnpm-store"
 # Copyright (C) 2025 baxyz
 # SPDX-License-Identifier: LGPL-3.0-or-later
 set -euo pipefail
+# shellcheck source=/dev/null
+. /usr/local/share/helpers4/common.sh
 HEADER
     printf 'STORE_DIR=%q\n' "${STORE_DIR}"
 } > "${GUARD}"
@@ -124,21 +126,10 @@ if [ ! -d "${STORE_DIR}" ]; then
         || { echo "❌ pnpm-store: could not create ${STORE_DIR}"; exit 1; }
 fi
 
-# Named volumes are created root-owned; hand the store to the current user so
-# pnpm can write to it. Only chown when needed (recursive chown is expensive on
-# a populated store shared across rebuilds).
-# stat failure (NFS root-squash, overlay FS) is treated as "unknown" — attempt
-# chown anyway rather than silently skipping it.
-store_owner="$(stat -c '%u' "${STORE_DIR}" 2>/dev/null || echo 'unknown')"
-if [ "${store_owner}" != "$(id -u)" ]; then
-    if command -v sudo >/dev/null 2>&1; then
-        if ! sudo chown -R "$(id -u):$(id -g)" "${STORE_DIR}"; then
-            echo "⚠️  pnpm-store: chown failed — pnpm may not be able to write to the store"
-        fi
-    else
-        echo "⚠️  pnpm-store: store is owned by uid ${store_owner} and sudo is unavailable; pnpm writes will fail (EACCES)"
-    fi
-fi
+# This volume is exclusive to this devcontainer (keyed by ${devcontainerId} — see
+# devcontainer-feature.json), so no --shared: no other container can be concurrently
+# using it, reassigning ownership outright is always safe.
+h4_ensure_volume_writable "${STORE_DIR}"
 
 # Re-apply store-dir to ~/.npmrc so it survives dotfiles-sync or any other
 # tool that may have overwritten the file between image build and container start.

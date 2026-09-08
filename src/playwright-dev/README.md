@@ -148,6 +148,9 @@ npx playwright install
 
 ## Version History
 
+- **v1.2.3**: Internal refactor, no behavior change — the browser-cache ownership logic
+  (chown to the current user when needed) now calls `helpers4-common`'s
+  `h4_ensure_volume_writable` instead of carrying its own inline copy.
 - **v1.2.2**: Documentation only, no functional change — the previous wording sweep made the
   JSON `description` field far too long, shifting focus away from the feature itself onto the
   self-heal side benefit. Shortened to 5 words and kept generic (no implementation detail like

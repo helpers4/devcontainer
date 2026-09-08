@@ -93,6 +93,10 @@ without depending on that user's shell profile already including
 
 ## Version History
 
+- **v1.2.3**: Internal refactor, no behavior change — the shared-volume ownership logic
+  (claim on first use, share via `chmod` afterward instead of stealing from another
+  project's container) now calls `helpers4-common`'s `h4_ensure_volume_writable --shared`
+  instead of carrying its own inline copy.
 - **v1.2.2**: Documentation only, no functional change — the previous wording sweep made the
   JSON `description` field far too long, shifting focus away from the feature itself onto the
   self-heal side benefit. Shortened to 5 words and kept generic (no implementation detail like
