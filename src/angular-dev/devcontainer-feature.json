@@ -2,7 +2,7 @@
   "id": "angular-dev",
   "version": "1.2.2",
   "name": "Angular Development Environment",
-  "description": "Angular-specific development environment with port forwarding, VS Code extensions, and CLI autocompletion. Also repairs broken git config.",
+  "description": "Angular-specific development environment with port forwarding, VS Code extensions, and CLI autocompletion. Also self-heals your devcontainer setup.",
   "documentationURL": "https://github.com/helpers4/devcontainer/tree/main/src/angular-dev",
   "licenseURL": "https://github.com/helpers4/devcontainer/blob/main/LICENSE",
   "keywords": ["helpers4", "angular", "typescript", "cli"],
