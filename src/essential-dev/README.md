@@ -2,7 +2,7 @@
 
 > Code name: `essential-dev`
 
-Core development environment with Git integration, GitHub Copilot, Markdown support, and essential editor enhancements. Perfect base for all development projects.
+Core development environment with Git integration, Markdown support, and essential editor enhancements. Perfect base for all development projects.
 
 > **Also included automatically:** helpers4's self-heal mechanism, working on both local and
 > cloud containers. It does its best to fix broken paths and a missing commit-signing key, with
@@ -11,8 +11,7 @@ Core development environment with Git integration, GitHub Copilot, Markdown supp
 
 ## Features
 
-- **Git Integration**: History, graph visualization, PR support, conventional commits
-- **GitHub Copilot**: AI-powered code assistance included
+- **Git Integration**: History and graph visualization
 - **Markdown Support**: Full markdown editing with preview and linting
 - **Editor Enhancements**: Multi-cursor, code comparison, local history
 - **File Format Support**: YAML, JSON, CSV, XML, Makefile support out-of-box
@@ -23,11 +22,16 @@ Core development environment with Git integration, GitHub Copilot, Markdown supp
 ### Git & Version Control
 - `donjayamanne.githistory` - View and search git log
 - `the0807.git-graph-plus` - Git graph visualization
-- `vivaxy.vscode-conventional-commits` - Conventional commits helper
+
+Conventional Commits + gitmoji guidance is provided as AI instructions by the
+`copilot-dev` feature, not a standalone linting extension — add `copilot-dev`
+for that.
 
 ### AI Assistant
-- `github.copilot` - AI code completion
-- `github.copilot-chat` - AI chat interface
+
+Not included here — add the `copilot-dev` feature for GitHub Copilot Chat and
+AI generation instructions, or `github-dev` for the `gh` CLI and GitHub pull
+request/issue/Actions extensions.
 
 ### Editor Enhancements
 - `cardinal90.multi-cursor-case-preserve` - Smart multi-cursor case handling
@@ -127,5 +131,10 @@ All shells are automatically detected and configured when available.
 
 ## Version History
 
+- **v1.2.1**: Documentation only, no functional change — `github.copilot`, `github.copilot-chat`
+  and `vivaxy.vscode-conventional-commits`, along with the PR-support and conventional-commits
+  claims in the intro and Features list, haven't shipped with this feature's manifest since the
+  AI/Copilot tooling was extracted into `github-dev` and `copilot-dev`; the README now matches
+  the manifest and points there instead.
 - **v1.2.0**: Documentation only, no functional change — mentions that `helpers4-common`'s
   automatic git-config self-heal (see above) comes along with this feature.
