@@ -221,12 +221,13 @@ peon packs list           # List installed packs
 
 ## Version History
 
-- **v1.3.0**: `host.docker.internal` now resolves automatically on native Linux Docker — a new
-  `postStartCommand` (`patch-hosts.sh`) derives the container's default gateway from
-  `/proc/net/route` (the same IP `--add-host=host.docker.internal:host-gateway` would have
-  resolved to) and adds it to the container's own `/etc/hosts` directly, entirely inside the
-  container. No more manual `runArgs` edit needed in the common case — that stays documented as a
-  fallback for the rare case where `/etc/hosts` isn't writable and `sudo` isn't available either.
+- **v1.2.3**: Removes the manual `runArgs` step on native Linux Docker — a new `postStartCommand`
+  (`patch-hosts.sh`) derives the container's default gateway from `/proc/net/route` (the same IP
+  `--add-host=host.docker.internal:host-gateway` would have resolved to) and adds it to the
+  container's own `/etc/hosts` directly, entirely inside the container. Not a new capability for
+  users who'd already added that `runArgs` line — the audio relay worked the same either way; this
+  just makes it work without that step. The manual edit stays documented as a fallback for the
+  rare case where `/etc/hosts` isn't writable and `sudo` isn't available either.
 - **v1.2.2**: Documentation only, no functional change — the previous wording sweep made the
   JSON `description` field far too long, shifting focus away from the feature itself onto the
   self-heal side benefit. Shortened to 5 words and kept generic (no implementation detail like
