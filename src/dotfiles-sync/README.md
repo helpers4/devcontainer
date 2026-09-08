@@ -305,6 +305,10 @@ ssh-add -l
 
 ## Version History
 
+- **v1.2.1**: Documentation only, no functional change — the JSON `description` field led with
+  internal jargon ("helpers4's self-heal") instead of the actual benefit; reworded to lead with
+  what it does. This README's own "Recommended" note above already described the benefit
+  directly, so it didn't need the same rewording the other helpers4-common-dependent features got.
 - **v1.2.0**: Documentation only, no functional change — description now mentions
   `helpers4-common`'s automatic git-config self-heal alongside the existing "Recommended" note
   above.
