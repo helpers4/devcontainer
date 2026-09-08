@@ -97,6 +97,8 @@ GUARD="/usr/local/bin/devcontainer-playwright-browsers"
 # Copyright (C) 2025 baxyz
 # SPDX-License-Identifier: LGPL-3.0-or-later
 set -euo pipefail
+# shellcheck source=/dev/null
+. /usr/local/share/helpers4/common.sh
 HEADER
     printf 'BROWSERS_PATH=%q\n' "${BROWSERS_PATH}"
     printf 'BROWSER_ARG=%q\n' "${browser_arg}"
@@ -112,17 +114,10 @@ if [ ! -d "${BROWSERS_PATH}" ]; then
         || { echo "❌ playwright-dev: could not create ${BROWSERS_PATH}"; exit 1; }
 fi
 
-# Named volumes are created root-owned; hand the cache to the current user so
-# Playwright's installer can write to it.
-cache_owner="$(stat -c '%u' "${BROWSERS_PATH}" 2>/dev/null || echo 'unknown')"
-if [ "${cache_owner}" != "$(id -u)" ]; then
-    if command -v sudo >/dev/null 2>&1; then
-        sudo chown -R "$(id -u):$(id -g)" "${BROWSERS_PATH}" \
-            || echo "⚠️  playwright-dev: chown failed — Playwright may not be able to write to the cache"
-    else
-        echo "⚠️  playwright-dev: cache is owned by uid ${cache_owner} and sudo is unavailable; downloads will fail (EACCES)"
-    fi
-fi
+# This volume is exclusive to this devcontainer (keyed by ${devcontainerId} — see
+# devcontainer-feature.json), so no --shared: no other container can be concurrently
+# using it, reassigning ownership outright is always safe.
+h4_ensure_volume_writable "${BROWSERS_PATH}"
 
 # Download the actual browser binaries only if not already fetched for this
 # browser selection. A completion marker (rather than "directory non-empty")

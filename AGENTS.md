@@ -31,16 +31,16 @@ devcontainer features test .
 | `essential-dev` | 1.2.4 | Git visualization, editor enhancements, Markdown |
 | `github-dev` | 1.0.5 | gh CLI, Copilot Chat, PR/Issues/Actions extensions |
 | `copilot-dev` | 1.0.3 | Copilot Chat + AI instructions (commits, PRs, code review) |
-| `claude-dev` | 1.2.2 | Claude Code extension + CLI + `~/.claude` named-volume persistence (credentials + memory) |
-| `mistral-dev` | 1.2.2 | Mistral Vibe extension + `~/.vibe` named-volume persistence |
+| `claude-dev` | 1.2.3 | Claude Code extension + CLI + `~/.claude` named-volume persistence (credentials + memory) |
+| `mistral-dev` | 1.2.3 | Mistral Vibe extension + `~/.vibe` named-volume persistence |
 | `cline-dev` | 1.0.0 | Cline extension (`saoudrizwan.claude-dev`) + optional CLI, no credential persistence |
 | `nub` | 1.2.2 | Fast TS/JS/script runner on top of existing node+package-manager (dependsOn node) |
 | `typescript-dev` | 1.0.7 | TS/JS dev, import management (dependsOn essential-dev) |
 | `angular-dev` | 1.2.2 | Angular dev, port 4200 |
 | `vite-plus` | 1.2.2 | vp CLI, Oxlint/Oxfmt, Vitest |
 | `package-auto-install` | 1.2.3 | Auto-detect and install packages (npm/yarn/pnpm/nub) |
-| `playwright-dev` | 1.2.2 | Playwright OS deps (Chromium/Firefox/WebKit) + shared browser-binary volume + VS Code extension |
-| `pnpm-store` | 1.2.2 | Shared pnpm store via Docker named volume (dependsOn helpers4-common) |
+| `playwright-dev` | 1.2.3 | Playwright OS deps (Chromium/Firefox/WebKit) + shared browser-binary volume + VS Code extension |
+| `pnpm-store` | 1.2.3 | Shared pnpm store via Docker named volume (dependsOn helpers4-common) |
 | `auto-header` | 1.2.2 | LGPL-3.0 license headers |
 | `git-absorb` | 1.2.2 | git-absorb from GitHub releases |
 | `bitwarden-secrets-manager` | 1.2.2 | `bws` CLI from bitwarden/sdk-sm GitHub releases, token-only auth, no persisted state |

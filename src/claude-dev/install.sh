@@ -47,6 +47,8 @@ mkdir -p "$(dirname "${SCRIPT}")"
 # Replaces TARGET_HOME/.claude with a symlink to it so credentials and all
 # Claude config persist across rebuilds.
 set -euo pipefail
+# shellcheck source=/dev/null
+. /usr/local/share/helpers4/common.sh
 HEADER
     printf 'TARGET_HOME=%q\n' "${USER_HOME}"
 } > "${SCRIPT}"
@@ -61,32 +63,10 @@ if [ ! -d "${STAGED}" ]; then
     exit 0
 fi
 
-# Docker creates a named volume root-owned; hand it to the current user so
-# Claude Code can write session state, settings, and memory into it. Unlike
-# pnpm-store's volume (exclusive per container, keyed by ${devcontainerId}),
-# this one is deliberately shared across every local project for the same
-# host OS user — a second, concurrently-running project can have a different
-# container UID. So: claim ownership only once, the first time the volume is
-# still root-owned; if it already belongs to a *different* non-root user
-# (another project's container), don't steal it out from under a possibly
-# still-running session there — just grant world read/write instead, so both
-# UIDs can use it without an ownership tug-of-war on every start.
-staged_owner="$(stat -c '%u' "${STAGED}" 2>/dev/null || echo 'unknown')"
-if [ "${staged_owner}" = "0" ]; then
-    if command -v sudo >/dev/null 2>&1; then
-        sudo chown -R "$(id -u):$(id -g)" "${STAGED}" \
-            || echo "[claude-dev] WARN: chown of ${STAGED} failed — writes may fail (EACCES)" >&2
-    else
-        echo "[claude-dev] WARN: ${STAGED} is root-owned and sudo is unavailable; writes will fail (EACCES)" >&2
-    fi
-elif [ "${staged_owner}" != "$(id -u)" ]; then
-    if command -v sudo >/dev/null 2>&1; then
-        sudo chmod -R o+rwX "${STAGED}" \
-            || echo "[claude-dev] WARN: chmod of ${STAGED} failed — writes may fail (EACCES)" >&2
-    else
-        echo "[claude-dev] WARN: ${STAGED} is owned by uid ${staged_owner} and sudo is unavailable; writes will fail (EACCES)" >&2
-    fi
-fi
+# Unlike pnpm-store's volume (exclusive per container, keyed by ${devcontainerId}), this
+# one is deliberately shared across every local project for the same host OS user — a
+# second, concurrently-running project can have a different container UID — so --shared.
+h4_ensure_volume_writable "${STAGED}" --shared
 
 rm -rf "${TARGET}"
 ln -sf "${STAGED}" "${TARGET}"
