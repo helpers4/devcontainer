@@ -2,7 +2,7 @@
 
 > Code name: `typescript-dev`
 
-TypeScript/JavaScript development setup with indexing, import management, HTML/CSS intelligence, and web tools. Built on top of `essential-dev` for Git, Copilot, and editor enhancements.
+TypeScript/JavaScript development setup with indexing, import management, HTML/CSS intelligence, and web tools. Built on top of `essential-dev` for Git and editor enhancements; add `copilot-dev`/`github-dev` for Copilot and PR tooling.
 
 ## Features
 
@@ -11,12 +11,12 @@ TypeScript/JavaScript development setup with indexing, import management, HTML/C
 - **HTML & CSS Intelligence**: Smart HTML and CSS editing with auto-rename
 - **Import Management**: Automatic import/export management and path aliases
 - **Web Development Ready**: HTML/CSS tools and code generation utilities
-- **Requires essential-dev**: For Git, Copilot, Markdown, and editor enhancements
+- **Requires essential-dev**: For Git, Markdown, and editor enhancements (`dependsOn`, always installed)
 
 ## What's Included
 
 ### TypeScript & JavaScript
-- `ms-vscode.vscode-typescript-next` - Latest TypeScript features
+- `TypeScriptTeam.native-preview` - Latest TypeScript features
 - `guilhermetheodoro.typescript-indexing` - Fast TypeScript indexing
 - `christian-kohler.npm-intellisense` - npm package autocomplete
 - `christian-kohler.path-intellisense` - Path autocomplete
@@ -35,7 +35,8 @@ TypeScript/JavaScript development setup with indexing, import management, HTML/C
 
 ### Basic Setup
 
-> **Note**: This feature requires `essential-dev` for Git, Copilot, and editor tools.
+> **Note**: This feature requires `essential-dev` for Git and editor tools (installed
+> automatically via `dependsOn`).
 
 Add to your `devcontainer.json`:
 
@@ -57,7 +58,7 @@ Add to your `devcontainer.json`:
         "ghcr.io/helpers4/devcontainer/vite-plus:1": {},
         "ghcr.io/helpers4/devcontainer/typescript-dev:1": {},
         "ghcr.io/helpers4/devcontainer/package-auto-install:1": {},
-        "ghcr.io/helpers4/devcontainer/local-mounts:1": {}
+        "ghcr.io/helpers4/devcontainer/dotfiles-sync:1": {}
     }
 }
 ```
@@ -72,7 +73,7 @@ Add to your `devcontainer.json`:
         "ghcr.io/helpers4/devcontainer/typescript-dev:1": {},
         "ghcr.io/helpers4/devcontainer/package-auto-install:1": {},
         "ghcr.io/helpers4/devcontainer/git-absorb:1": {},
-        "ghcr.io/helpers4/devcontainer/local-mounts:1": {}
+        "ghcr.io/helpers4/devcontainer/dotfiles-sync:1": {}
     }
 }
 ```
@@ -96,16 +97,16 @@ This feature configures the following VS Code settings specific to TypeScript/Ja
 
 ## Complementary Features
 
-- **essential-dev** - Core development tools (include this first)
+- **essential-dev** - Core development tools (installed automatically via `dependsOn`)
 - **vite-plus** - Vite toolchain with Oxc formatter/linter
 - **package-auto-install** - Automatic npm/yarn/pnpm install
-- **local-mounts** - Mount local Git, SSH, GPG, npm config
+- **dotfiles-sync** - Sync local Git/SSH/GPG/npm config into the container
+- **copilot-dev** / **github-dev** - Copilot Chat, AI instructions, `gh` CLI, PR/Issues/Actions
 
 ## Not Included (By Design)
 
 **Code Formatters**
 - Oxc/Prettier - Use `vite-plus` feature instead
-- Biome - Dedicated feature available
 
 **Testing**
 - Vitest - Use `vite-plus` feature instead
@@ -115,20 +116,35 @@ This feature configures the following VS Code settings specific to TypeScript/Ja
 - React/Vue snippets - Add per framework
 - Cloudflare Workers - Project-specific
 
+**AI Tooling** (not bundled here or in `essential-dev`)
+- GitHub Copilot Chat, PR/Issues/Actions - Add `copilot-dev` / `github-dev`
+
 **General Tools** (included in essential-dev)
 - Git integration
-- GitHub Copilot
 - Markdown support
 - File format support (YAML, JSON, CSV)
 
 ## Perfect With
 
 This feature pairs perfectly with:
-- **[essential-dev](../essential-dev)** - Core development tools (required)
+- **[essential-dev](../essential-dev)** - Core development tools (required, `dependsOn`)
 - **[vite-plus](../vite-plus)** - TypeScript + Vite + Oxc/Vitest toolchain
 - **[package-auto-install](../package-auto-install)** - Automatic dependency installation
-- **[local-mounts](../../deprecated/local-mounts/)** - Git/SSH/GPG configuration
+- **[dotfiles-sync](../dotfiles-sync)** - Git/SSH/GPG/npm configuration from the host
 - **[git-absorb](../git-absorb)** - Commit cleanup tools
+
+## Version History
+
+- **v1.0.8**: Documentation only, no functional change — this README had drifted from the
+  manifest in several ways: `local-mounts` (superseded by `dotfiles-sync` since that feature's
+  v1.0.0) was still listed as the recommended companion in four places; Copilot was claimed as
+  bundled via `essential-dev`, which stopped being true once Copilot moved to `copilot-dev` /
+  `github-dev`; a "Biome - Dedicated feature available" line named a feature that doesn't exist
+  in this repo; and the listed TypeScript extension ID (`ms-vscode.vscode-typescript-next`) no
+  longer matched the manifest's `TypeScriptTeam.native-preview`. Fixed all four; no
+  `install.sh`/manifest change, the manifest's own `description` field already said the right
+  thing.
+- **v1.0.7**: See commit history for earlier changes.
 
 ## License
 
