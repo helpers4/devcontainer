@@ -305,6 +305,11 @@ ssh-add -l
 
 ## Version History
 
+- **v1.2.3**: Internal cleanup, no behavior change — dropped dead `_BUILD_ARG_*` fallbacks in
+  `install.sh` (`USERNAME` and the four `SYNC*` options). That prefix is only ever set for the
+  legacy `internalVersion: "1"` manifest shape, which this feature (and every other one in this
+  repo) never declared — the fallback never fired, the plain option env var alone always
+  resolved the same value.
 - **v1.2.2**: Documentation only, no functional change — the previous wording sweep made the
   JSON `description` field far too long, shifting focus away from the feature itself onto the
   self-heal side benefit. Shortened to 5 words and kept generic (no implementation detail like

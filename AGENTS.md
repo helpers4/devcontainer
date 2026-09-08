@@ -29,11 +29,11 @@ devcontainer features test .
 | ------- | --- | ----------- |
 | `helpers4-common` | 1.2.0 | Bootstrap: `common.sh` (user detection, apt helpers, cloud-env detection) + automatic git-config self-heal on every attach — all features depend on this |
 | `essential-dev` | 1.2.4 | Git visualization, editor enhancements, Markdown |
-| `github-dev` | 1.0.5 | gh CLI, Copilot Chat, PR/Issues/Actions extensions |
-| `copilot-dev` | 1.0.3 | Copilot Chat + AI instructions (commits, PRs, code review) |
-| `claude-dev` | 1.2.3 | Claude Code extension + CLI + `~/.claude` named-volume persistence (credentials + memory) |
-| `mistral-dev` | 1.2.3 | Mistral Vibe extension + `~/.vibe` named-volume persistence |
-| `cline-dev` | 1.0.0 | Cline extension (`saoudrizwan.claude-dev`) + optional CLI, no credential persistence |
+| `github-dev` | 1.0.6 | gh CLI, Copilot Chat, PR/Issues/Actions extensions |
+| `copilot-dev` | 1.0.4 | Copilot Chat + AI instructions (commits, PRs, code review) |
+| `claude-dev` | 1.2.4 | Claude Code extension + CLI + `~/.claude` named-volume persistence (credentials + memory) |
+| `mistral-dev` | 1.2.4 | Mistral Vibe extension + `~/.vibe` named-volume persistence |
+| `cline-dev` | 1.0.1 | Cline extension (`saoudrizwan.claude-dev`) + optional CLI, no credential persistence |
 | `nub` | 1.2.2 | Fast TS/JS/script runner on top of existing node+package-manager (dependsOn node) |
 | `typescript-dev` | 1.0.7 | TS/JS dev, import management (dependsOn essential-dev) |
 | `angular-dev` | 1.2.2 | Angular dev, port 4200 |
@@ -44,7 +44,7 @@ devcontainer features test .
 | `auto-header` | 1.2.2 | LGPL-3.0 license headers |
 | `git-absorb` | 1.2.2 | git-absorb from GitHub releases |
 | `bitwarden-secrets-manager` | 1.2.2 | `bws` CLI from bitwarden/sdk-sm GitHub releases, token-only auth, no persisted state |
-| `dotfiles-sync` | 1.2.2 | Sync Git/SSH/GPG/npm/gh config from host; SSH key files opt-in (dependsOn helpers4-common) |
+| `dotfiles-sync` | 1.2.3 | Sync Git/SSH/GPG/npm/gh config from host; SSH key files opt-in (dependsOn helpers4-common) |
 | `peon-ping` | 1.2.3 | AI agent sound notifications |
 | `shell-history-per-project` | 1.2.2 | Persistent shell history (zsh/bash/fish) |
 

@@ -1,6 +1,6 @@
 {
   "id": "cline-dev",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "name": "Cline Development Environment",
   "description": "Installs the Cline AI coding agent extension (saoudrizwan.claude-dev) for VS Code and Cursor, and optionally the cline CLI.",
   "documentationURL": "https://github.com/helpers4/devcontainer/tree/main/src/cline-dev",

@@ -96,6 +96,11 @@ gh auth login
 
 ## Version History
 
+- **v1.0.6**: Internal cleanup, no behavior change — dropped a dead `_BUILD_ARG_GHVERSION`
+  fallback in `install.sh`. That prefix is only ever set for the legacy
+  `internalVersion: "1"` manifest shape, which this feature (and every other one in this
+  repo) never declared — the fallback never fired, `${GHVERSION:-"latest"}` alone always
+  resolved the same value.
 - **v1.0.5**: Extract Copilot Chat extension and generation instructions into the standalone `copilot-dev` feature (breaking change — add `copilot-dev` to your `devcontainer.json` if you relied on Copilot being bundled here).
 - **v1.0.4**: Add shared Copilot Chat pull-request title & description instruction.
 - **v1.0.3**: Add shared Copilot Chat commit-message instruction (Conventional Commits + gitmoji).

@@ -93,6 +93,11 @@ without depending on that user's shell profile already including
 
 ## Version History
 
+- **v1.2.4**: Internal cleanup, no behavior change — dropped dead `_BUILD_ARG_*` fallbacks in
+  `install.sh` (`INSTALLCLI`, `USERNAME`). That prefix is only ever set for the legacy
+  `internalVersion: "1"` manifest shape, which this feature (and every other one in this
+  repo) never declared — the fallback never fired, the plain option env var alone always
+  resolved the same value.
 - **v1.2.3**: Internal refactor, no behavior change — the shared-volume ownership logic
   (claim on first use, share via `chmod` afterward instead of stealing from another
   project's container) now calls `helpers4-common`'s `h4_ensure_volume_writable --shared`
