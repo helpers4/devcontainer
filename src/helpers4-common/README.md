@@ -92,6 +92,9 @@ every dependent feature picks it up on its next install.
 
 ## Version History
 
+- **v1.1.1**: Extended the git-config self-heal's shell-out key list to `core.sshCommand`
+  (alongside `credential.helper`, `gpg.program`, `gpg.ssh.program`, `core.editor`) — the same
+  class of host-baked absolute path, previously left unhandled.
 - **v1.1.0**: Added `h4_detect_cloud_env` and an automatic `postAttachCommand` git-config
   self-heal (see above) — fixes host-specific paths a client's automatic `.gitconfig` copy or
   SSH agent forwarding leaves broken. Every helpers4 feature now depends on `helpers4-common`
