@@ -81,6 +81,35 @@ h4_detect_cloud_env() {
     fi
     export IS_CLOUD_ENV ENV_LABEL
 }
+# Docker creates a named volume root-owned. Without --shared (a volume exclusive to one
+# container, e.g. keyed by ${devcontainerId}), always chown to the current user — nothing
+# else can be concurrently using that exact volume. With --shared (deliberately shared
+# across every concurrently-running container for the same host user, e.g. keyed by
+# ${localEnv:USER}), claim ownership only the first time, while it's still root-owned; if
+# it already belongs to a *different* non-root user (another project's container,
+# possibly still running), don't steal it out from under that session — grant world
+# read/write instead, so every UID can use it without an ownership tug-of-war on every
+# start. Best-effort either way: warns, never fails, if chown/chmod can't succeed.
+h4_ensure_volume_writable() {
+    local _path="$1" _shared="false" _owner
+    [ "${2:-}" = "--shared" ] && _shared="true"
+    _owner="$(stat -c '%u' "${_path}" 2>/dev/null || echo 'unknown')"
+    if [ "${_shared}" = "true" ] && [ "${_owner}" != "0" ] && [ "${_owner}" != "$(id -u)" ]; then
+        if command -v sudo >/dev/null 2>&1; then
+            sudo chmod -R o+rwX "${_path}" \
+                || echo "⚠️  h4_ensure_volume_writable: chmod of ${_path} failed — writes may fail (EACCES)" >&2
+        else
+            echo "⚠️  h4_ensure_volume_writable: ${_path} is owned by uid ${_owner} and sudo is unavailable — writes will fail (EACCES)" >&2
+        fi
+    elif [ "${_owner}" != "$(id -u)" ]; then
+        if command -v sudo >/dev/null 2>&1; then
+            sudo chown -R "$(id -u):$(id -g)" "${_path}" \
+                || echo "⚠️  h4_ensure_volume_writable: chown of ${_path} failed — writes may fail (EACCES)" >&2
+        else
+            echo "⚠️  h4_ensure_volume_writable: ${_path} needs chown and sudo is unavailable — writes will fail (EACCES)" >&2
+        fi
+    fi
+}
 H4_COMMON
 
 chmod 644 "${COMMON_SH}"

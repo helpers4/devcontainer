@@ -27,7 +27,7 @@ devcontainer features test .
 
 | Feature | Ver | Description |
 | ------- | --- | ----------- |
-| `helpers4-common` | 1.1.1 | Bootstrap: `common.sh` (user detection, apt helpers, cloud-env detection) + automatic git-config self-heal on every attach — all features depend on this |
+| `helpers4-common` | 1.2.0 | Bootstrap: `common.sh` (user detection, apt helpers, cloud-env detection) + automatic git-config self-heal on every attach — all features depend on this |
 | `essential-dev` | 1.2.4 | Git visualization, editor enhancements, Markdown |
 | `github-dev` | 1.0.5 | gh CLI, Copilot Chat, PR/Issues/Actions extensions |
 | `copilot-dev` | 1.0.3 | Copilot Chat + AI instructions (commits, PRs, code review) |
@@ -167,12 +167,17 @@ container for users, sometimes silently.
   credentials script symlinked `~/.claude`/`~/.vibe` straight into the
   root-owned volume with no chown step, so every write under it (session
   state, settings, memory) failed with `EACCES` for the container's real
-  user. `pnpm-store`'s guard script already had this solved —
-  `stat -c '%u'` the volume, `sudo chown -R "$(id -u):$(id -g)"` it if it
-  doesn't already belong to the current user (skip the chown when it does;
-  a recursive chown on a populated, shared-across-rebuilds volume isn't
-  free) — `claude-dev`/`mistral-dev` v1.0.8/v1.0.6 copy that pattern. Any
-  new named-volume feature needs this same chown step, not just the mount.
+  user. `helpers4-common` v1.2.0 provides `h4_ensure_volume_writable <path>
+  [--shared]` for this — any named-volume feature's runtime script should
+  source `/usr/local/share/helpers4/common.sh` and call that instead of
+  reimplementing it. Without `--shared` (a `${devcontainerId}`-scoped volume,
+  exclusive to one container): always chown, skipping only when it already
+  belongs to the current user (a recursive chown on a populated,
+  shared-across-rebuilds volume isn't free). With `--shared` (a
+  `${localEnv:USER}`-scoped volume, see below): chown only while still
+  root-owned; if it already belongs to a *different* non-root user (another
+  concurrently-running project's container), `chmod o+rwX` instead of
+  stealing ownership out from under that session.
 - **A client's own automatic behavior (VS Code copying `~/.gitconfig`, SSH
   agent forwarding) happens outside any Feature's control, and copies/forwards
   host-specific values verbatim — a `credential.helper` shelling out to a
