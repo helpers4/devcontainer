@@ -16,6 +16,7 @@
   "helpers4-common",
   "mistral-dev",
   "nub",
+  "org-workspace",
   "package-auto-install",
   "peon-ping",
   "playwright-dev",

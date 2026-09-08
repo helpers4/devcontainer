@@ -47,6 +47,7 @@ devcontainer features test .
 | `dotfiles-sync` | 1.2.3 | Sync Git/SSH/GPG/npm/gh config from host; SSH key files opt-in (dependsOn helpers4-common) |
 | `peon-ping` | 1.2.3 | AI agent sound notifications |
 | `shell-history-per-project` | 1.2.2 | Persistent shell history (zsh/bash/fish) |
+| `org-workspace` | 1.0.0 | Clones every repo of a GitHub org into sibling `/workspaces` folders + generates/merges a multi-root `.code-workspace` (dependsOn helpers4-common, github-dev) |
 
 **Adding a new feature — checklist:**
 
