@@ -54,7 +54,7 @@ FIXED=0
 WARNED=0
 
 # ── Shell-out keys: credential.helper (incl. per-URL scopes), gpg.program,
-#    gpg.ssh.program, core.editor ─────────────────────────────────────────────
+#    gpg.ssh.program, core.editor, core.sshCommand ────────────────────────────
 # A value like "!/snap/gh/751/gh auth git-credential" or "/usr/bin/some-tool
 # --flag" that shells out to an absolute path which no longer resolves here.
 # Rewritten to the bare command name instead of a fresh absolute path: once
@@ -94,7 +94,7 @@ _heal_shellout_key() {
     fi
 }
 
-for key in gpg.program gpg.ssh.program core.editor; do
+for key in gpg.program gpg.ssh.program core.editor core.sshCommand; do
     val="$(_get "${key}")"
     [ -n "${val}" ] && _heal_shellout_key "${key}" "${val}"
 done

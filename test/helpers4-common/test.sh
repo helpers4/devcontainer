@@ -82,9 +82,12 @@ TEST_BIN="${TEST_HOME}/bin"
 mkdir -p "${TEST_BIN}"
 printf '#!/bin/sh\ntrue\n' > "${TEST_BIN}/fakegh"
 chmod +x "${TEST_BIN}/fakegh"
+printf '#!/bin/sh\ntrue\n' > "${TEST_BIN}/fakessh"
+chmod +x "${TEST_BIN}/fakessh"
 
 git config --file "${TEST_HOME}/.gitconfig" credential.helper "!/does/not/exist/fakegh auth git-credential"
 git config --file "${TEST_HOME}/.gitconfig" core.editor "code --wait"
+git config --file "${TEST_HOME}/.gitconfig" core.sshCommand "/does/not/exist/fakessh -i /host/only/key"
 
 HOME="${TEST_HOME}" PATH="${TEST_BIN}:${PATH}" "${SELF_HEAL}" >/tmp/self-heal-test8.log 2>&1
 
@@ -101,6 +104,15 @@ if git config --file "${TEST_HOME}/.gitconfig" --get core.editor | grep -qF "cod
     echo "✅ PASS: self-heal left a non-absolute-path command (core.editor) untouched"
 else
     echo "❌ FAIL: self-heal incorrectly modified a non-absolute-path core.editor value"
+    rm -rf "${TEST_HOME}"
+    exit 1
+fi
+
+if git config --file "${TEST_HOME}/.gitconfig" --get core.sshCommand | grep -qF "fakessh -i /host/only/key"; then
+    echo "✅ PASS: self-heal rewrote a stale absolute-path core.sshCommand to the \$PATH-resolved bare command"
+else
+    echo "❌ FAIL: self-heal did not rewrite the stale core.sshCommand"
+    cat /tmp/self-heal-test8.log
     rm -rf "${TEST_HOME}"
     exit 1
 fi
