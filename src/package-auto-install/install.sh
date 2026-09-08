@@ -15,6 +15,12 @@ echo "🔧 Setting up package-auto-install devcontainer feature..."
 # Get options
 COMMAND="${COMMAND:-auto}"
 PACKAGE_MANAGER="${PACKAGEMANAGER:-auto}"
+# devcontainer-feature.json declares the real default as
+# /workspaces/${localWorkspaceFolderBasename} — the devcontainer CLI always resolves and
+# passes that (or the user's override) as WORKINGDIRECTORY at install time, so this bare
+# /workspaces is never actually used there. It only applies here, at install.sh's own
+# top-level scope, and below in the persisted devcontainer-package-install script, when either
+# runs without that env var set (e.g. invoked directly for local testing).
 WORKING_DIR="${WORKINGDIRECTORY:-/workspaces}"
 SKIP_IF_EXISTS="${SKIPIFNODEMODULESEXISTS:-false}"
 ADDITIONAL_ARGS="${ADDITIONALARGS:-}"
@@ -29,6 +35,9 @@ set -euo pipefail
 # Get configuration from environment or use defaults
 COMMAND="${COMMAND:-auto}"
 PACKAGE_MANAGER="${PACKAGEMANAGER:-auto}"
+# devcontainer-feature.json's real default is /workspaces/${localWorkspaceFolderBasename},
+# always resolved and passed in as WORKINGDIRECTORY by the devcontainer CLI — this bare
+# /workspaces only applies when this script runs standalone, without that env var set.
 WORKING_DIR="${WORKINGDIRECTORY:-/workspaces}"
 SKIP_IF_EXISTS="${SKIPIFNODEMODULESEXISTS:-false}"
 ADDITIONAL_ARGS="${ADDITIONALARGS:-}"
