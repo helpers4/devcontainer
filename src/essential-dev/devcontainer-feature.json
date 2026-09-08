@@ -1,6 +1,6 @@
 {
   "id": "essential-dev",
-  "version": "1.2.3",
+  "version": "1.2.4",
   "name": "Essential Development Environment",
   "description": "Core development environment with Git visualization, Markdown support, and essential editor enhancements. Also self-heals your devcontainer setup.",
   "documentationURL": "https://github.com/helpers4/devcontainer/tree/main/src/essential-dev",

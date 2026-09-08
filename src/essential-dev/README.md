@@ -99,21 +99,10 @@ That's it! All extensions and settings are applied automatically.
 
 ## Terminal Shell Integration
 
-[VS Code Shell Integration](https://code.visualstudio.com/docs/terminal/shell-integration) is automatically enabled with this feature. It provides:
-
-### Benefits
-- **Command Awareness**: VS Code tracks commands executed in the terminal
-- **Exit Codes**: Visual indicators for success (✓) and failure (✗)
-- **Run History**: Easy navigation through previously executed commands
-- **Smart Suggestions**: Context-aware suggestions for frequently used commands
-- **Decorations**: Visual separators between commands for cleaner display
-
-### Supported Shells
-- **zsh** (primary)
-- **bash**
-- **fish**
-
-All shells are automatically detected and configured when available.
+[VS Code Shell Integration](https://code.visualstudio.com/docs/terminal/shell-integration) works
+automatically in any devcontainer, including this one — it's a VS Code client capability, not
+something this feature configures. For zsh, bash, or fish, it provides command awareness,
+exit-code indicators (✓/✗), run history, smart suggestions, and command decorations.
 
 ## Not Included (By Design)
 
@@ -130,6 +119,10 @@ All shells are automatically detected and configured when available.
 
 ## Version History
 
+- **v1.2.4**: Removed `install.sh`'s "Configure VS Code shell integration" loop — it grepped
+  shell config files and printed a status line, but never wrote anything; shell integration is a
+  VS Code client capability, not something this feature configures. The "Terminal Shell
+  Integration" section above no longer claims this feature enables it either.
 - **v1.2.3**: Documentation only, no functional change — the previous wording sweep made the
   JSON `description` field far too long, shifting focus away from the feature itself onto the
   self-heal side benefit. Shortened to 5 words and kept generic (no implementation detail like
