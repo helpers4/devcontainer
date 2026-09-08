@@ -13,7 +13,7 @@ used to each carry their own inline copy of.
 
 ## What it provides
 
-`common.sh` defines five shell functions, sourced by features that need them:
+`common.sh` defines six shell functions, sourced by features that need them:
 
 | Function | Purpose |
 |----------|---------|
@@ -22,6 +22,7 @@ used to each carry their own inline copy of.
 | `h4_apt_update` | Runs `apt-get update` once, skipped if the apt lists cache is already populated |
 | `h4_ensure_packages` | Installs only the packages from its argument list that aren't already present, running `h4_apt_update` first if needed |
 | `h4_detect_cloud_env` | Sets `IS_CLOUD_ENV` (`true`/`false`) and `ENV_LABEL` (`GitHub Codespaces`, `Gitpod`, `DevPod`, `WSL`, or `local`) by checking the well-known env vars each platform sets |
+| `h4_ensure_volume_writable <path> [--shared]` | Hands a root-owned named volume to the current user. Without `--shared`: always chown (safe for a volume exclusive to one container). With `--shared`: chown only while still root-owned, otherwise `chmod o+rwX` instead of stealing ownership from another concurrently-running project's container |
 
 ## Automatic git-config self-heal
 
@@ -92,6 +93,11 @@ every dependent feature picks it up on its next install.
 
 ## Version History
 
+- **v1.2.0**: Added `h4_ensure_volume_writable`, extracted from four features
+  (`pnpm-store`, `playwright-dev`, `claude-dev`, `mistral-dev`) that each carried their own
+  copy of the same named-volume ownership logic — including the subtler `--shared` case
+  (chown-once vs. chmod-to-share) that only `claude-dev`/`mistral-dev` had. One correct
+  implementation instead of four independently-maintained copies.
 - **v1.1.1**: Extended the git-config self-heal's shell-out key list to `core.sshCommand`
   (alongside `credential.helper`, `gpg.program`, `gpg.ssh.program`, `core.editor`) — the same
   class of host-baked absolute path, previously left unhandled.
