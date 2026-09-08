@@ -28,25 +28,25 @@ devcontainer features test .
 | Feature | Ver | Description |
 | ------- | --- | ----------- |
 | `helpers4-common` | 1.1.1 | Bootstrap: `common.sh` (user detection, apt helpers, cloud-env detection) + automatic git-config self-heal on every attach — all features depend on this |
-| `essential-dev` | 1.2.1 | Git visualization, editor enhancements, Markdown |
+| `essential-dev` | 1.2.2 | Git visualization, editor enhancements, Markdown |
 | `github-dev` | 1.0.5 | gh CLI, Copilot Chat, PR/Issues/Actions extensions |
 | `copilot-dev` | 1.0.3 | Copilot Chat + AI instructions (commits, PRs, code review) |
-| `claude-dev` | 1.2.0 | Claude Code extension + CLI + `~/.claude` named-volume persistence (credentials + memory) |
-| `mistral-dev` | 1.2.0 | Mistral Vibe extension + `~/.vibe` named-volume persistence |
+| `claude-dev` | 1.2.1 | Claude Code extension + CLI + `~/.claude` named-volume persistence (credentials + memory) |
+| `mistral-dev` | 1.2.1 | Mistral Vibe extension + `~/.vibe` named-volume persistence |
 | `cline-dev` | 1.0.0 | Cline extension (`saoudrizwan.claude-dev`) + optional CLI, no credential persistence |
-| `nub` | 1.2.0 | Fast TS/JS/script runner on top of existing node+package-manager (dependsOn node) |
+| `nub` | 1.2.1 | Fast TS/JS/script runner on top of existing node+package-manager (dependsOn node) |
 | `typescript-dev` | 1.0.7 | TS/JS dev, import management (dependsOn essential-dev) |
-| `angular-dev` | 1.2.0 | Angular dev, port 4200 |
-| `vite-plus` | 1.2.0 | vp CLI, Oxlint/Oxfmt, Vitest |
-| `package-auto-install` | 1.2.1 | Auto-detect and install packages (npm/yarn/pnpm/nub) |
-| `playwright-dev` | 1.2.0 | Playwright OS deps (Chromium/Firefox/WebKit) + shared browser-binary volume + VS Code extension |
-| `pnpm-store` | 1.2.0 | Shared pnpm store via Docker named volume (dependsOn helpers4-common) |
-| `auto-header` | 1.2.0 | LGPL-3.0 license headers |
-| `git-absorb` | 1.2.0 | git-absorb from GitHub releases |
-| `bitwarden-secrets-manager` | 1.2.0 | `bws` CLI from bitwarden/sdk-sm GitHub releases, token-only auth, no persisted state |
-| `dotfiles-sync` | 1.2.0 | Sync Git/SSH/GPG/npm/gh config from host; SSH key files opt-in (dependsOn helpers4-common) |
-| `peon-ping` | 1.2.0 | AI agent sound notifications |
-| `shell-history-per-project` | 1.2.0 | Persistent shell history (zsh/bash/fish) |
+| `angular-dev` | 1.2.1 | Angular dev, port 4200 |
+| `vite-plus` | 1.2.1 | vp CLI, Oxlint/Oxfmt, Vitest |
+| `package-auto-install` | 1.2.2 | Auto-detect and install packages (npm/yarn/pnpm/nub) |
+| `playwright-dev` | 1.2.1 | Playwright OS deps (Chromium/Firefox/WebKit) + shared browser-binary volume + VS Code extension |
+| `pnpm-store` | 1.2.1 | Shared pnpm store via Docker named volume (dependsOn helpers4-common) |
+| `auto-header` | 1.2.1 | LGPL-3.0 license headers |
+| `git-absorb` | 1.2.1 | git-absorb from GitHub releases |
+| `bitwarden-secrets-manager` | 1.2.1 | `bws` CLI from bitwarden/sdk-sm GitHub releases, token-only auth, no persisted state |
+| `dotfiles-sync` | 1.2.1 | Sync Git/SSH/GPG/npm/gh config from host; SSH key files opt-in (dependsOn helpers4-common) |
+| `peon-ping` | 1.2.1 | AI agent sound notifications |
+| `shell-history-per-project` | 1.2.1 | Persistent shell history (zsh/bash/fish) |
 
 **Adding a new feature — checklist:**
 
