@@ -35,7 +35,7 @@ devcontainer features test .
 | `mistral-dev` | 1.2.4 | Mistral Vibe extension + `~/.vibe` named-volume persistence |
 | `cline-dev` | 1.0.1 | Cline extension (`saoudrizwan.claude-dev`) + optional CLI, no credential persistence |
 | `nub` | 1.2.2 | Fast TS/JS/script runner on top of existing node+package-manager (dependsOn node) |
-| `typescript-dev` | 1.0.7 | TS/JS dev, import management (dependsOn essential-dev) |
+| `typescript-dev` | 1.0.8 | TS/JS dev, import management (dependsOn essential-dev) |
 | `angular-dev` | 1.2.2 | Angular dev, port 4200 |
 | `vite-plus` | 1.2.2 | vp CLI, Oxlint/Oxfmt, Vitest |
 | `package-auto-install` | 1.2.3 | Auto-detect and install packages (npm/yarn/pnpm/nub) |
