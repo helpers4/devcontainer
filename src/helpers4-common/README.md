@@ -100,7 +100,7 @@ every dependent feature picks it up on its next install.
 
 ## Version History
 
-- **v1.3.0**: The git-config self-heal now also warns (never fixes) about `core.hooksPath`,
+- **v1.2.1**: The git-config self-heal now also warns (never fixes) about `core.hooksPath`,
   `core.excludesfile`, `core.attributesfile`, and `include.path`/`includeIf.*.path` pointing at
   a file or directory missing in this container — none of those have a `$PATH` search or
   forwarded-agent equivalent to recover from, so this only names the gap. Fixed the
