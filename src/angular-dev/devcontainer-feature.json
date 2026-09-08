@@ -1,8 +1,8 @@
 {
   "id": "angular-dev",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "name": "Angular Development Environment",
-  "description": "Angular-specific development environment with port forwarding, VS Code extensions, and CLI autocompletion. Also automatically repairs broken host paths in your git config and restores your SSH commit-signing key on every attach.",
+  "description": "Angular-specific development environment with port forwarding, VS Code extensions, and CLI autocompletion. Also repairs broken git config.",
   "documentationURL": "https://github.com/helpers4/devcontainer/tree/main/src/angular-dev",
   "licenseURL": "https://github.com/helpers4/devcontainer/blob/main/LICENSE",
   "keywords": ["helpers4", "angular", "typescript", "cli"],

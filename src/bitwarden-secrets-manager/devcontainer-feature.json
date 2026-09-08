@@ -1,8 +1,8 @@
 {
   "id": "bitwarden-secrets-manager",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "name": "Bitwarden Secrets Manager CLI",
-  "description": "Installs bws, the official Bitwarden Secrets Manager CLI, from bitwarden/sdk-sm GitHub releases. Non-interactive, machine-account-token auth only (BWS_ACCESS_TOKEN) — no vault login, no persisted state, no bind mounts. Also automatically repairs broken host paths in your git config and restores your SSH commit-signing key on every attach.",
+  "description": "Installs bws, the official Bitwarden Secrets Manager CLI, from bitwarden/sdk-sm GitHub releases. Non-interactive, machine-account-token auth only (BWS_ACCESS_TOKEN) — no vault login, no persisted state, no bind mounts. Also repairs broken git config.",
   "documentationURL": "https://github.com/helpers4/devcontainer/tree/main/src/bitwarden-secrets-manager",
   "licenseURL": "https://github.com/helpers4/devcontainer/blob/main/LICENSE",
   "keywords": ["helpers4", "bitwarden", "bws", "secrets", "secrets-manager"],

@@ -1,8 +1,8 @@
 {
   "id": "vite-plus",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "name": "Vite+ Development Environment",
-  "description": "Complete Vite+ unified toolchain setup (vp) with Vite, Vitest, Oxlint, Oxfmt, Rolldown, tsdown, and VS Code integration. Also automatically repairs broken host paths in your git config and restores your SSH commit-signing key on every attach.",
+  "description": "Complete Vite+ unified toolchain setup (vp) with Vite, Vitest, Oxlint, Oxfmt, Rolldown, tsdown, and VS Code integration. Also repairs broken git config.",
   "documentationURL": "https://github.com/helpers4/devcontainer/tree/main/src/vite-plus",
   "licenseURL": "https://github.com/helpers4/devcontainer/blob/main/LICENSE",
   "keywords": ["helpers4", "vite", "vitest", "oxc", "typescript"],
