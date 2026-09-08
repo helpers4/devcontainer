@@ -1,0 +1,57 @@
+{
+  "id": "org-workspace",
+  "version": "1.0.0",
+  "name": "Org Workspace",
+  "description": "Clones every repo of a GitHub org into sibling /workspaces folders (persisted across rebuilds via a named volume) and generates or updates a multi-root .code-workspace file. Also self-heals your devcontainer setup.",
+  "documentationURL": "https://github.com/helpers4/devcontainer/tree/main/src/org-workspace",
+  "licenseURL": "https://github.com/helpers4/devcontainer/blob/main/LICENSE",
+  "keywords": [
+    "helpers4",
+    "github",
+    "workspace",
+    "multi-repo",
+    "monorepo"
+  ],
+  "options": {
+    "org": {
+      "type": "string",
+      "default": "",
+      "description": "GitHub org (or user) to clone repos from. Left empty, detected automatically from the bootstrap repo's own 'origin' remote via 'gh repo view'."
+    },
+    "repos": {
+      "type": "string",
+      "default": "",
+      "description": "Comma-separated explicit list of repo names to clone (e.g. 'typescript,devcontainer,action'). Takes precedence over autoDiscover — set this for a stable, reproducible set that doesn't change if the org's repo list does."
+    },
+    "autoDiscover": {
+      "type": "string",
+      "default": "false",
+      "description": "Only used when 'repos' is empty. 'false': discover nothing. 'true': discover with sane defaults (public + private, no forks, no archived). Or a comma-separated token list to control exactly what's included: 'public', 'private', 'internal', 'fork', 'archived' — e.g. 'public,fork' includes public repos and forks, excluding private/internal/archived."
+    },
+    "generateCodeWorkspace": {
+      "type": "boolean",
+      "default": true,
+      "description": "Generate (or update) a VS Code multi-root .code-workspace file listing every sibling repo under /workspaces. If one already exists (e.g. committed to the bootstrap repo), its folders list is merged into rather than replaced — other keys (settings, extensions, launch, ...) are left untouched."
+    },
+    "codeWorkspaceName": {
+      "type": "string",
+      "default": "",
+      "description": "Filename for the generated .code-workspace, written at the bootstrap repo's own root. Left empty, defaults to '<org>.code-workspace'."
+    }
+  },
+  "mounts": [
+    {
+      "source": "helpers4-org-workspace-${devcontainerId}",
+      "target": "/mnt/h4org-workspace",
+      "type": "volume"
+    }
+  ],
+  "postStartCommand": "/usr/local/share/org-workspace/clone-repos.sh",
+  "installsAfter": [
+    "ghcr.io/devcontainers/features/common-utils"
+  ],
+  "dependsOn": {
+    "ghcr.io/helpers4/devcontainer/helpers4-common:1": {},
+    "ghcr.io/helpers4/devcontainer/github-dev:1": {}
+  }
+}
