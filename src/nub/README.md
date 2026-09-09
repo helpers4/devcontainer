@@ -18,6 +18,10 @@ nub is explicitly **not a replacement runtime**: "runs on the node and package m
 
 It also has its own dependency installer (`nub install`) with a unified interface across npm/pnpm/bun lockfiles, and its own Node-version manager — **this feature deliberately doesn't use the latter.** Node's own version is already this container's responsibility via the official `node` feature (`dependsOn` below); letting `nub node install` manage a second, independent version would create two competing version-selection mechanisms in the same container. Use `nub` for the speed, not for the version management.
 
+## Compatibility with pnpm-store
+
+`nub install` doesn't shell out to the real `pnpm` binary — it resolves a `pnpm-lock.yaml` with its own embedded engine. Verified directly (real container, inode comparison, and an offline reinstall with `nub`'s own cache wiped): when [`pnpm-store`](../pnpm-store) is also installed, `nub` reads the same `store-dir`/`storeDir` config and hardlinks package content from that shared store instead of duplicating it — a package fetched once is reused, and survives a rebuild via `pnpm-store`'s named volume, exactly like a real `pnpm install` would. The two features are safe to combine.
+
 ## Example Usage
 
 ```jsonc
@@ -67,6 +71,9 @@ No VS Code extension — nub doesn't have one. This feature is CLI tooling only.
 
 ## Version History
 
+- **v1.2.3**: Documentation only, no functional change — added a "Compatibility with pnpm-store"
+  section documenting a verified finding: `nub install` hardlinks package content from
+  `pnpm-store`'s shared store instead of duplicating it.
 - **v1.2.2**: Documentation only, no functional change — the previous wording sweep made the
   JSON `description` field far too long, shifting focus away from the feature itself onto the
   self-heal side benefit. Shortened to 5 words and kept generic (no implementation detail like
