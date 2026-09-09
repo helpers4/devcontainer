@@ -8,6 +8,20 @@ This DevContainer feature provides shell history persistence per project by moun
 > your SSH commit-signing key on every attach, on both local and cloud containers, with nothing
 > to set up on your end — see [`helpers4-common`](../helpers4-common) for how it works.
 
+## When to use this
+
+Use this when you work on several devcontainer projects on the same machine and don't want one
+project's shell history mixed in with another's — each project gets its own history file,
+isolated and persisted independently.
+
+**Alternatives:**
+- Mounting your host's real history file (`~/.zsh_history`) directly is simpler, but every
+  project ends up sharing the exact same history — commands from one project show up while
+  you're working in another.
+- [stuartleeks/dev-container-features](https://github.com/stuartleeks/dev-container-features)'
+  `shell-history` feature does something similar but globally, not per project — see
+  [Comparison](#comparison-with-stuartleeksdev-container-features-shell-history) below.
+
 ## Features
 
 - **Per-project history isolation**: Each project maintains its own shell history
@@ -133,6 +147,8 @@ This feature is part of the `helpers4/devcontainer-features` repository. Contrib
 
 ## Version History
 
+- **v1.2.3**: Documentation only, no functional change — added a "When to use this" section
+  with alternatives, matching the equivalent sections other features in this catalog already had.
 - **v1.2.2**: Documentation only, no functional change — the previous wording sweep made the
   JSON `description` field far too long, shifting focus away from the feature itself onto the
   self-heal side benefit. Shortened to 5 words and kept generic (no implementation detail like
