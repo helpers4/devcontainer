@@ -51,10 +51,9 @@ re-run once per that job's `baseImage` matrix entries. Not every option needs a 
 reserve it for an off-by-default path whose failure mode is silent (a warn-and-continue on
 install failure, not a hard `exit 1`) rather than one that already fails loudly if broken.
 
-Adding a `scenarios.json` or scenario script doesn't need a version bump — like a README, it
-verifies an existing option combination without changing what already-published consumers get.
-Only `test/<name>/test.sh` itself (the one CI runs against every consumer's build) triggers the
-version-bump-check below.
+Adding a `scenarios.json`, a scenario script, or editing `test.sh` itself never needs a version
+bump — none of it is visible to a consumer of the feature, see "Modifying an existing feature —
+version bump" below.
 
 **Available features:**
 
@@ -92,32 +91,35 @@ version-bump-check below.
 
 **Modifying an existing feature — version bump:**
 
-Any change under `src/<name>/` that touches `install.sh`,
-`devcontainer-feature.json`, or `test/<name>/test.sh` must bump that
-feature's `version` field (patch by default, minor/major when warranted) —
-`release.yml` only tags and publishes a feature whose `version` changed
-between the base branch and HEAD, so an unbumped change to something that
-actually ships silently never gets published. Bump it **once per branch**:
-if the version on the branch already differs from `main`'s, a further commit
-on that same branch/PR must *not* bump it again — check the diff against
-`main` first, don't bump reflexively on every commit.
+Any change under `src/<name>/` that touches `install.sh` or
+`devcontainer-feature.json` must bump that feature's `version` field (patch
+by default, minor/major when warranted) — `release.yml` only tags and
+publishes a feature whose `version` changed between the base branch and
+HEAD, so an unbumped change to something that actually ships silently
+never gets published. Bump it **once per branch**: if the version on the
+branch already differs from `main`'s, a further commit on that same
+branch/PR must *not* bump it again — check the diff against `main` first,
+don't bump reflexively on every commit.
 
-A **README-only** change doesn't require a bump — nothing about what ships
-in the image changes. It's still worth bumping when the doc fix is
-safety-relevant (e.g. a corrected `initializeCommand` requirement, like
-`dotfiles-sync` v1.0.8), since `release.yml`'s version-diff gate is also
-what triggers the website docs rebuild — an unbumped README fix never
-reaches the published site. Judgment call, not enforced either way.
+**Never bump for something invisible to the consumer** — nothing under
+`test/<name>/` (including `test.sh` itself and any scenario file), and no
+CI workflow change, ever needs a bump. A version bump publishes a new GHCR
+tag and triggers a website docs rebuild; doing that for a change nobody
+running the feature can actually see is pure noise. A **README-only**
+change doesn't require one either — nothing about what ships in the image
+changes. It's still worth bumping a README fix when it's safety-relevant
+(e.g. a corrected `initializeCommand` requirement, like `dotfiles-sync`
+v1.0.8), since the docs-rebuild trigger is exactly what's needed there.
+Judgment call, not enforced either way.
 
-Enforced by the `version-bump-check` job in `pr-validation.yml`: it fails the
-PR if a touched feature's `version` is unchanged from `main` *and* something
-other than `src/<name>/README.md` changed under `src/<name>/`, or
-`test/<name>/test.sh` specifically changed (a new `test/<name>/scenarios.json`
-or scenario script doesn't count — see "Testing non-default options" above).
-It's a blocking check only — it never commits a bump on your behalf (deliberately:
-no bot commits, no push-permission/fork edge cases, consistent with how
-`conventional-commits` already works in this repo). Bump the version
-yourself and push again.
+Enforced by the `version-bump-check` job in `pr-validation.yml`: it fails
+the PR if a touched feature's `version` is unchanged from `main` *and*
+something other than `src/<name>/README.md` changed under `src/<name>/`.
+Nothing under `test/<name>/` ever counts toward this check — see "Testing
+non-default options" above. It's a blocking check only — it never commits
+a bump on your behalf (deliberately: no bot commits, no push-permission/
+fork edge cases, consistent with how `conventional-commits` already works
+in this repo). Bump the version yourself and push again.
 
 **A lost version bump after merge gets flagged, not just caught before merge.**
 `version-bump-check` only validates the PR branch — it can't catch a bump
