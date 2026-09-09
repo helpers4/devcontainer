@@ -110,6 +110,29 @@ h4_ensure_volume_writable() {
         fi
     fi
 }
+h4_arch_musl_triple() {
+    local arch
+    arch="$(uname -m)"
+    case "${arch}" in
+        x86_64) echo "x86_64-unknown-linux-musl" ;;
+        aarch64 | arm64 | armv8*) echo "aarch64-unknown-linux-musl" ;;
+        *) echo "(!) Architecture ${arch} unsupported" >&2; return 1 ;;
+    esac
+}
+h4_github_latest_tag() {
+    local repo="$1" prefix="${2:-}"
+    # grep -o exits 1 on no match, which under the caller's `set -o pipefail`
+    # would otherwise abort the script right here on any transient API
+    # hiccup, with no diagnostic — the trailing `|| true` lets the caller's
+    # own empty-result check handle that instead.
+    if [ -n "${prefix}" ]; then
+        curl -s "https://api.github.com/repos/${repo}/releases" \
+            | grep -o "\"tag_name\": *\"${prefix}[^\"]*\"" | head -1 | cut -d'"' -f4 || true
+    else
+        curl -s "https://api.github.com/repos/${repo}/releases/latest" \
+            | grep -o '"tag_name": *"[^"]*"' | cut -d'"' -f4 || true
+    fi
+}
 H4_COMMON
 
 chmod 644 "${COMMON_SH}"

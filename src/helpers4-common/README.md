@@ -13,7 +13,7 @@ used to each carry their own inline copy of.
 
 ## What it provides
 
-`common.sh` defines six shell functions, sourced by features that need them:
+`common.sh` defines eight shell functions, sourced by features that need them:
 
 | Function | Purpose |
 |----------|---------|
@@ -23,6 +23,8 @@ used to each carry their own inline copy of.
 | `h4_ensure_packages` | Installs only the packages from its argument list that aren't already present, running `h4_apt_update` first if needed |
 | `h4_detect_cloud_env` | Sets `IS_CLOUD_ENV` (`true`/`false`) and `ENV_LABEL` (`GitHub Codespaces`, `Gitpod`, `DevPod`, `WSL`, or `local`) by checking the well-known env vars each platform sets |
 | `h4_ensure_volume_writable <path> [--shared]` | Hands a root-owned named volume to the current user. Without `--shared`: always chown (safe for a volume exclusive to one container). With `--shared`: chown only while still root-owned, otherwise `chmod o+rwX` instead of stealing ownership from another concurrently-running project's container |
+| `h4_arch_musl_triple` | Maps `uname -m` to the `x86_64-unknown-linux-musl` / `aarch64-unknown-linux-musl` target-triple convention used by Rust-built CLI releases (`git-absorb`, `bitwarden-secrets-manager`) — echoes the triple, or writes an error to stderr and returns 1 on an unsupported architecture |
+| `h4_github_latest_tag <owner/repo> [prefix]` | Resolves a GitHub repo's latest release tag via the REST API — no prefix queries `/releases/latest` directly; with a prefix, scans the full `/releases` list for the first tag starting with it (for a monorepo publishing several tools under one repo, like `bitwarden/sdk-sm`'s `bws-` releases) — echoes the tag, or nothing on failure or no match (caller checks for an empty result) |
 
 ## Automatic git-config self-heal
 
@@ -100,6 +102,19 @@ every dependent feature picks it up on its next install.
 
 ## Version History
 
+- **v1.2.2**: Added two shared helpers, extracted from duplicated logic in `git-absorb` and
+  `bitwarden-secrets-manager`: `h4_arch_musl_triple` (maps `uname -m` to the
+  `x86_64-unknown-linux-musl` / `aarch64-unknown-linux-musl` target-triple convention those two
+  features' Rust binaries use) and `h4_github_latest_tag <owner/repo> [prefix]` (resolves a
+  GitHub repo's latest release tag, optionally filtered by tag prefix for a monorepo that
+  publishes several tools under one repo — see `bitwarden-secrets-manager`'s `bws-` filter).
+  `github-dev`'s own arch mapping (`amd64`/`arm64`/`armv6`, GitHub CLI's own asset-naming
+  convention) is a different scheme entirely, not a duplicate of the musl triple above, so it
+  stays feature-local. An "official installer" helper (curl-installer scripts used by `nub`,
+  `vite-plus`, `claude-dev`) was evaluated too, but each invocation differs in ways that matter
+  (fatal vs. degraded failure, different `su` argument-passing styles, different env vars) —
+  forcing a shared wrapper risked exactly the kind of silent behavior change already found and
+  fixed once in `vite-plus`'s own installer call, so left as feature-local.
 - **v1.2.1**: The git-config self-heal now also warns (never fixes) about `core.hooksPath`,
   `core.excludesfile`, `core.attributesfile`, and `include.path`/`includeIf.*.path` pointing at
   a file or directory missing in this container — none of those have a `$PATH` search or
