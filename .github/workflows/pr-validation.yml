@@ -160,6 +160,8 @@ jobs:
             baseImage: mcr.microsoft.com/devcontainers/base:debian
           - features: github-dev
             baseImage: mcr.microsoft.com/devcontainers/base:ubuntu
+          - features: copilot-dev
+            baseImage: mcr.microsoft.com/devcontainers/base:ubuntu
           - features: mistral-dev
             baseImage: ubuntu:latest
           - features: mistral-dev
@@ -211,6 +213,8 @@ jobs:
           # exists. Add an entry here whenever a feature gains a
           # scenarios.json; see AGENTS.md "Testing non-default options".
           - features: claude-dev
+          - features: cline-dev
+          - features: mistral-dev
 
     steps:
       - name: Checkout
@@ -233,9 +237,10 @@ jobs:
         with:
           severity: warning
           scandir: src
-          # Preserve the previous scope (install.sh only) — path-keys.sh, sync-files.sh,
-          # and gh-auth.sh have never been linted here and may have pre-existing issues.
-          ignore_names: "path-keys.sh sync-files.sh gh-auth.sh"
+          # gh-auth.sh is sourced from /etc/profile.d/, so it can't carry a
+          # shebang — shellcheck's SC2148 ("target shell unknown") on that is
+          # expected and not fixable without breaking how the file is used.
+          ignore_names: "gh-auth.sh"
 
       - name: Verify AGENTS.md's feature table matches manifest versions
         run: |
