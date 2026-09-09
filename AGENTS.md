@@ -37,7 +37,7 @@ devcontainer features test .
 | `nub` | 1.2.3 | Fast TS/JS/script runner on top of existing node+package-manager (dependsOn node) |
 | `typescript-dev` | 1.0.8 | TS/JS dev, import management (dependsOn essential-dev) |
 | `angular-dev` | 1.2.3 | Angular dev, port 4200 |
-| `vite-plus` | 1.2.2 | vp CLI, Oxlint/Oxfmt, Vitest |
+| `vite-plus` | 1.2.3 | vp CLI, Oxlint/Oxfmt, Vitest |
 | `package-auto-install` | 1.2.3 | Auto-detect and install packages (npm/yarn/pnpm/nub) |
 | `playwright-dev` | 1.2.3 | Playwright OS deps (Chromium/Firefox/WebKit) + shared browser-binary volume + VS Code extension |
 | `pnpm-store` | 1.2.4 | Shared pnpm store via Docker named volume (dependsOn helpers4-common) |

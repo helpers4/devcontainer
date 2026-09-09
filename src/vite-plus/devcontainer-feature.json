@@ -1,6 +1,6 @@
 {
   "id": "vite-plus",
-  "version": "1.2.2",
+  "version": "1.2.3",
   "name": "Vite+ Development Environment",
   "description": "Complete Vite+ unified toolchain setup (vp) with Vite, Vitest, Oxlint, Oxfmt, Rolldown, tsdown, and VS Code integration. Also self-heals your devcontainer setup.",
   "documentationURL": "https://github.com/helpers4/devcontainer/tree/main/src/vite-plus",
