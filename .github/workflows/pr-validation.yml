@@ -38,9 +38,9 @@ jobs:
           echo "::notice::Diff base = ${MERGE_BASE} → HEAD ($(git rev-parse HEAD))"
 
           # Computed once, reused per-feature below instead of re-running git
-          # diff in the loop. Covers both src/<name>/ (what ships) and
-          # test/<name>/test.sh — a sibling of src/, not nested under it, but
-          # AGENTS.md requires a bump for it too, so it needs its own pathspec.
+          # diff in the loop. test/ is included only so a test-only PR still
+          # resolves a feature name to check (and reports "no bump needed"
+          # correctly) — it never counts toward requiring a bump itself.
           touched_files=$(git diff --name-only "${MERGE_BASE}..HEAD" -- src/ test/)
 
           mapfile -t names < <(echo "$touched_files" | awk -F/ '{print $2}' | sort -u)
@@ -53,22 +53,20 @@ jobs:
             new_version=$(jq -r '.version' "$manifest")
             old_version=$(git show "${MERGE_BASE}:${manifest}" 2>/dev/null | jq -r '.version' 2>/dev/null || echo "")
 
-            # A version bump is required for anything under src/<name>/ except
-            # its README, or for test/<name>/test.sh specifically — the one
-            # test file CI runs against every consumer's build. A new
-            # test/<name>/scenarios.json or scenario script is test-only, like
-            # a README change: it verifies a non-default option combination
-            # but doesn't touch what already-published consumers get.
-            non_readme_touched=$({ \
-              echo "$touched_files" | grep -E "^src/${name}/" | grep -v "^src/${name}/README\.md$"; \
-              echo "$touched_files" | grep -E "^test/${name}/test\.sh$"; \
-            } || true)
+            # A version bump is required for anything under src/<name>/
+            # except its README — nothing under test/<name>/ counts,
+            # including test.sh itself. Tests and CI are invisible to the
+            # consumer: bumping for them publishes a new GHCR tag and
+            # triggers a docs rebuild for a change nobody running the
+            # feature can actually see.
+            non_readme_touched=$(echo "$touched_files" \
+              | grep -E "^src/${name}/" | grep -v "^src/${name}/README\.md$" || true)
 
             if [ -z "$old_version" ]; then
               echo "✅ ${name}: new feature, no bump required"
             elif [ "$old_version" = "$new_version" ]; then
               if [ -z "$non_readme_touched" ]; then
-                echo "ℹ️  ${name}: README-only change, version bump optional (still ${new_version})"
+                echo "ℹ️  ${name}: README/test-only change, no bump needed (still ${new_version})"
               else
                 echo "❌ ${name}: touched but version unchanged (${new_version})"
                 FAILED=1
