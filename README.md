@@ -340,6 +340,97 @@ Features from this repository are available via GitHub Container Registry. Refer
 | [peon-ping](./src/peon-ping) | AI agent sound notifications with multi-IDE hooks and Peon Pet extension | [README](./src/peon-ping/README.md) |
 | [org-workspace](./src/org-workspace) | Clone an entire GitHub org into sibling workspace folders with one feature | [README](./src/org-workspace/README.md) |
 
+## Dependency Graph
+
+[`helpers4-common`](./src/helpers4-common) is the shared foundation almost every feature here `dependsOn` — you never add it yourself, it just comes along. A handful of features chain further on top of each other:
+
+```mermaid
+flowchart BT
+    common(["helpers4-common<br/>(implicit base)"])
+    node(["devcontainers/node"])
+    github["github-dev"]
+
+    essential["essential-dev"] --> common
+    typescript["typescript-dev"] --> essential
+    vite["vite-plus"] --> typescript
+    vite --> common
+    playwright["playwright-dev"] --> typescript
+    playwright --> node
+    playwright --> common
+    nub["nub"] --> node
+    nub --> common
+    org["org-workspace"] --> github
+    org --> common
+
+    leaves["auto-header, git-absorb, angular-dev, dotfiles-sync,<br/>package-auto-install, pnpm-store, peon-ping,<br/>shell-history-per-project, claude-dev, mistral-dev,<br/>bitwarden-secrets-manager"] --> common
+```
+
+`github-dev`, `copilot-dev`, and `cline-dev` have no `dependsOn` at all — they only install VS Code extensions and CLI tools, with no shared bootstrap logic to pull in.
+
+## Ready-to-Copy Stacks
+
+### Web dev
+
+```jsonc
+{
+  "features": {
+    "ghcr.io/helpers4/devcontainer/essential-dev:1": {},
+    "ghcr.io/helpers4/devcontainer/typescript-dev:1": {},
+    "ghcr.io/helpers4/devcontainer/vite-plus:1": {},
+    "ghcr.io/helpers4/devcontainer/package-auto-install:1": {},
+    "ghcr.io/helpers4/devcontainer/pnpm-store:1": {}
+  }
+}
+```
+
+### Web dev + E2E testing
+
+Same as above, plus `playwright-dev` for browser automation:
+
+```jsonc
+{
+  "features": {
+    "ghcr.io/helpers4/devcontainer/essential-dev:1": {},
+    "ghcr.io/helpers4/devcontainer/typescript-dev:1": {},
+    "ghcr.io/helpers4/devcontainer/vite-plus:1": {},
+    "ghcr.io/helpers4/devcontainer/package-auto-install:1": {},
+    "ghcr.io/helpers4/devcontainer/pnpm-store:1": {},
+    "ghcr.io/helpers4/devcontainer/playwright-dev:1": {}
+  }
+}
+```
+
+### AI pairing
+
+`github-dev` for the `gh` CLI and PR/Issues tooling, `copilot-dev` and `claude-dev` for two AI assistants side by side, and `peon-ping` so you hear when either one finishes or needs input:
+
+```jsonc
+{
+  "features": {
+    "ghcr.io/helpers4/devcontainer/essential-dev:1": {},
+    "ghcr.io/helpers4/devcontainer/github-dev:1": {},
+    "ghcr.io/helpers4/devcontainer/copilot-dev:1": {},
+    "ghcr.io/helpers4/devcontainer/claude-dev:1": {},
+    "ghcr.io/helpers4/devcontainer/peon-ping:1": {}
+  }
+}
+```
+
+### Multi-repo org bootstrap
+
+This org's own `.dev` repo hand-writes a `mounts` entry per sibling repo to bring `.github`, `action`, `devcontainer`, `typescript`, and `website` into one workspace. [`org-workspace`](./src/org-workspace) replaces that with one feature reference — point it at the org and it clones every repo and generates the multi-root `.code-workspace` file for you:
+
+```jsonc
+{
+  "features": {
+    "ghcr.io/helpers4/devcontainer/github-dev:1": {},
+    "ghcr.io/helpers4/devcontainer/org-workspace:1": {
+      "autoDiscover": "public"
+    }
+  }
+}
+```
+
 ## Documentation
 
 Full documentation is available at [**helpers4.dev/devcontainer**](https://helpers4.dev/devcontainer).
