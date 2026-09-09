@@ -24,6 +24,73 @@ ghcr.io/helpers4/devcontainer/<feature-name>
 
 ## Features
 
+### helpers4-common
+
+Shared bootstrap library every other feature in this repo depends on: a `common.sh` script for user/home detection and apt helpers, plus an automatic git-config self-heal that runs on every attach. This is an internal dependency, not something you add to `devcontainer.json` yourself — it comes along for free with any other helpers4 feature.
+
+**Key benefits:**
+- Repairs broken `credential.helper`/`gpg.program` paths and a missing SSH commit-signing key on every attach, on local and cloud containers alike
+- Nothing to configure — it activates automatically as soon as one helpers4 feature is present
+- A single shared `common.sh` instead of every feature carrying its own copy of user-detection logic
+
+[📖 Documentation](./src/helpers4-common/README.md)
+
+### copilot-dev
+
+GitHub Copilot Chat and the `gh copilot` CLI extension, plus shared instructions that steer Copilot's commit-message, PR-description, and code-review generation toward this org's conventions (Conventional Commits + gitmoji + PR template). Covers the AI assistant only — pair it with `github-dev` for `gh` CLI and the other GitHub platform extensions.
+
+**Key benefits:**
+- GitHub Copilot Chat pre-installed, `gh copilot explain`/`suggest` in the terminal
+- Commit messages and PR descriptions generated to this org's Conventional Commits + gitmoji format automatically
+- Code review instructions focused on correctness and security, not style nitpicks
+- Every instruction is overridable or disableable per-repo
+
+[📖 Documentation](./src/copilot-dev/README.md)
+
+### claude-dev
+
+Installs the Claude Code IDE extension across supported editors and persists `~/.claude` (credentials, config, memory) across every rebuild — including GitHub Codespaces — via a Docker named volume. Optionally installs the `claude` CLI too.
+
+**Key benefits:**
+- Credentials, config, and memory survive every rebuild, `--no-cache` included
+- Shared per host OS user, not per container — no re-login after a rebuild
+- Optional `claude` CLI alongside the IDE extension
+
+[📖 Documentation](./src/claude-dev/README.md)
+
+### mistral-dev
+
+Installs the Mistral Vibe IDE extension across supported editors for AI-assisted coding powered by Mistral. Credentials and configuration persist in a Docker named volume, surviving every rebuild including Codespaces.
+
+**Key benefits:**
+- Credentials and configuration survive every rebuild, `--no-cache` and Codespaces included
+- Shared per host OS user across containers
+- Zero setup beyond adding the feature
+
+[📖 Documentation](./src/mistral-dev/README.md)
+
+### cline-dev
+
+Installs the Cline AI coding agent extension for VS Code and Cursor, and optionally the `cline` CLI. Unlike `claude-dev`/`mistral-dev`, it persists no credentials of its own across rebuilds.
+
+**Key benefits:**
+- Cline extension pre-installed and ready to sign in
+- Optional CLI install via `installCli`
+- No named-volume persistence to manage — Cline handles its own auth
+
+[📖 Documentation](./src/cline-dev/README.md)
+
+### nub
+
+Installs [nub](https://nubjs.com/), a single Rust binary that runs TypeScript/JavaScript files, `package.json` scripts, and local CLIs directly on the Node.js and package manager already in the container — no new runtime, no lock-in. Doesn't manage Node versions itself, so it never competes with the container's own version-selection mechanism.
+
+**Key benefits:**
+- Runs `.ts`/`.js` files and npm scripts without a separate runtime install
+- Built on top of whatever Node + package manager the container already has
+- Pairs with `package-auto-install` (`packageManager: "nub"`) for one-line setup
+
+[📖 Documentation](./src/nub/README.md)
+
 ### vite-plus
 
 Complete Vite+ toolchain setup with VS Code extensions (Oxc, Vitest), optimized configuration, and optional global CLI tools. Perfect for modern web development with React, Vue, Svelte, and more.
@@ -199,6 +266,28 @@ Installs [peon-ping](https://peonping.com/) for game character voice notificatio
 
 [📖 Documentation](./src/peon-ping/README.md)
 
+### bitwarden-secrets-manager
+
+Installs `bws`, the official Bitwarden Secrets Manager CLI, straight from Bitwarden's own GitHub releases. Scoped to non-interactive, machine-account-token auth only — no vault login, no persisted state, no host bind-mounts.
+
+**Key benefits:**
+- Token-only auth via `BWS_ACCESS_TOKEN` — no interactive login flow to script around
+- Nothing persisted or bind-mounted; everything stays inside the container
+- `bws` (Secrets Manager) only — not the `bw` vault CLI, which needs a different auth model
+
+[📖 Documentation](./src/bitwarden-secrets-manager/README.md)
+
+### org-workspace
+
+Clones every repo of a GitHub org into sibling `/workspaces` folders and generates or updates a multi-root `.code-workspace` file — add this to one "bootstrap" project instead of hand-writing `mounts` entries and a workspace file per project.
+
+**Key benefits:**
+- One feature reference brings in an entire org's worth of repos
+- Clones persist across rebuilds via a named volume
+- Auto-discovers the org from the bootstrap repo's own `origin` remote, or takes an explicit repo list
+
+[📖 Documentation](./src/org-workspace/README.md)
+
 ## Usage
 
 Features from this repository are available via GitHub Container Registry. Reference them in your `devcontainer.json`:
@@ -229,8 +318,14 @@ Features from this repository are available via GitHub Container Registry. Refer
 
 | Feature | Description | Documentation |
 |---------|-------------|---------------|
+| [helpers4-common](./src/helpers4-common) | Internal dependency, not added directly — shared bootstrap + automatic git-config self-heal | [README](./src/helpers4-common/README.md) |
 | [essential-dev](./src/essential-dev) | Core dev environment with Git visualization, editor tools, and Markdown | [README](./src/essential-dev/README.md) |
 | [github-dev](./src/github-dev) | gh CLI, Copilot, PR & Issues, Actions, RemoteHub | [README](./src/github-dev/README.md) |
+| [copilot-dev](./src/copilot-dev) | Copilot Chat + gh copilot CLI + shared commit/PR/review instructions | [README](./src/copilot-dev/README.md) |
+| [claude-dev](./src/claude-dev) | Claude Code extension + CLI + persistent `~/.claude` across rebuilds | [README](./src/claude-dev/README.md) |
+| [mistral-dev](./src/mistral-dev) | Mistral Vibe extension + persistent `~/.vibe` across rebuilds | [README](./src/mistral-dev/README.md) |
+| [cline-dev](./src/cline-dev) | Cline AI coding agent extension + optional CLI | [README](./src/cline-dev/README.md) |
+| [nub](./src/nub) | Fast TS/JS/script runner on top of the container's own Node + package manager | [README](./src/nub/README.md) |
 | [auto-header](./src/auto-header) | Automatic file headers with customizable templates (simple or custom) | [README](./src/auto-header/README.md) |
 | [vite-plus](./src/vite-plus) | Complete Vite+ toolchain with Oxc, Vitest, and VS Code integration | [README](./src/vite-plus/README.md) |
 | [playwright-dev](./src/playwright-dev) | Playwright OS deps (Chromium/Firefox/WebKit) + shared browser-binary volume + VS Code extension | [README](./src/playwright-dev/README.md) |
@@ -241,7 +336,9 @@ Features from this repository are available via GitHub Container Registry. Refer
 | [shell-history-per-project](./src/shell-history-per-project) | Per-project shell history persistence with multi-shell auto-detection | [README](./src/shell-history-per-project/README.md) |
 | [git-absorb](./src/git-absorb) | Automatic absorption of staged changes into logical commits | [README](./src/git-absorb/README.md) |
 | [dotfiles-sync](./src/dotfiles-sync) | Sync local Git, SSH, GPG, and npm config — works on macOS, Linux, WSL, Codespaces | [README](./src/dotfiles-sync/README.md) |
+| [bitwarden-secrets-manager](./src/bitwarden-secrets-manager) | `bws` CLI from Bitwarden's own GitHub releases, token-only auth, no persisted state | [README](./src/bitwarden-secrets-manager/README.md) |
 | [peon-ping](./src/peon-ping) | AI agent sound notifications with multi-IDE hooks and Peon Pet extension | [README](./src/peon-ping/README.md) |
+| [org-workspace](./src/org-workspace) | Clone an entire GitHub org into sibling workspace folders with one feature | [README](./src/org-workspace/README.md) |
 
 ## Documentation
 
