@@ -155,6 +155,9 @@ This feature is part of the `helpers4/devcontainer-features` repository. Contrib
 
 ## Version History
 
+- **v1.2.3**: Internal refactor, no behavior change — architecture detection and latest-release
+  resolution now call `helpers4-common`'s `h4_arch_musl_triple` and `h4_github_latest_tag`
+  instead of carrying inline copies of the same logic.
 - **v1.2.2**: Documentation only, no functional change — the previous wording sweep made the
   JSON `description` field far too long, shifting focus away from the feature itself onto the
   self-heal side benefit. Shortened to 5 words and kept generic (no implementation detail like

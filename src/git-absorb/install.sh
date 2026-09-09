@@ -46,19 +46,14 @@ if ! command -v git > /dev/null 2>&1; then
 fi
 
 # Detect architecture
-architecture="$(uname -m)"
-case $architecture in
-    x86_64) architecture="x86_64-unknown-linux-musl";;
-    aarch64 | armv8*) architecture="aarch64-unknown-linux-musl";;
-    *) echo "(!) Architecture $architecture unsupported"; exit 1 ;;
-esac
+architecture="$(h4_arch_musl_triple)" || exit 1
 
 # Install git-absorb
 echo "🎯 Installing git-absorb..."
 
 if [ "${GIT_ABSORB_VERSION}" = "latest" ]; then
     echo "  📦 Fetching latest version..."
-    GIT_ABSORB_VERSION=$(curl -s "https://api.github.com/repos/tummychow/git-absorb/releases/latest" | grep -o '"tag_name": "[^"]*"' | cut -d'"' -f4)
+    GIT_ABSORB_VERSION=$(h4_github_latest_tag tummychow/git-absorb)
     if [ -z "${GIT_ABSORB_VERSION}" ]; then
         echo "(!) Failed to fetch latest version"
         exit 1
