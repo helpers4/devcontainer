@@ -274,6 +274,13 @@ Run `vp migrate` in your project root or see the [migration guide](https://vitep
 
 ## Version History
 
+- **v1.2.3**: Fix — the official installer now defaults to an XDG split layout
+  (`~/.local/share/vite-plus/bin`) instead of the monolithic `~/.vite-plus/bin` this feature
+  assumed, unless `VP_HOME` is explicitly set. Without it, `vp` silently failed to install (no
+  error, no symlink to `/usr/local/bin/vp`) while the feature still printed "installed
+  successfully". Now pins `VP_HOME` explicitly, sets `VP_NODE_MANAGER=no` for a deterministic
+  non-interactive install (per the installer's own documented CI/devcontainer support), and
+  fails loudly if the binary still isn't there afterward instead of silently continuing.
 - **v1.2.2**: Documentation only, no functional change — the previous wording sweep made the
   JSON `description` field far too long, shifting focus away from the feature itself onto the
   self-heal side benefit. Shortened to 5 words and kept generic (no implementation detail like
