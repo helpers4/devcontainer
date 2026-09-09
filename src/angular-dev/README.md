@@ -8,6 +8,19 @@ Angular-specific development environment with VS Code extensions and CLI autocom
 > your SSH commit-signing key on every attach, on both local and cloud containers, with nothing
 > to set up on your end — see [`helpers4-common`](../helpers4-common) for how it works.
 
+## When to use this
+
+Use this feature for an Angular project where you want the curated extension set and CLI
+autocompletion set up without picking them one by one. For general TypeScript/JavaScript
+tooling that isn't Angular-specific, see [`typescript-dev`](../typescript-dev) instead.
+
+**Alternatives:**
+- Angular's own `ng completion` sets up autocompletion too, but you'd need to source it into
+  your shell profile yourself on every container — this feature wires it into both zsh and
+  bash automatically.
+- Hand-picking the 7 extensions below yourself works fine for a one-off project, but drifts
+  across projects and needs to be redone whenever you set up a new devcontainer.
+
 ## Features
 
 - **VS Code extensions**: Essential Angular development extensions pre-installed
@@ -172,6 +185,8 @@ If `ng` command is not available:
 
 ## Version History
 
+- **v1.2.3**: Documentation only, no functional change — added a "When to use this" section
+  with alternatives, matching the equivalent sections other features in this catalog already had.
 - **v1.2.2**: Documentation only, no functional change — the previous wording sweep made the
   JSON `description` field far too long, shifting focus away from the feature itself onto the
   self-heal side benefit. Shortened to 5 words and kept generic (no implementation detail like
