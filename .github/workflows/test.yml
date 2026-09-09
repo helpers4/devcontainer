@@ -117,6 +117,11 @@ jobs:
           - features: github-dev
             baseImage: mcr.microsoft.com/devcontainers/base:ubuntu
 
+          # copilot-dev - no dependsOn on github-dev; gh CLI absent by
+          # default, install.sh's own graceful-skip path
+          - features: copilot-dev
+            baseImage: mcr.microsoft.com/devcontainers/base:ubuntu
+
           # dotfiles-sync - works on any base image
           - features: dotfiles-sync
             baseImage: mcr.microsoft.com/devcontainers/base:debian
@@ -166,6 +171,8 @@ jobs:
           # exists. Add an entry here whenever a feature gains a
           # scenarios.json; see AGENTS.md "Testing non-default options".
           - features: claude-dev
+          - features: cline-dev
+          - features: mistral-dev
 
     steps:
       - name: Checkout
