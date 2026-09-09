@@ -1,0 +1,10 @@
+{
+  "with_cli": {
+    "image": "mcr.microsoft.com/devcontainers/python:3.12",
+    "features": {
+      "mistral-dev": {
+        "installCli": true
+      }
+    }
+  }
+}
