@@ -6,6 +6,15 @@ Installs the **GitHub CLI (`gh`)** and the essential GitHub VS Code **platform**
 
 > **AI assistant:** For GitHub Copilot Chat and the shared commit-message / PR-description generation instructions, use [`copilot-dev`](../copilot-dev) alongside this feature.
 
+## When to use this
+
+Use this when you want `gh` CLI plus the PR/Issues/Actions/RemoteHub VS Code extensions,
+without also pulling in Copilot — the two are kept as separate features on purpose.
+
+**Alternatives:**
+- The official [`ghcr.io/devcontainers/features/github-cli`](https://github.com/devcontainers/features/tree/main/src/github-cli) feature installs just the CLI, no VS Code extensions and no auto-auth — use that instead if the extensions here aren't what you need.
+- Inside GitHub Codespaces, `gh` and a `GITHUB_TOKEN` are already provided by the platform — this feature is still useful there for the VS Code extensions, but the CLI auto-auth step has nothing to do.
+
 ## Usage
 
 ```jsonc
@@ -96,6 +105,8 @@ gh auth login
 
 ## Version History
 
+- **v1.0.7**: Documentation only, no functional change — added a "When to use this" section
+  with alternatives, matching the equivalent sections other features in this catalog already had.
 - **v1.0.6**: Internal cleanup, no behavior change — dropped a dead `_BUILD_ARG_GHVERSION`
   fallback in `install.sh`. That prefix is only ever set for the legacy
   `internalVersion: "1"` manifest shape, which this feature (and every other one in this
