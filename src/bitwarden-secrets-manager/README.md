@@ -10,6 +10,22 @@ This is deliberately **not** a general Bitwarden feature: it installs `bws` (Sec
 > your SSH commit-signing key on every attach, on both local and cloud containers, with nothing
 > to set up on your end — see [`helpers4-common`](../helpers4-common) for how it works.
 
+## When to use this
+
+Use this when a CI-like machine account is the right auth model for your secrets — a
+non-interactive token that reads specific Secrets Manager entries, with nothing to unlock and
+nothing left behind in the container.
+
+**Alternatives:**
+- The `bw` CLI (personal password vault) needs an interactive login/unlock session — a
+  different model this feature doesn't address. See the note above if that's what you need.
+- Other third-party `bws`/Bitwarden features on `ghcr.io` bind-mount `~/.config/bws` from the
+  host to persist login state — this feature avoids that on purpose (see
+  [Why no bind mount, no persisted login](#why-no-bind-mount-no-persisted-login) below).
+- You could skip this feature entirely and just install `bws` yourself in a `postCreateCommand`
+  — this feature's value is the verified download (SHA-256 checked against Bitwarden's own
+  published checksums) and the correct `bws-` release-tag filtering, not licensing logic.
+
 ## Usage
 
 Add this feature to your `devcontainer.json`, and pass your Secrets Manager machine account access token through as an environment variable:
@@ -55,6 +71,8 @@ Supported architectures: `x86_64` and `aarch64`/`arm64` (e.g. Oracle Cloud Amper
 
 ## Version History
 
+- **v1.2.3**: Documentation only, no functional change — added a "When to use this" section
+  with alternatives, matching the equivalent sections other features in this catalog already had.
 - **v1.2.2**: Documentation only, no functional change — the previous wording sweep made the
   JSON `description` field far too long, shifting focus away from the feature itself onto the
   self-heal side benefit. Shortened to 5 words and kept generic (no implementation detail like
