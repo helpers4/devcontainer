@@ -447,6 +447,21 @@ Features can be tested locally using the [DevContainer CLI](https://github.com/d
 devcontainer features test --features shell-history-per-project
 ```
 
+That installs the CLI on your host. To have it available **inside** a devcontainer instead —
+useful for testing this repo's own features without a Node.js install on the host, or for
+building/running a nested devcontainer — add the community
+[`ghcr.io/devcontainers-extra/features/devcontainers-cli`](https://github.com/devcontainers-extra/features/tree/main/src/devcontainers-cli)
+feature. It already does exactly this (a thin wrapper around `npm install -g @devcontainers/cli`),
+so this repo doesn't duplicate it with a feature of its own:
+
+```jsonc
+{
+  "features": {
+    "ghcr.io/devcontainers-extra/features/devcontainers-cli:1": {}
+  }
+}
+```
+
 ### Publishing
 
 Features are automatically published to GitHub Container Registry via GitHub Actions when tagged releases are created.
