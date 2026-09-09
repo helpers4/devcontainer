@@ -71,6 +71,9 @@ Supported architectures: `x86_64` and `aarch64`/`arm64` (e.g. Oracle Cloud Amper
 
 ## Version History
 
+- **v1.2.4**: Internal refactor, no behavior change — architecture detection and latest-release
+  resolution now call `helpers4-common`'s `h4_arch_musl_triple` and `h4_github_latest_tag`
+  instead of carrying inline copies of the same logic.
 - **v1.2.3**: Documentation only, no functional change — added a "When to use this" section
   with alternatives, matching the equivalent sections other features in this catalog already had.
 - **v1.2.2**: Documentation only, no functional change — the previous wording sweep made the

@@ -42,11 +42,7 @@ h4_ensure_packages curl ca-certificates unzip
 case "${BWS_VERSION_INPUT}" in
     latest)
         echo "  📦 Fetching latest bws release..."
-        # grep -o exits 1 on no match, which under pipefail would otherwise
-        # kill the script right here — before the check below ever runs — on
-        # any transient API hiccup, with no diagnostic. The trailing
-        # `|| true` lets that check do its job instead.
-        BWS_TAG="$(curl -s "https://api.github.com/repos/bitwarden/sdk-sm/releases" | grep -o '"tag_name": *"bws-[^"]*"' | head -1 | cut -d'"' -f4 || true)"
+        BWS_TAG="$(h4_github_latest_tag bitwarden/sdk-sm bws-)"
         if [ -z "${BWS_TAG}" ]; then
             echo "(!) Failed to fetch latest bws release"
             exit 1
@@ -66,12 +62,7 @@ VERSION_NUMBER="${BWS_TAG#bws-v}"
 # built, never on the host — so unlike bws's own multi-OS releases, there is
 # no Darwin case to detect here. Only the architecture varies (Oracle Cloud
 # Ampere A1 targets are aarch64).
-architecture="$(uname -m)"
-case "${architecture}" in
-    x86_64) target="x86_64-unknown-linux-musl" ;;
-    aarch64 | arm64) target="aarch64-unknown-linux-musl" ;;
-    *) echo "(!) Architecture ${architecture} unsupported"; exit 1 ;;
-esac
+target="$(h4_arch_musl_triple)" || exit 1
 
 ASSET_NAME="bws-${target}-${VERSION_NUMBER}.zip"
 CHECKSUMS_NAME="bws-sha256-checksums-${VERSION_NUMBER}.txt"
