@@ -8,6 +8,20 @@ Automatically configures VS Code with customizable file headers based on your pr
 > your SSH commit-signing key on every attach, on both local and cloud containers, with nothing
 > to set up on your end — see [`helpers4-common`](../helpers4-common) for how it works.
 
+## When to use this
+
+Use this when you want every new file in a project to carry a consistent license/copyright
+header — SPDX identifier, project name, company, contributors — without anyone copy-pasting it
+by hand or forgetting it.
+
+**Alternatives:**
+- VS Code extensions like `psioniq File Header` do the same job, but you configure the template
+  yourself in `settings.json`; this feature derives the template from `projectName`/`license`/
+  `company` options and writes the VS Code config for you.
+- A CI-side license-header linter (e.g. a pre-commit hook or a dedicated Actions step) enforces
+  headers on files that slip through, which pairs well with this feature rather than replacing
+  it — this one generates headers as you create files, a linter catches anything that wasn't.
+
 ## Features
 
 ✨ **Two header styles**:
@@ -273,6 +287,8 @@ Licensed under LGPL-3.0 - see LICENSE file for details
 
 ## Version History
 
+- **v1.2.3**: Documentation only, no functional change — added a "When to use this" section
+  with alternatives, matching the equivalent sections other features in this catalog already had.
 - **v1.2.2**: Documentation only, no functional change — the previous wording sweep made the
   JSON `description` field far too long, shifting focus away from the feature itself onto the
   self-heal side benefit. Shortened to 5 words and kept generic (no implementation detail like
