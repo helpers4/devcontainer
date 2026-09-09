@@ -42,8 +42,8 @@ devcontainer features test .
 | `playwright-dev` | 1.2.3 | Playwright OS deps (Chromium/Firefox/WebKit) + shared browser-binary volume + VS Code extension |
 | `pnpm-store` | 1.2.4 | Shared pnpm store via Docker named volume (dependsOn helpers4-common) |
 | `auto-header` | 1.2.3 | LGPL-3.0 license headers |
-| `git-absorb` | 1.2.2 | git-absorb from GitHub releases |
-| `bitwarden-secrets-manager` | 1.2.3 | `bws` CLI from bitwarden/sdk-sm GitHub releases, token-only auth, no persisted state |
+| `git-absorb` | 1.2.3 | git-absorb from GitHub releases |
+| `bitwarden-secrets-manager` | 1.2.4 | `bws` CLI from bitwarden/sdk-sm GitHub releases, token-only auth, no persisted state |
 | `dotfiles-sync` | 1.2.3 | Sync Git/SSH/GPG/npm/gh config from host; SSH key files opt-in (dependsOn helpers4-common) |
 | `peon-ping` | 1.2.3 | AI agent sound notifications |
 | `shell-history-per-project` | 1.2.3 | Persistent shell history (zsh/bash/fish) |
