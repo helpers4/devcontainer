@@ -29,24 +29,24 @@ devcontainer features test .
 | ------- | --- | ----------- |
 | `helpers4-common` | 1.2.1 | Bootstrap: `common.sh` (user detection, apt helpers, cloud-env detection) + automatic git-config self-heal on every attach — all features depend on this |
 | `essential-dev` | 1.2.4 | Git visualization, editor enhancements, Markdown |
-| `github-dev` | 1.0.6 | gh CLI, Copilot Chat, PR/Issues/Actions extensions |
+| `github-dev` | 1.0.7 | gh CLI, Copilot Chat, PR/Issues/Actions extensions |
 | `copilot-dev` | 1.0.4 | Copilot Chat + AI instructions (commits, PRs, code review) |
 | `claude-dev` | 1.2.4 | Claude Code extension + CLI + `~/.claude` named-volume persistence (credentials + memory) |
 | `mistral-dev` | 1.2.4 | Mistral Vibe extension + `~/.vibe` named-volume persistence |
 | `cline-dev` | 1.0.1 | Cline extension (`saoudrizwan.claude-dev`) + optional CLI, no credential persistence |
 | `nub` | 1.2.2 | Fast TS/JS/script runner on top of existing node+package-manager (dependsOn node) |
 | `typescript-dev` | 1.0.8 | TS/JS dev, import management (dependsOn essential-dev) |
-| `angular-dev` | 1.2.2 | Angular dev, port 4200 |
+| `angular-dev` | 1.2.3 | Angular dev, port 4200 |
 | `vite-plus` | 1.2.2 | vp CLI, Oxlint/Oxfmt, Vitest |
 | `package-auto-install` | 1.2.3 | Auto-detect and install packages (npm/yarn/pnpm/nub) |
 | `playwright-dev` | 1.2.3 | Playwright OS deps (Chromium/Firefox/WebKit) + shared browser-binary volume + VS Code extension |
 | `pnpm-store` | 1.2.3 | Shared pnpm store via Docker named volume (dependsOn helpers4-common) |
-| `auto-header` | 1.2.2 | LGPL-3.0 license headers |
+| `auto-header` | 1.2.3 | LGPL-3.0 license headers |
 | `git-absorb` | 1.2.2 | git-absorb from GitHub releases |
-| `bitwarden-secrets-manager` | 1.2.2 | `bws` CLI from bitwarden/sdk-sm GitHub releases, token-only auth, no persisted state |
+| `bitwarden-secrets-manager` | 1.2.3 | `bws` CLI from bitwarden/sdk-sm GitHub releases, token-only auth, no persisted state |
 | `dotfiles-sync` | 1.2.3 | Sync Git/SSH/GPG/npm/gh config from host; SSH key files opt-in (dependsOn helpers4-common) |
 | `peon-ping` | 1.2.3 | AI agent sound notifications |
-| `shell-history-per-project` | 1.2.2 | Persistent shell history (zsh/bash/fish) |
+| `shell-history-per-project` | 1.2.3 | Persistent shell history (zsh/bash/fish) |
 | `org-workspace` | 1.0.0 | Clones every repo of a GitHub org into sibling `/workspaces` folders + generates/merges a multi-root `.code-workspace` (dependsOn helpers4-common, github-dev) |
 
 **Adding a new feature — checklist:**
