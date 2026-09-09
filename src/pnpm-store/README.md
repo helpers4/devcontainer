@@ -66,6 +66,13 @@ If another feature installs pnpm, you may need
 [`overrideFeatureInstallOrder`](https://containers.dev/implementors/features/#overrideFeatureInstallOrder)
 to ensure it runs before `pnpm-store`.
 
+## Compatibility with nub
+
+[`nub`](../nub) has its own embedded install engine rather than shelling out to `pnpm`, but it
+reads the same `store-dir`/`storeDir` config this feature writes and hardlinks package content
+from it — verified directly, including an offline reinstall with `nub`'s own cache cleared. The
+two features are safe to combine; see `nub`'s README for details.
+
 ## OS and Architecture Support
 
 - **OS:** Debian, Ubuntu (any base image)
@@ -74,6 +81,9 @@ to ensure it runs before `pnpm-store`.
 
 ## Version History
 
+- **v1.2.4**: Documentation only, no functional change — added a "Compatibility with nub" section
+  documenting a verified finding: `nub install` hardlinks package content from this feature's
+  shared store instead of duplicating it.
 - **v1.2.3**: Internal refactor, no behavior change — the store-directory ownership logic
   (chown to the current user when needed) now calls `helpers4-common`'s
   `h4_ensure_volume_writable` instead of carrying its own inline copy.
