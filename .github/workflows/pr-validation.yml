@@ -53,12 +53,16 @@ jobs:
             new_version=$(jq -r '.version' "$manifest")
             old_version=$(git show "${MERGE_BASE}:${manifest}" 2>/dev/null | jq -r '.version' 2>/dev/null || echo "")
 
-            # README-only changes don't require a bump — the README is the
-            # only file where a diff can't change what actually ships. Every
-            # other file (install.sh, the manifest, test/<name>/test.sh, ...)
-            # still does.
-            non_readme_touched=$(echo "$touched_files" \
-              | grep -E "^(src|test)/${name}/" | grep -v "^src/${name}/README\.md$" || true)
+            # A version bump is required for anything under src/<name>/ except
+            # its README, or for test/<name>/test.sh specifically — the one
+            # test file CI runs against every consumer's build. A new
+            # test/<name>/scenarios.json or scenario script is test-only, like
+            # a README change: it verifies a non-default option combination
+            # but doesn't touch what already-published consumers get.
+            non_readme_touched=$({ \
+              echo "$touched_files" | grep -E "^src/${name}/" | grep -v "^src/${name}/README\.md$"; \
+              echo "$touched_files" | grep -E "^test/${name}/test\.sh$"; \
+            } || true)
 
             if [ -z "$old_version" ]; then
               echo "✅ ${name}: new feature, no bump required"

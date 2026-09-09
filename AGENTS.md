@@ -51,6 +51,11 @@ re-run once per that job's `baseImage` matrix entries. Not every option needs a 
 reserve it for an off-by-default path whose failure mode is silent (a warn-and-continue on
 install failure, not a hard `exit 1`) rather than one that already fails loudly if broken.
 
+Adding a `scenarios.json` or scenario script doesn't need a version bump — like a README, it
+verifies an existing option combination without changing what already-published consumers get.
+Only `test/<name>/test.sh` itself (the one CI runs against every consumer's build) triggers the
+version-bump-check below.
+
 **Available features:**
 
 | Feature | Ver | Description |
@@ -59,7 +64,7 @@ install failure, not a hard `exit 1`) rather than one that already fails loudly 
 | `essential-dev` | 1.2.4 | Git visualization, editor enhancements, Markdown |
 | `github-dev` | 1.0.7 | gh CLI, Copilot Chat, PR/Issues/Actions extensions |
 | `copilot-dev` | 1.0.4 | Copilot Chat + AI instructions (commits, PRs, code review) |
-| `claude-dev` | 1.2.5 | Claude Code extension + CLI + `~/.claude` named-volume persistence (credentials + memory) |
+| `claude-dev` | 1.2.4 | Claude Code extension + CLI + `~/.claude` named-volume persistence (credentials + memory) |
 | `mistral-dev` | 1.2.4 | Mistral Vibe extension + `~/.vibe` named-volume persistence |
 | `cline-dev` | 1.0.1 | Cline extension (`saoudrizwan.claude-dev`) + optional CLI, no credential persistence |
 | `nub` | 1.2.3 | Fast TS/JS/script runner on top of existing node+package-manager (dependsOn node) |

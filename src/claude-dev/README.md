@@ -93,9 +93,6 @@ without depending on that user's shell profile already including
 
 ## Version History
 
-- **v1.2.5**: Test-only change, no behavior change — added a `with_cli` scenario test
-  (`installCli: true`), the default-off code path that plain `test.sh` never exercises. See
-  AGENTS.md "Testing non-default options".
 - **v1.2.4**: Internal cleanup, no behavior change — dropped dead `_BUILD_ARG_*` fallbacks in
   `install.sh` (`INSTALLCLI`, `USERNAME`). That prefix is only ever set for the legacy
   `internalVersion: "1"` manifest shape, which this feature (and every other one in this
