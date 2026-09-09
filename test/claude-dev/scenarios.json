@@ -1,0 +1,10 @@
+{
+  "with_cli": {
+    "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+    "features": {
+      "claude-dev": {
+        "installCli": true
+      }
+    }
+  }
+}
