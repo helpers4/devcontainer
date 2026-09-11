@@ -77,6 +77,16 @@ else
     exit 1
 fi
 
+# Test 3b: the guard claims ownership with --shared — this volume is shared across every
+# local project for this host OS user (${localEnv:USER}), so a plain chown would race with
+# a second, concurrently-running project that resolved a different container UID.
+if grep -q -- '--shared' "${GUARD}"; then
+    echo "✅ PASS: guard script uses --shared ownership (volume is shared across projects)"
+else
+    echo "❌ FAIL: guard script does not use --shared ownership"
+    exit 1
+fi
+
 # Test 4: if pnpm is available, it must report the configured store-dir.
 if command -v pnpm >/dev/null 2>&1; then
     configured="$(pnpm config get store-dir 2>/dev/null || echo '')"

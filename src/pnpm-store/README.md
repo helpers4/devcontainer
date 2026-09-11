@@ -35,8 +35,13 @@ inside each project.
 ```
 
 The feature is **zero-config**: it declares its own named-volume mount
-(`helpers4-pnpm-store` → `/workspaces/.pnpm-store`) and points pnpm at it. No
-manual `mounts` entry and no options required.
+(`helpers4-pnpm-store-${localEnv:USER}` → `/workspaces/.pnpm-store`) and points pnpm at it. No
+manual `mounts` entry and no options required. The volume name includes `${localEnv:USER}`, so
+it's shared across every local devcontainer for the same host OS user — not just every repo
+inside one devcontainer — matching how pnpm's own store already works on a bare-metal machine.
+Content-addressed package bytes carry no registry credentials (those stay in `~/.npmrc`, handled
+separately by `dotfiles-sync`), so unlike an AI tool's credentials volume, there's no
+identity/permissions surface to leak between otherwise-unrelated projects.
 
 ## How it works
 
@@ -81,6 +86,13 @@ two features are safe to combine; see `nub`'s README for details.
 
 ## Version History
 
+- **v1.3.0**: The store volume is now keyed by `${localEnv:USER}` instead of
+  `${devcontainerId}` — shared across every local devcontainer for this host OS user, not just
+  every repo inside one devcontainer, matching pnpm's own bare-metal default of one global
+  store. Safe unlike an AI tool's credentials volume: the store holds only hash-addressed
+  package bytes, never registry tokens. `h4_ensure_volume_writable` is now called with
+  `--shared`, since a second, concurrently-running devcontainer can resolve a different
+  container UID.
 - **v1.2.4**: Documentation only, no functional change — added a "Compatibility with nub" section
   documenting a verified finding: `nub install` hardlinks package content from this feature's
   shared store instead of duplicating it.

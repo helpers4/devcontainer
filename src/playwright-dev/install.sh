@@ -114,18 +114,29 @@ if [ ! -d "${BROWSERS_PATH}" ]; then
         || { echo "❌ playwright-dev: could not create ${BROWSERS_PATH}"; exit 1; }
 fi
 
-# This volume is exclusive to this devcontainer (keyed by ${devcontainerId} — see
-# devcontainer-feature.json), so no --shared: no other container can be concurrently
-# using it, reassigning ownership outright is always safe.
-h4_ensure_volume_writable "${BROWSERS_PATH}"
+# Unlike claude-dev/mistral-dev's credentials volumes, this one is deliberately shared
+# across every local project for the same host OS user — see devcontainer-feature.json
+# (${localEnv:USER}). A second, concurrently-running project can have a different
+# container UID, so --shared. Browser binaries are just downloaded artifacts, not an
+# identity/permissions surface, so sharing them across a user's own projects has none of
+# the cross-project bleed risk that made claude-dev/mistral-dev move away from it.
+h4_ensure_volume_writable "${BROWSERS_PATH}" --shared
 
-# Download the actual browser binaries only if not already fetched for this
-# browser selection. A completion marker (rather than "directory non-empty")
-# is used so an interrupted first download gets retried on the next start
-# instead of being silently treated as done forever; the marker is scoped
-# per browser selection so switching the `browsers` option after a rebuild
-# re-triggers a download instead of trusting a stale, incomplete cache.
-MARKER="${BROWSERS_PATH}/.h4-installed-${BROWSER_ARG:-all}"
+# Download the actual browser binaries only if not already fetched for this Playwright
+# version + browser selection. A completion marker (rather than "directory non-empty") is
+# used so an interrupted first download gets retried on the next start instead of being
+# silently treated as done forever; the marker is scoped per browser selection so switching
+# the `browsers` option after a rebuild re-triggers a download instead of trusting a stale,
+# incomplete cache.
+#
+# The Playwright version is also part of the marker now that this volume is shared across
+# every local project (see devcontainer-feature.json): two projects can pin different
+# Playwright versions needing different browser revisions. Playwright's own cache already
+# namespaces binaries by revision (e.g. chromium-1091/) so this never collides — it only
+# guards our own "already installed" shortcut from wrongly skipping a download some other
+# project's version never actually fetched.
+PLAYWRIGHT_VERSION="$(npx -y playwright --version 2>/dev/null | awk '{print $NF}')"
+MARKER="${BROWSERS_PATH}/.h4-installed-${PLAYWRIGHT_VERSION:-unknown}-${BROWSER_ARG:-all}"
 if [ ! -f "${MARKER}" ]; then
     echo "📥 playwright-dev: downloading browser binaries (${BROWSER_ARG:-all}) into ${BROWSERS_PATH}..."
     # No @latest pin — see install.sh's install-deps step for why.

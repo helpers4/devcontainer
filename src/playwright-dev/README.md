@@ -73,7 +73,9 @@ If your project only needs Chromium (e.g. CDP-based WebAuthn testing), skip the 
 
 ## Browser cache volume
 
-Binaries live in a Docker named volume (`helpers4-playwright-browsers-${devcontainerId}`) mounted at `/usr/local/share/playwright-browsers`, exposed to every shell via `PLAYWRIGHT_BROWSERS_PATH`. A `postCreateCommand` guard script takes ownership of the volume at container creation and downloads the browsers only if they haven't been fetched yet for the current `browsers` selection — so a rebuild reuses what's already there instead of re-fetching.
+Binaries live in a Docker named volume (`helpers4-playwright-browsers-${localEnv:USER}`) mounted at `/usr/local/share/playwright-browsers`, exposed to every shell via `PLAYWRIGHT_BROWSERS_PATH`. The volume name includes `${localEnv:USER}`, so it's shared across every local devcontainer for the same host OS user — not just rebuilds of one project — the same reasoning as [`pnpm-store`](../pnpm-store): browser binaries are downloaded, versioned artifacts with no credentials attached, so sharing them across your own projects has none of the cross-project bleed risk that keeps an AI tool's credentials volume ([`claude-dev`](../claude-dev), [`mistral-dev`](../mistral-dev)) scoped per devcontainer instead.
+
+A `postCreateCommand` guard script takes ownership of the volume at container creation (with `--shared`, since a second, concurrently-running project can resolve a different container UID) and downloads the browsers only if they haven't been fetched yet for the current Playwright version + `browsers` selection — the version is part of the completion marker specifically because the cache is now shared: two projects pinning different Playwright versions can need different browser revisions, and only the marker (not Playwright's own revision-namespaced cache layout) would otherwise get that wrong.
 
 ```bash
 # Confirm what's cached
@@ -148,6 +150,16 @@ npx playwright install
 
 ## Version History
 
+- **v1.3.0**: The browser-cache volume is now keyed by `${localEnv:USER}` instead of
+  `${devcontainerId}` — shared across every local devcontainer for this host OS user instead of
+  exclusive to one project, avoiding redundant downloads across your own projects. Safe unlike
+  an AI tool's credentials volume: browser binaries carry no identity/permissions surface to
+  leak between projects. `h4_ensure_volume_writable` is now called with `--shared`. The download
+  completion marker is now also scoped by the resolved Playwright version (previously just the
+  `browsers` selection) — necessary now that the cache is shared, since two projects can pin
+  different Playwright versions needing different browser revisions; without this, whichever
+  project populated the shared cache first would cause a different project's version to wrongly
+  skip its own download.
 - **v1.2.3**: Internal refactor, no behavior change — the browser-cache ownership logic
   (chown to the current user when needed) now calls `helpers4-common`'s
   `h4_ensure_volume_writable` instead of carrying its own inline copy.
