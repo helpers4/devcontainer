@@ -91,7 +91,32 @@ fi
 # "microsoft" in /proc/version from the WSL2 kernel, so peon-ping misdetects
 # "wsl" and hard-requires powershell.exe (unavailable in the build sandbox),
 # exiting before the binary is even installed.
-su - "${USERNAME}" -c "curl -fsSL https://raw.githubusercontent.com/PeonPing/peon-ping/main/install.sh | REMOTE_CONTAINERS=true bash -s -- ${INSTALLER_ARGS}" || \
+#
+# When the claude-dev feature is also installed (installsAfter guarantees it has already run,
+# so its generated setup-credentials.sh already exists), redirect the *entire* install (binary,
+# packs, adapters, skills, and the Claude Code hook entries the installer writes into its own
+# settings.json) away from ~/.claude via CLAUDE_CONFIG_DIR. claude-dev's own postStartCommand
+# does `rm -rf ~/.claude` and replaces it with a symlink to a Docker volume shared across every
+# project for this host user (see claude-dev's setup-credentials.sh) — anything peon-ping wrote
+# straight into ~/.claude at build time would be lost the moment that runs, and would clobber
+# other projects' pack/volume choices if it landed in the shared volume instead.
+# PEON_STABLE_HOME then stays entirely inside this container's own filesystem, unaffected either
+# way and never leaking between projects. patch-hosts.sh's postStartCommand sibling
+# (seed-claude-hooks.sh) re-links ~/.claude/hooks/peon-ping and ~/.claude/skills/peon-ping-* into
+# it, and merges the Claude Code hook entries into the real ~/.claude/settings.json, once
+# claude-dev has finished swapping ~/.claude for the real one.
+#
+# Without claude-dev, ~/.claude is just an ordinary directory for the life of the container, so
+# there's nothing to work around — install straight into it, as peon-ping does by default.
+CLAUDE_DEV_MARKER="/usr/local/share/claude-dev/setup-credentials.sh"
+if [ -f "${CLAUDE_DEV_MARKER}" ]; then
+    PEON_STABLE_HOME="${USER_HOME}/.local/share/peon-ping/claude-home"
+    INSTALL_ENV="CLAUDE_CONFIG_DIR='${PEON_STABLE_HOME}' "
+else
+    PEON_STABLE_HOME="${USER_HOME}/.claude"
+    INSTALL_ENV=""
+fi
+su - "${USERNAME}" -c "curl -fsSL https://raw.githubusercontent.com/PeonPing/peon-ping/main/install.sh | ${INSTALL_ENV}REMOTE_CONTAINERS=true bash -s -- ${INSTALLER_ARGS}" || \
     echo "⚠️  peon-ping installer exited with errors (sound test failure during build is expected)"
 
 # Verify the binary was actually installed (fail now if curl/download truly failed)
@@ -101,9 +126,35 @@ if [ ! -x "${PEON_BIN}" ] && ! su - "${USERNAME}" -c "command -v peon" > /dev/nu
     exit 1
 fi
 
+# With claude-dev, save the Claude Code hook entries the installer wrote into
+# PEON_STABLE_HOME/settings.json as a standalone fragment, with their absolute paths rewritten
+# from PEON_STABLE_HOME to the real ~/.claude — so seed-claude-hooks.sh can merge them into the
+# real settings.json later without needing to know anything about peon-ping's install layout.
+CLAUDE_REAL_DIR="${USER_HOME}/.claude"
+if [ "${PEON_STABLE_HOME}" != "${CLAUDE_REAL_DIR}" ]; then
+    PEON_HOOKS_SETTINGS="${PEON_STABLE_HOME}/settings.json"
+    PEON_HOOKS_FRAGMENT="${USER_HOME}/.local/share/peon-ping/claude-hooks.json"
+
+    if [ -f "${PEON_HOOKS_SETTINGS}" ] && command -v python3 > /dev/null 2>&1; then
+        python3 << PYEOF
+import json
+
+try:
+    with open("${PEON_HOOKS_SETTINGS}") as f:
+        hooks = json.load(f).get("hooks", {})
+    rewritten = json.dumps(hooks).replace("${PEON_STABLE_HOME}", "${CLAUDE_REAL_DIR}")
+    with open("${PEON_HOOKS_FRAGMENT}", "w") as f:
+        f.write(rewritten)
+except (json.JSONDecodeError, OSError) as e:
+    print(f"⚠️  Could not save Claude Code hooks fragment: {e}")
+PYEOF
+        chown "${USERNAME}:${USERNAME}" "${PEON_HOOKS_FRAGMENT}" 2>/dev/null || true
+    fi
+fi
+
 # ── Set volume ───────────────────────────────────────────────────────────────
 
-PEON_CONFIG_DIR="${USER_HOME}/.claude/hooks/peon-ping"
+PEON_CONFIG_DIR="${PEON_STABLE_HOME}/hooks/peon-ping"
 PEON_CONFIG="${PEON_CONFIG_DIR}/config.json"
 
 if [ -f "${PEON_CONFIG}" ] && command -v python3 > /dev/null 2>&1; then
@@ -328,11 +379,12 @@ EOF
     echo "   ✅ Codex hooks written to ${CODEX_CONFIG}"
 fi
 
-# ── host.docker.internal patch (postStartCommand) ───────────────────────────
+# ── postStartCommand scripts ─────────────────────────────────────────────────
 
 mkdir -p /usr/local/share/peon-ping
 cp "$(dirname "$0")/patch-hosts.sh" /usr/local/share/peon-ping/patch-hosts.sh
-chmod +x /usr/local/share/peon-ping/patch-hosts.sh
+cp "$(dirname "$0")/seed-claude-hooks.sh" /usr/local/share/peon-ping/seed-claude-hooks.sh
+chmod +x /usr/local/share/peon-ping/patch-hosts.sh /usr/local/share/peon-ping/seed-claude-hooks.sh
 
 # ── Verify installation ─────────────────────────────────────────────────────
 

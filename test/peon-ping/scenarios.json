@@ -1,0 +1,11 @@
+{
+  "with_claude_dev": {
+    "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+    "features": {
+      "claude-dev": {},
+      "peon-ping": {
+        "packs": "peon"
+      }
+    }
+  }
+}

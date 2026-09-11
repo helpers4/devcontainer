@@ -129,6 +129,24 @@ If that patch can't run for some reason (`/etc/hosts` not writable, `sudo` unava
 container's startup log for a `peon-ping: could not write /etc/hosts` warning), fall back to
 adding this to your `devcontainer.json` and rebuilding:
 
+### Coexisting with `claude-dev`
+
+The [`claude-dev`](../claude-dev) feature persists `~/.claude` across rebuilds by replacing it
+(`rm -rf` + symlink) with a Docker volume shared across every local project for the same host OS
+user, on every container start. If peon-ping installed itself straight into `~/.claude` like the
+upstream installer does by default, that swap would wipe it on every start — and if it landed in
+the shared volume instead, one project's chosen packs/volume would clobber another's.
+
+Instead, when `claude-dev` is present, peon-ping installs into a per-container path
+(`~/.local/share/peon-ping/claude-home`, via `CLAUDE_CONFIG_DIR`) that `claude-dev`'s swap never
+touches, and a second `postStartCommand` (`seed-claude-hooks.sh`, ordered after `claude-dev` via
+`installsAfter`) re-links `~/.claude/hooks/peon-ping` and `~/.claude/skills/peon-ping-*` into it,
+and merges the Claude Code hook entries into the real `~/.claude/settings.json`. Nothing
+project-specific ever touches the shared volume — only a fixed, install-invariant hook
+registration does, the same way `claude-dev` already shares permissions and memory across
+projects. No configuration needed; this happens automatically whenever both features are
+installed, and is a no-op otherwise.
+
 ```jsonc
 {
   "runArgs": ["--add-host=host.docker.internal:host-gateway"]
@@ -221,6 +239,15 @@ peon packs list           # List installed packs
 
 ## Version History
 
+- **v1.3.0**: Fixed peon-ping never actually working for Claude Code when the `claude-dev`
+  feature is also installed — its `postStartCommand` replaces `~/.claude` with a symlink to a
+  persistent volume on every start, which silently discarded everything peon-ping had installed
+  at build time (including the `peon` binary itself, leaving `command not found`). peon-ping now
+  installs into a per-container path claude-dev's swap never touches, and a new
+  `seed-claude-hooks.sh` postStartCommand (ordered after claude-dev via `installsAfter`) re-links
+  it into the real `~/.claude` and merges its Claude Code hook entries into the real
+  `settings.json` — see "Coexisting with claude-dev" above. No behavior change when claude-dev
+  isn't installed.
 - **v1.2.3**: Removes the manual `runArgs` step on native Linux Docker — a new `postStartCommand`
   (`patch-hosts.sh`) derives the container's default gateway from `/proc/net/route` (the same IP
   `--add-host=host.docker.internal:host-gateway` would have resolved to) and adds it to the

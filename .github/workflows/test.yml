@@ -173,6 +173,7 @@ jobs:
           - features: claude-dev
           - features: cline-dev
           - features: mistral-dev
+          - features: peon-ping
 
     steps:
       - name: Checkout
