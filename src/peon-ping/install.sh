@@ -96,15 +96,14 @@ fi
 # so its generated setup-credentials.sh already exists), redirect the *entire* install (binary,
 # packs, adapters, skills, and the Claude Code hook entries the installer writes into its own
 # settings.json) away from ~/.claude via CLAUDE_CONFIG_DIR. claude-dev's own postStartCommand
-# does `rm -rf ~/.claude` and replaces it with a symlink to a Docker volume shared across every
-# project for this host user (see claude-dev's setup-credentials.sh) — anything peon-ping wrote
-# straight into ~/.claude at build time would be lost the moment that runs, and would clobber
-# other projects' pack/volume choices if it landed in the shared volume instead.
-# PEON_STABLE_HOME then stays entirely inside this container's own filesystem, unaffected either
-# way and never leaking between projects. patch-hosts.sh's postStartCommand sibling
-# (seed-claude-hooks.sh) re-links ~/.claude/hooks/peon-ping and ~/.claude/skills/peon-ping-* into
-# it, and merges the Claude Code hook entries into the real ~/.claude/settings.json, once
-# claude-dev has finished swapping ~/.claude for the real one.
+# does `rm -rf ~/.claude` and replaces it with a symlink to its persistent volume on *every*
+# container start (see claude-dev's setup-credentials.sh) — anything peon-ping wrote straight
+# into ~/.claude at build time would be lost the moment that runs, regardless of whether that
+# volume is exclusive to this devcontainer or shared with others. PEON_STABLE_HOME stays
+# entirely inside this container's own filesystem, unaffected by that swap. patch-hosts.sh's
+# postStartCommand sibling (seed-claude-hooks.sh) re-links ~/.claude/hooks/peon-ping and
+# ~/.claude/skills/peon-ping-* into it, and merges the Claude Code hook entries into the real
+# ~/.claude/settings.json, once claude-dev has finished swapping ~/.claude for the real one.
 #
 # Without claude-dev, ~/.claude is just an ordinary directory for the life of the container, so
 # there's nothing to work around — install straight into it, as peon-ping does by default.

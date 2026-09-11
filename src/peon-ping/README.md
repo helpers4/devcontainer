@@ -132,19 +132,18 @@ adding this to your `devcontainer.json` and rebuilding:
 ### Coexisting with `claude-dev`
 
 The [`claude-dev`](../claude-dev) feature persists `~/.claude` across rebuilds by replacing it
-(`rm -rf` + symlink) with a Docker volume shared across every local project for the same host OS
-user, on every container start. If peon-ping installed itself straight into `~/.claude` like the
-upstream installer does by default, that swap would wipe it on every start — and if it landed in
-the shared volume instead, one project's chosen packs/volume would clobber another's.
+(`rm -rf` + symlink) with a Docker volume dedicated to this devcontainer, on every container
+start. If peon-ping installed itself straight into `~/.claude` like the upstream installer does
+by default, that swap would wipe it on every start — the volume isn't mounted yet at image build
+time, when peon-ping actually installs, so anything it wrote directly into `~/.claude` is gone
+the moment `claude-dev`'s `postStartCommand` runs.
 
 Instead, when `claude-dev` is present, peon-ping installs into a per-container path
 (`~/.local/share/peon-ping/claude-home`, via `CLAUDE_CONFIG_DIR`) that `claude-dev`'s swap never
 touches, and a second `postStartCommand` (`seed-claude-hooks.sh`, ordered after `claude-dev` via
 `installsAfter`) re-links `~/.claude/hooks/peon-ping` and `~/.claude/skills/peon-ping-*` into it,
-and merges the Claude Code hook entries into the real `~/.claude/settings.json`. Nothing
-project-specific ever touches the shared volume — only a fixed, install-invariant hook
-registration does, the same way `claude-dev` already shares permissions and memory across
-projects. No configuration needed; this happens automatically whenever both features are
+and merges the Claude Code hook entries into the real `~/.claude/settings.json`. No configuration
+needed; this happens automatically whenever both features are
 installed, and is a no-op otherwise.
 
 ```jsonc

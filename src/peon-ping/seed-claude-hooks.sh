@@ -5,7 +5,7 @@
 # SPDX-License-Identifier: LGPL-3.0-or-later
 #
 # Runs on postStartCommand, after the claude-dev feature's own postStartCommand (if present)
-# has replaced ~/.claude with a symlink to its persistent, per-host-user Docker volume — see
+# has replaced ~/.claude with a symlink to its persistent, per-devcontainer Docker volume — see
 # install.sh for why peon-ping's actual install (binary, packs, adapters, skills) lives outside
 # ~/.claude instead of inside it. This script re-attaches that install to the real ~/.claude
 # (whatever it is right now, symlinked or not) so Claude Code's own hook/skill discovery — and

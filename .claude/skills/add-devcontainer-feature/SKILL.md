@@ -61,12 +61,15 @@ for one that persists host state via a Docker named volume + symlink.
     exist on the host — file *or* directory — fails the whole container at start,
     unconditionally, and GitHub Codespaces doesn't support host bind-mounts *at all* (not a
     missing-path edge case — a hard platform limitation). A named volume has neither problem:
-    Docker creates it automatically. For state that should stay shared across every local
-    project for one identity (credentials, not a per-project cache), scope it by
-    `${localEnv:USER}` — e.g. `helpers4-<name>-credentials-${localEnv:USER}` — see
-    `claude-dev`/`mistral-dev`. For a per-project cache instead, scope it by `${devcontainerId}`
-    — see `pnpm-store`/`playwright-dev`. Both patterns and the reasoning behind the split are
-    documented in `AGENTS.md`'s "Design constraints for features" section.
+    Docker creates it automatically. Scope by what the volume holds, not just whether it
+    "needs to persist": an AI tool's own identity (credentials, settings, memory) must be
+    exclusive to one devcontainer, scoped by `${devcontainerId}` — e.g.
+    `helpers4-<name>-credentials-${devcontainerId}` — see `claude-dev`/`mistral-dev`. A pure
+    content/artifact cache with no identity or permissions surface should instead be shared
+    across every local project for the host OS user, scoped by `${localEnv:USER}` — see
+    `pnpm-store`/`playwright-dev`. Getting this backwards is a real bug, not just suboptimal —
+    see `AGENTS.md`'s "Design constraints for features" section for the incident that proved it
+    (an identity volume shared per-user leaked memory/settings across unrelated projects).
   - A raw host bind-mount is still occasionally the right call (e.g. syncing many small,
     already-present dotfiles — see `dotfiles-sync`), but accept that it won't work on
     Codespaces, and document that in the feature's README. If you do add one: a Feature-level

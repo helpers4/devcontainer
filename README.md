@@ -53,7 +53,7 @@ Installs the Claude Code IDE extension across supported editors and persists `~/
 
 **Key benefits:**
 - Credentials, config, and memory survive every rebuild, `--no-cache` included
-- Shared per host OS user, not per container — no re-login after a rebuild
+- Dedicated volume per devcontainer — no cross-project bleed of settings or memory
 - Optional `claude` CLI alongside the IDE extension
 
 [📖 Documentation](./src/claude-dev/README.md)
@@ -64,7 +64,7 @@ Installs the Mistral Vibe IDE extension across supported editors for AI-assisted
 
 **Key benefits:**
 - Credentials and configuration survive every rebuild, `--no-cache` and Codespaces included
-- Shared per host OS user across containers
+- Dedicated volume per devcontainer — no cross-project bleed of settings
 - Zero setup beyond adding the feature
 
 [📖 Documentation](./src/mistral-dev/README.md)
@@ -107,11 +107,11 @@ Complete Vite+ toolchain setup with VS Code extensions (Oxc, Vitest), optimized 
 
 ### playwright-dev
 
-OS-level dependencies for headless Chromium, Firefox, and WebKit, a browser-binary cache shared across rebuilds via a Docker named volume, and the official Playwright Test VS Code extension.
+OS-level dependencies for headless Chromium, Firefox, and WebKit, a browser-binary cache shared across every local project and rebuild via a Docker named volume, and the official Playwright Test VS Code extension.
 
 **Key benefits:**
 - OS packages installed once via the official `playwright install-deps` (no hand-maintained apt list)
-- Browser binaries cached in a Docker volume — no re-download on every rebuild
+- Browser binaries cached in a Docker volume shared across your local projects — no re-download per rebuild or per project
 - Official Playwright Test VS Code extension, pre-configured
 - Doesn't install the `playwright` npm package itself — stays in sync with your project's own version
 - Enables Chromium's CDP `WebAuthn.addVirtualAuthenticator` for passkey/WebAuthn testing without hardware
@@ -138,7 +138,7 @@ Configures a shared pnpm content-addressable store on the **same filesystem as y
 **Key benefits:**
 - Keeps the pnpm store on the same filesystem as bind-mounted repos
 - No `.pnpm-store` clutter inside your projects
-- Shares the store across every repo and across rebuilds
+- Shares the store across every local project and every rebuild
 - Fail-fast cross-device guard with an actionable fix message
 - Writes `store-dir` to `~/.npmrc`; works with any pnpm install
 
