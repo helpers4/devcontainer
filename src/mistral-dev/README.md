@@ -44,12 +44,14 @@ support mounting the local file system](https://code.visualstudio.com/remote/adv
 at all, so this feature uses a Docker named volume instead. Each codespace
 gets its own volume, populated on your first Vibe login there.
 
-The volume name includes `${localEnv:USER}`, so credentials are shared across
-every local devcontainer for the same OS user — matching what a bind-mount to
-`~/.vibe` would give you — while staying isolated from other OS users on a
-shared Docker host. On a host where `$USER` isn't set, anyone missing it
-shares one volume; not a concern on a personal machine or a codespace, worth
-knowing on a shared multi-user build server.
+The volume name includes `${devcontainerId}`, so it's dedicated to this one devcontainer —
+credentials and config survive rebuilds of *this* project, but never bleed into another one. The
+trade-off: logging in again is needed once per devcontainer, not once per machine. Earlier
+versions keyed the volume by `${localEnv:USER}` instead (one identity shared across every local
+project) — deliberately dropped, mirroring the same fix applied to [`claude-dev`](../claude-dev):
+sharing one AI tool identity across otherwise-unrelated projects risks config/permission
+settings from one project silently applying to another, for a convenience (skip re-login) that
+isn't worth that trade-off.
 
 ## Options
 
@@ -76,7 +78,7 @@ installs it automatically.
 1. **Build time** (`install.sh`): generates `/usr/local/share/mistral-dev/setup-credentials.sh`
    with the target user's home path baked in.
 2. **Mount** (`devcontainer-feature.json → mounts`): mounts the Docker named volume
-   `helpers4-mistral-credentials-${localEnv:USER}` at `/mnt/h4vibe` inside the container.
+   `helpers4-mistral-credentials-${devcontainerId}` at `/mnt/h4vibe` inside the container.
 3. **Every start** (`postStartCommand`): `setup-credentials.sh` replaces `~/.vibe`
    with a symlink to `/mnt/h4vibe` — credentials and config survive rebuilds.
 
@@ -100,6 +102,12 @@ When `installCli: true`, the `vibe` command is installed at build time via `uv`
 
 ## Version History
 
+- **v1.3.0**: **Breaking**: the credentials volume is now keyed by `${devcontainerId}` instead
+  of `${localEnv:USER}` — each devcontainer gets its own dedicated volume instead of sharing one
+  across every local project. You'll need to log in again once per devcontainer instead of once
+  per machine. Mirrors the same fix applied to [`claude-dev`](../claude-dev) — see "GitHub
+  Codespaces" above. `h4_ensure_volume_writable` is now called without `--shared`, since an
+  exclusive-per-container volume can never have a concurrent writer with a different UID.
 - **v1.2.4**: Internal cleanup, no behavior change — dropped dead `_BUILD_ARG_*` fallbacks in
   `install.sh` (`INSTALLCLI`, `USERNAME`). That prefix is only ever set for the legacy
   `internalVersion: "1"` manifest shape, which this feature (and every other one in this

@@ -185,18 +185,38 @@ container for users, sometimes silently.
   which doesn't exist, and failing the whole codespace build
   (`helpers4/devcontainer#66`). The fix is a Docker named volume instead of a
   bind-mount, not a smarter `initializeCommand`.
-- **A named volume that needs to stay shared across every local project for
-  one identity (credentials, not a per-project cache) should be scoped by
-  `${localEnv:USER}`**, e.g. `helpers4-claude-credentials-${localEnv:USER}`
-  (see `claude-dev`, `mistral-dev`). This is different from the
-  `${devcontainerId}`-scoped volumes below (`pnpm-store`, `playwright-dev`),
-  which intentionally isolate per project — right for a cache, wrong for an
-  identity a bind-mount used to share across every project. Docker creates a
-  named volume automatically, so this also has none of a bind-mount's
-  missing-source crash risk on Codespaces. One tradeoff: on a host where
-  `$USER` is unset, everyone missing it shares one volume — irrelevant on a
-  personal machine or an already-isolated Codespaces VM, worth knowing on a
-  shared multi-user build server.
+- **A named volume's scoping key depends on what it holds, not just whether
+  it "needs to persist"**: an AI tool's own identity (credentials, settings,
+  memory) must be scoped by `${devcontainerId}`, e.g.
+  `helpers4-claude-credentials-${devcontainerId}` (see `claude-dev`,
+  `mistral-dev`) — exclusive to one devcontainer, never shared with another
+  project. A pure content/artifact cache with no identity or permissions
+  surface should instead be scoped by `${localEnv:USER}`, e.g.
+  `helpers4-pnpm-store-${localEnv:USER}` (see `pnpm-store`,
+  `playwright-dev`) — shared across every local devcontainer for that host
+  OS user, avoiding redundant downloads across your own projects.
+  **Getting this backwards is a real bug, not just a suboptimal default**:
+  claude-dev/mistral-dev were `${localEnv:USER}`-scoped through v1.2.x,
+  meaning one Claude Code / Mistral Vibe identity (credentials, permissions,
+  memory) was shared across every local project for that host user — closer
+  to a bind-mount to `~/.claude`/`~/.vibe` than to true per-project
+  isolation. This leaked in practice: Claude Code partitions memory/sessions
+  by its own container-internal workspace path (e.g. `/workspaces/<name>`),
+  not a host-unique id, so two *unrelated* projects using the same
+  mount-path convention ended up sharing one memory/permissions bucket.
+  Fixed in v1.3.0 by switching to `${devcontainerId}`, at the cost of
+  logging in again per devcontainer instead of per machine. `pnpm-store` and
+  `playwright-dev` moved the other way in the same round — from
+  `${devcontainerId}` to `${localEnv:USER}` — since a package store /
+  browser-binary cache has no identity to leak and pnpm's own store is
+  designed to be shared this way even on bare metal; both hold only
+  hash-addressed or versioned artifacts, never credentials. Docker creates a
+  named volume automatically either way, so this also has none of a
+  bind-mount's missing-source crash risk on Codespaces. One tradeoff of
+  `${localEnv:USER}`: on a host where `$USER` is unset, everyone missing it
+  shares one volume — irrelevant on a personal machine or an
+  already-isolated Codespaces VM, worth knowing on a shared multi-user
+  build server.
 - **Docker creates a fresh named volume root-owned — the non-root
   `postStartCommand`/`postCreateCommand` user can't write to it until
   something chowns it.** Missed on `claude-dev`/`mistral-dev` when they first
@@ -211,7 +231,7 @@ container for users, sometimes silently.
   exclusive to one container): always chown, skipping only when it already
   belongs to the current user (a recursive chown on a populated,
   shared-across-rebuilds volume isn't free). With `--shared` (a
-  `${localEnv:USER}`-scoped volume, see below): chown only while still
+  `${localEnv:USER}`-scoped volume): chown only while still
   root-owned; if it already belongs to a *different* non-root user (another
   concurrently-running project's container), `chmod o+rwX` instead of
   stealing ownership out from under that session.
@@ -257,9 +277,8 @@ container for users, sometimes silently.
   `github-dev` reimplements `gh` CLI install rather than depending on an
   upstream feature because no existing feature bundles the CLI and the IDE
   extension together.
-- **A shared named `volume` mount needs `${devcontainerId}` in its source**
-  — see `pnpm-store` and `playwright-dev`. It's derived from the workspace's
-  local folder path, so it stays stable across rebuilds of one workspace but
-  won't collide with an unrelated project on the same machine. Volumes don't
-  have the missing-source crash risk bind mounts do (Docker creates them),
-  but they do need this scoping.
+- **`${devcontainerId}` is derived from the workspace's local folder path**,
+  so a volume scoped by it stays stable across rebuilds of one workspace but
+  won't collide with an unrelated project on the same machine — see the
+  volume-scoping bullet above for which named-volume features use this vs.
+  `${localEnv:USER}`, and why.

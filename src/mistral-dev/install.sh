@@ -67,10 +67,10 @@ if [ ! -d "${STAGED}" ]; then
     exit 0
 fi
 
-# Unlike pnpm-store's volume (exclusive per container, keyed by ${devcontainerId}), this
-# one is deliberately shared across every local project for the same host OS user — a
-# second, concurrently-running project can have a different container UID — so --shared.
-h4_ensure_volume_writable "${STAGED}" --shared
+# This volume is exclusive to this devcontainer (keyed by ${devcontainerId} — see
+# devcontainer-feature.json), so no --shared: no other container can be concurrently
+# using it, reassigning ownership outright is always safe.
+h4_ensure_volume_writable "${STAGED}"
 
 rm -rf "${TARGET}"
 ln -sf "${STAGED}" "${TARGET}"

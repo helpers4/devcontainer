@@ -43,12 +43,14 @@ support mounting the local file system](https://code.visualstudio.com/remote/adv
 at all, so this feature uses a Docker named volume instead. Each codespace
 gets its own volume, populated on your first `/login` there.
 
-The volume name includes `${localEnv:USER}`, so credentials are shared across
-every local devcontainer for the same OS user — matching what a bind-mount to
-`~/.claude` would give you — while staying isolated from other OS users on a
-shared Docker host. On a host where `$USER` isn't set, anyone missing it
-shares one volume; not a concern on a personal machine or a codespace, worth
-knowing on a shared multi-user build server.
+The volume name includes `${devcontainerId}`, so it's dedicated to this one devcontainer —
+credentials, permissions, hooks, and Claude Code's own per-project memory survive rebuilds of
+*this* project, but never bleed into another one. The trade-off: logging in again is needed once
+per devcontainer, not once per machine. Earlier versions keyed the volume by `${localEnv:USER}`
+instead (one identity shared across every local project) — deliberately dropped, because Claude
+Code's own project/memory partitioning keys off the *container-internal* workspace path (e.g.
+`/workspaces/<name>`), not a host-unique id: two unrelated projects using the same mount-path
+convention would silently share one memory/settings bucket under that model.
 
 ## Options
 
@@ -71,7 +73,7 @@ knowing on a shared multi-user build server.
 1. **Build time** (`install.sh`): generates `/usr/local/share/claude-dev/setup-credentials.sh`
    with the target user's home path baked in.
 2. **Mount** (`devcontainer-feature.json → mounts`): mounts the Docker named volume
-   `helpers4-claude-credentials-${localEnv:USER}` at `/mnt/h4claude` inside the container.
+   `helpers4-claude-credentials-${devcontainerId}` at `/mnt/h4claude` inside the container.
 3. **Every start** (`postStartCommand`): `setup-credentials.sh` replaces `~/.claude`
    with a symlink to `/mnt/h4claude` — credentials, settings, and Claude Code memory
    all survive rebuilds.
@@ -93,6 +95,15 @@ without depending on that user's shell profile already including
 
 ## Version History
 
+- **v1.3.0**: **Breaking**: the credentials volume is now keyed by `${devcontainerId}` instead
+  of `${localEnv:USER}` — each devcontainer gets its own dedicated volume instead of sharing one
+  across every local project. You'll need to log in again once per devcontainer instead of once
+  per machine. This closes a real cross-project leak: Claude Code partitions memory/sessions by
+  its own container-internal workspace path, not by a host-unique id, so two unrelated projects
+  using the same mount-path convention (e.g. both mounting their root at `/workspaces/<name>`)
+  ended up sharing one memory and permissions bucket under the old, per-user-shared volume. See
+  "GitHub Codespaces" above. `h4_ensure_volume_writable` is now called without `--shared`, since
+  an exclusive-per-container volume can never have a concurrent writer with a different UID.
 - **v1.2.4**: Internal cleanup, no behavior change — dropped dead `_BUILD_ARG_*` fallbacks in
   `install.sh` (`INSTALLCLI`, `USERNAME`). That prefix is only ever set for the legacy
   `internalVersion: "1"` manifest shape, which this feature (and every other one in this

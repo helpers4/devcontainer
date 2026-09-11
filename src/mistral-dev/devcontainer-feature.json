@@ -1,8 +1,8 @@
 {
   "id": "mistral-dev",
-  "version": "1.2.4",
+  "version": "1.3.0",
   "name": "Mistral Vibe Development Environment",
-  "description": "Installs the Mistral Vibe IDE extension (mistralai.mistral-vibe-code) for VS Code and Cursor. Persists ~/.vibe (credentials, config) across rebuilds and Codespaces via a Docker named volume, shared per host OS user. Also self-heals your devcontainer setup.",
+  "description": "Installs the Mistral Vibe IDE extension (mistralai.mistral-vibe-code) for VS Code and Cursor. Persists ~/.vibe (credentials, config) across rebuilds and Codespaces via a Docker named volume, dedicated to this devcontainer. Also self-heals your devcontainer setup.",
   "documentationURL": "https://github.com/helpers4/devcontainer/tree/main/src/mistral-dev",
   "licenseURL": "https://github.com/helpers4/devcontainer/blob/main/LICENSE",
   "keywords": [
@@ -27,7 +27,7 @@
 
   "mounts": [
     {
-      "source": "helpers4-mistral-credentials-${localEnv:USER}",
+      "source": "helpers4-mistral-credentials-${devcontainerId}",
       "target": "/mnt/h4vibe",
       "type": "volume"
     }
