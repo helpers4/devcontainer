@@ -86,6 +86,10 @@ two features are safe to combine; see `nub`'s README for details.
 
 ## Version History
 
+- **v1.3.1**: Documentation only, no functional change — centralized the exclusive-vs-shared
+  volume rationale onto `h4_ensure_volume_writable`'s own comment in `helpers4-common`, trimming
+  the near-identical explanation this file (and claude-dev/mistral-dev/playwright-dev) used to
+  restate independently.
 - **v1.3.0**: The store volume is now keyed by `${localEnv:USER}` instead of
   `${devcontainerId}` — shared across every local devcontainer for this host OS user, not just
   every repo inside one devcontainer, matching pnpm's own bare-metal default of one global

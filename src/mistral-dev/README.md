@@ -102,6 +102,10 @@ When `installCli: true`, the `vibe` command is installed at build time via `uv`
 
 ## Version History
 
+- **v1.3.1**: Documentation only, no functional change — centralized the exclusive-vs-shared
+  volume rationale onto `h4_ensure_volume_writable`'s own comment in `helpers4-common`, trimming
+  the near-identical explanation this file (and claude-dev/pnpm-store/playwright-dev) used to
+  restate independently.
 - **v1.3.0**: **Breaking**: the credentials volume is now keyed by `${devcontainerId}` instead
   of `${localEnv:USER}` — each devcontainer gets its own dedicated volume instead of sharing one
   across every local project. You'll need to log in again once per devcontainer instead of once

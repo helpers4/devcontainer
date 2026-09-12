@@ -67,9 +67,9 @@ if [ ! -d "${STAGED}" ]; then
     exit 0
 fi
 
-# This volume is exclusive to this devcontainer (keyed by ${devcontainerId} — see
-# devcontainer-feature.json), so no --shared: no other container can be concurrently
-# using it, reassigning ownership outright is always safe.
+# Exclusive to this devcontainer (${devcontainerId} — see devcontainer-feature.json), so no
+# --shared — see h4_ensure_volume_writable's own comment in helpers4-common/install.sh for why
+# that flag choice follows the volume's scoping key.
 h4_ensure_volume_writable "${STAGED}"
 
 rm -rf "${TARGET}"

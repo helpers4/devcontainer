@@ -126,14 +126,12 @@ if [ ! -d "${STORE_DIR}" ]; then
         || { echo "❌ pnpm-store: could not create ${STORE_DIR}"; exit 1; }
 fi
 
-# This volume is shared across every local project for the same host OS user (see
-# devcontainer-feature.json, ${localEnv:USER}) — pnpm's own content-addressable store is
-# designed to be shared this way even on a bare-metal machine, and a second,
-# concurrently-running project can have a different container UID, so --shared. Unlike
-# claude-dev/mistral-dev's credentials volumes, this one holds only hash-addressed package
-# bytes, never registry tokens (those stay in ~/.npmrc, handled separately by
-# dotfiles-sync's direct host bind-mount) — no identity/permissions surface to leak
-# between projects.
+# Shared across every local project for this host OS user (${localEnv:USER} — see
+# devcontainer-feature.json), so --shared (see h4_ensure_volume_writable's own comment in
+# helpers4-common/install.sh for why). Safe unlike claude-dev/mistral-dev's credentials
+# volumes: this one holds only hash-addressed package bytes, never registry tokens (those
+# stay in ~/.npmrc, handled separately by dotfiles-sync's direct host bind-mount) — no
+# identity/permissions surface to leak between projects.
 h4_ensure_volume_writable "${STORE_DIR}" --shared
 
 # Re-apply store-dir to ~/.npmrc so it survives dotfiles-sync or any other
