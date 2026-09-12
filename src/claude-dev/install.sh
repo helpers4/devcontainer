@@ -31,11 +31,11 @@ echo "  Home:        ${USER_HOME}"
 echo "  Install CLI: ${INSTALL_CLI}"
 
 # Generate the runtime credentials script with TARGET_HOME baked in via printf %q.
-# Generating rather than copying means postStartCommand always targets the correct
+# Generating rather than copying means postCreateCommand always targets the correct
 # user's home regardless of which user the container runtime invokes the script as.
 #
 # This exact path is also peon-ping's own proxy for "is claude-dev installed" (its
-# install.sh:110 checks for this file directly) — keep the two in sync if it ever moves.
+# install.sh checks for this file directly) — keep the two in sync if it ever moves.
 SCRIPT="/usr/local/share/claude-dev/setup-credentials.sh"
 mkdir -p "$(dirname "${SCRIPT}")"
 
@@ -46,9 +46,12 @@ mkdir -p "$(dirname "${SCRIPT}")"
 # Copyright (C) 2025 baxyz
 # SPDX-License-Identifier: LGPL-3.0-or-later
 #
-# Runs at container START (postStartCommand) — the named volume is mounted.
-# Replaces TARGET_HOME/.claude with a symlink to it so credentials and all
-# Claude config persist across rebuilds.
+# Runs once, at container creation (postCreateCommand) — the named volume is already
+# mounted by then (Docker attaches mounts at container creation, before any command runs
+# inside it; postCreateCommand fires exactly once per container instance, including a fresh
+# instance created by a rebuild, never again on a plain restart of the same instance).
+# Replaces TARGET_HOME/.claude with a symlink to it so credentials and all Claude config
+# persist across rebuilds.
 set -euo pipefail
 # shellcheck source=/dev/null
 . /usr/local/share/helpers4/common.sh
@@ -70,6 +73,20 @@ fi
 # --shared — see h4_ensure_volume_writable's own comment in helpers4-common/install.sh for why
 # that flag choice follows the volume's scoping key.
 h4_ensure_volume_writable "${STAGED}"
+
+# TARGET is an ordinary directory here, not yet a symlink (this is the first and only time
+# this script runs for this container instance) — it may already hold files another feature
+# wrote into ~/.claude at *image build* time, before this volume existed to write into (the
+# volume is only attached once the container is created, not during the image build that
+# produced it). Add whatever's missing to the volume; never overwrite what's already there —
+# the volume's own accumulated state (real credentials, a user's actual settings.json edits,
+# memory) always wins over a fresh build's defaults. A feature whose build-time file already
+# exists in the volume from a previous build simply won't see that particular update land
+# here; it should install via its own postCreateCommand instead (ordered after this one via
+# installsAfter) if it needs to keep pace with rebuilds — see peon-ping for the pattern.
+if [ -d "${TARGET}" ] && [ ! -L "${TARGET}" ]; then
+    cp -rn "${TARGET}/." "${STAGED}/" 2>/dev/null || true
+fi
 
 rm -rf "${TARGET}"
 ln -sf "${STAGED}" "${TARGET}"

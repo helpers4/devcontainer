@@ -243,36 +243,43 @@ container for users, sometimes silently.
   rebuild overlapping a still-running old container) can't corrupt anything
   either way — `chown -R` is metadata-only and both converge on the same
   target UID, so a race here just means redundant work, not a data hazard.
-- **`claude-dev`'s `rm -rf ~/.claude` + symlink swap (previous bullet) runs on every
-  container start and is generically hostile to any feature that drops files under
-  `~/.claude` at build time** — not just a claude-dev-specific quirk, a hazard for
-  every feature. `peon-ping` hit this first (its binary/hooks/skills, installed at
-  build time, vanished the moment claude-dev's postStartCommand ran) and is the
-  reference implementation for the fix — see `src/peon-ping/install.sh` and
-  `seed-claude-hooks.sh`. The pattern, reusable for any future feature that needs to
-  write into `~/.claude` (or any other feature's swapped-at-start directory):
-  1. At build time, detect the other feature by checking for a file it's known to
-     generate (e.g. `peon-ping` checks for claude-dev's
-     `/usr/local/share/claude-dev/setup-credentials.sh`) — add a one-line comment at
-     *both* call sites cross-referencing the exact path, so a rename on either side is
-     caught by a repo-wide grep instead of failing silently at runtime.
-  2. If detected, install into a path of your own outside `~/.claude` (e.g.
-     `~/.local/share/<feature>/claude-home`) instead of directly into it.
-  3. Declare `installsAfter: ["<the-other-feature>"]` in `devcontainer-feature.json`.
-     This is a *soft* dependency (`AGENTS.md`'s "A shared named volume..." bullets
-     above cover this for `dependsOn`/mounts; the same applies here) — it does not
-     force-install the other feature, so your own detection in step 1 must still
-     handle "absent" gracefully.
-  4. Add your own `postStartCommand` that re-links/merges your build-time install into
-     the real, now-swapped `~/.claude`. **`installsAfter` also orders
-     `postStartCommand` execution across features, not just installation** — verified
-     against the dev container spec (containers.dev): "For each lifecycle hook (in
-     Feature installation order), each command contributed by a Feature is executed in
-     sequence," and `installsAfter` is exactly what determines that installation order
-     when both features are already queued. This only holds when both features are
-     actually declared in the consumer's `devcontainer.json` together (the normal,
-     documented case) — it does not retroactively add the other feature to the
-     install queue.
+- **A Docker volume declared in `mounts` is already attached — and writable once
+  chowned — from the very first command that runs inside the container, not just by
+  `postStartCommand`.** Verified directly (`docker run -d` + an immediate `docker exec`):
+  mounts are part of a container's configuration at creation, before any process,
+  including lifecycle commands, runs inside it. That means `onCreateCommand` and
+  `postCreateCommand` — which fire once per container instance, not on every
+  start/attach — already see every mount a plain `postStartCommand` would. Prefer
+  `postCreateCommand` for anything that only needs to happen once when a container
+  instance is (re)created (a rebuild is a new instance, so it fires again then; a plain
+  restart of the same instance never re-triggers it) — it needs no "already done" guard
+  the way a `postStartCommand`-based version of the same logic would, precisely because
+  it structurally can't run twice for one instance.
+- **`claude-dev`'s `~/.claude` swap (two bullets up) is generically hostile to any
+  feature that drops files under `~/.claude` at build time — not a claude-dev-specific
+  quirk, a hazard for every feature that might do this, now or in the future.**
+  `peon-ping` hit this first: its binary/hooks, installed at *image build* time (no
+  volume exists yet then — see the bullet above), vanished the moment claude-dev's swap
+  ran. Fixed on both sides:
+  - `claude-dev`'s swap no longer discards what it finds: if `~/.claude` isn't already a
+    symlink, whatever's in it gets added to the volume (`cp -rn`, never overwriting what
+    the volume already has) before the swap, instead of being `rm -rf`'d outright. This
+    is a safety net for a badly-behaved feature (including a third-party one this repo
+    doesn't control), not something well-behaved features should rely on: a rebuild
+    still won't propagate an *updated* build-time file to the volume if a same-named one
+    already exists there, since preserving the volume's own accumulated state (real
+    credentials, an actual edited `settings.json`, memory) always wins over guessing
+    which side should overwrite the other.
+  - `peon-ping` itself no longer writes to `~/.claude` at build time at all — its actual
+    install (binary, packs, Claude Code hooks) is deferred to its own
+    `postCreateCommand`, declared `installsAfter: ["claude-dev"]` so it runs right after
+    claude-dev's own (a soft dependency — doesn't force-install claude-dev, so this must
+    still work fine standalone). By the time it runs, `~/.claude` is already whatever
+    it's going to be for this container — claude-dev's volume if present, an ordinary
+    directory otherwise — so it just installs normally into it. No redirection, no
+    relinking, no claude-dev-specific code path: this is the preferred pattern for a new
+    feature over `claude-dev`'s own merge-preserve safety net, which only exists to
+    catch a feature that *doesn't* follow it.
 - **A client's own automatic behavior (VS Code copying `~/.gitconfig`, SSH
   agent forwarding) happens outside any Feature's control, and copies/forwards
   host-specific values verbatim — a `credential.helper` shelling out to a

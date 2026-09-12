@@ -43,7 +43,8 @@
       }
     }
   },
-  "postStartCommand": "/usr/local/share/peon-ping/patch-hosts.sh && /usr/local/share/peon-ping/seed-claude-hooks.sh",
+  "postCreateCommand": "/usr/local/share/peon-ping/install-claude-hooks.sh",
+  "postStartCommand": "/usr/local/share/peon-ping/patch-hosts.sh",
   "installsAfter": [
     "ghcr.io/devcontainers/features/common-utils",
     "ghcr.io/helpers4/devcontainer/claude-dev"

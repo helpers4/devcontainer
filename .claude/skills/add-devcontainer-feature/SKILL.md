@@ -144,13 +144,17 @@ echo "Testing <name> feature..."
 echo "✅ PASS: ..."
 ```
 
-Keep it about **build-time artifacts** (binary present, file generated, config written) — it
-can't exercise `postStartCommand`/mount-dependent behavior, since `devcontainer features test`
-doesn't wire up mounts from a real host. A named-volume mount (the preferred kind — see above)
-needs no extra CI setup, since Docker creates the volume itself. Only a host bind-mount needs a
-"Create mount sources for `<name>`" step in `pr-validation.yml`'s `test-features` job (see the
-existing step for `dotfiles-sync`) so the test job's own container build doesn't fail on a
-missing source.
+Named-volume mounts (the preferred kind — see above) work fine under `devcontainer features
+test`: Docker creates the volume itself, no extra CI setup needed, and it's already attached —
+readable and writable — by the time any lifecycle command runs, `postCreateCommand`/
+`postStartCommand` included (verified directly: `docker exec` right after `docker run` already
+sees a declared volume mounted). `claude-dev`'s own `test.sh` exercises exactly this: it reads
+the `postCreateCommand`-generated script's baked-in `TARGET_HOME` and asserts `~/.claude` is
+actually symlinked into the mounted volume — a real test of mount-dependent behavior, not just
+a build-time artifact. What genuinely doesn't work under this harness is a **host bind-mount**
+(there's no real host to bind from during an automated test run) — that needs a "Create mount
+sources for `<name>`" step in `pr-validation.yml`'s `test-features` job (see the existing step
+for `dotfiles-sync`) so the test job's own container build doesn't fail on a missing source.
 
 ## 3. Wire it into the repo
 

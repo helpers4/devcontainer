@@ -32,7 +32,7 @@
       "type": "volume"
     }
   ],
-  "postStartCommand": "/usr/local/share/claude-dev/setup-credentials.sh",
+  "postCreateCommand": "/usr/local/share/claude-dev/setup-credentials.sh",
   "customizations": {
     "vscode": {
       "extensions": [

@@ -131,20 +131,21 @@ adding this to your `devcontainer.json` and rebuilding:
 
 ### Coexisting with `claude-dev`
 
-The [`claude-dev`](../claude-dev) feature persists `~/.claude` across rebuilds by replacing it
-(`rm -rf` + symlink) with a Docker volume dedicated to this devcontainer, on every container
-start. If peon-ping installed itself straight into `~/.claude` like the upstream installer does
-by default, that swap would wipe it on every start — the volume isn't mounted yet at image build
-time, when peon-ping actually installs, so anything it wrote directly into `~/.claude` is gone
-the moment `claude-dev`'s `postStartCommand` runs.
+The [`claude-dev`](../claude-dev) feature persists `~/.claude` across rebuilds via a Docker
+volume, linked into place once at container creation. A named volume isn't mounted yet during
+the *image build* that runs `install.sh` — only once the container is actually created — so
+installing straight into `~/.claude` at build time, like the upstream installer does by
+default, would land in a spot that isn't the persistent one yet.
 
-Instead, when `claude-dev` is present, peon-ping installs into a per-container path
-(`~/.local/share/peon-ping/claude-home`, via `CLAUDE_CONFIG_DIR`) that `claude-dev`'s swap never
-touches, and a second `postStartCommand` (`seed-claude-hooks.sh`, ordered after `claude-dev` via
-`installsAfter`) re-links `~/.claude/hooks/peon-ping` and `~/.claude/skills/peon-ping-*` into it,
-and merges the Claude Code hook entries into the real `~/.claude/settings.json`. No configuration
-needed; this happens automatically whenever both features are
-installed, and is a no-op otherwise.
+peon-ping sidesteps this by not installing at build time at all: the actual install (binary,
+packs, Claude Code hooks) runs once via `postCreateCommand`
+(`install-claude-hooks.sh`) — after the container, and any mounted volume, already exist.
+`installsAfter: claude-dev` (`devcontainer-feature.json`) orders it after claude-dev's own
+`postCreateCommand`, so `~/.claude` is already whatever it's going to be for this container by
+the time peon-ping installs into it — its own persistent volume if claude-dev is present, an
+ordinary directory otherwise. Either way, peon-ping just installs normally, straight into the
+real `~/.claude` — no redirection, no relinking, nothing claude-dev-specific. No configuration
+needed; this is the same install path whether claude-dev is installed or not.
 
 ```jsonc
 {
@@ -238,14 +239,16 @@ peon packs list           # List installed packs
 
 ## Version History
 
-- **v1.3.1**: Code-review follow-ups to v1.3.0's fix, no user-visible behavior change —
-  `seed-claude-hooks.sh` now dedups by the same install-invariant substring `install.sh`'s own
-  `merge_hooks_json` already used (verified against a real installer-generated fragment that
-  multiple distinct peon-ping commands under one event, e.g. `UserPromptSubmit`'s sound player
-  plus its `/peon-ping-*` slash-command handlers, still both register and stay idempotent);
-  removed a redundant re-derivation of "is claude-dev present" that was computed twice by two
-  different means; added cross-reference comments between peon-ping's and claude-dev's install
-  scripts so a path rename on either side is caught by grep instead of failing silently.
+- **v1.3.1**: Simplified v1.3.0's claude-dev coexistence fix — replaced the redirect-into-a-
+  private-directory-then-relink dance (`CLAUDE_CONFIG_DIR`, a stable `claude-home` path,
+  `seed-claude-hooks.sh` re-linking hooks/skills and rewriting/merging a settings.json
+  fragment) with a plain, unconditional install into the real `~/.claude`, deferred to a new
+  `install-claude-hooks.sh` running once via `postCreateCommand` instead of at image build
+  time. `postCreateCommand` runs after the container (and any mounted volume) already exists,
+  ordered after claude-dev's own via `installsAfter` — by the time it runs, `~/.claude` is
+  already whatever it's going to be for this container, so there's nothing left to redirect
+  or relink around. peon-ping installs the same way whether claude-dev is present or not — no
+  claude-dev-specific code path anymore. See "Coexisting with claude-dev" below.
 - **v1.3.0**: Fixed peon-ping never actually working for Claude Code when the `claude-dev`
   feature is also installed — its `postStartCommand` replaces `~/.claude` with a symlink to a
   persistent volume on every start, which silently discarded everything peon-ping had installed
