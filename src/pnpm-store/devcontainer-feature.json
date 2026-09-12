@@ -1,6 +1,6 @@
 {
   "id": "pnpm-store",
-  "version": "1.3.0",
+  "version": "1.3.1",
   "name": "pnpm Store (shared)",
   "description": "Shares a single pnpm content-addressable store across every local devcontainer for this host OS user and across rebuilds via a Docker named volume, so no stray .pnpm-store folders pollute your repos and packages aren't re-downloaded per project. Zero-config and autonomous: the volume is created automatically, with no host directory to pre-create. Also self-heals your devcontainer setup.",
   "documentationURL": "https://github.com/helpers4/devcontainer/tree/main/src/pnpm-store",

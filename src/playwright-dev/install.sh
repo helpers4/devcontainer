@@ -114,12 +114,12 @@ if [ ! -d "${BROWSERS_PATH}" ]; then
         || { echo "❌ playwright-dev: could not create ${BROWSERS_PATH}"; exit 1; }
 fi
 
-# Unlike claude-dev/mistral-dev's credentials volumes, this one is deliberately shared
-# across every local project for the same host OS user — see devcontainer-feature.json
-# (${localEnv:USER}). A second, concurrently-running project can have a different
-# container UID, so --shared. Browser binaries are just downloaded artifacts, not an
-# identity/permissions surface, so sharing them across a user's own projects has none of
-# the cross-project bleed risk that made claude-dev/mistral-dev move away from it.
+# Shared across every local project for this host OS user (${localEnv:USER} — see
+# devcontainer-feature.json), so --shared (see h4_ensure_volume_writable's own comment in
+# helpers4-common/install.sh for why). Safe unlike claude-dev/mistral-dev's credentials
+# volumes: browser binaries are just downloaded artifacts, not an identity/permissions
+# surface, so sharing them across a user's own projects has none of the cross-project bleed
+# risk that made claude-dev/mistral-dev move away from it.
 h4_ensure_volume_writable "${BROWSERS_PATH}" --shared
 
 # Download the actual browser binaries only if not already fetched for this Playwright
