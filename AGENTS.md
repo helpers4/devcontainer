@@ -143,6 +143,10 @@ every single time.
 # SPDX-License-Identifier: LGPL-3.0-or-later
 ```
 
+Copy this verbatim, year included — `2025` is fixed (the project's inception), not "the current year." A
+new file dated to whatever year it was added in has drifted from this convention, not updated it; 4 files
+were found and corrected back to 2025 in the volume-scoping review (all 46 `.sh` files now agree).
+
 ## Design constraints for features
 
 These are hard requirements, not style preferences — violating them breaks the
