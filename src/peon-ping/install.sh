@@ -119,6 +119,16 @@ cat >> "${SCRIPT}" << 'EOF'
 
 echo "🎮 Installing peon-ping..."
 
+# Run directly — no `su -`. install.sh (build time, root) needed `su - "${USERNAME}"` to drop
+# privileges; this script runs at container creation as postCreateCommand, which already
+# executes as the container's remoteUser/containerUser (USERNAME, resolved by the same
+# h4_detect_user this script's generator used). `su - "${USERNAME}"` run BY that same non-root
+# user requires their password — there's no sudoers-style passwordless path for `su` itself —
+# so it fails with "Authentication failure" every time, silently swallowed by the `||` below,
+# and the peon binary is never actually installed. Verified directly: `su - <self> -c true` run
+# as that same non-root user fails the same way. claude-dev's own postCreateCommand script
+# avoids this same trap by never using `su` either.
+#
 # The installer may exit non-zero if its sound test fails (no audio device attached yet at
 # container creation). Tolerate that and verify the actual installation ourselves.
 #
@@ -126,11 +136,12 @@ echo "🎮 Installing peon-ping..."
 # branch. Without it, a WSL2-backed Docker Desktop host has none of `/.dockerenv`/$CODESPACES
 # yet still inherits "microsoft" in /proc/version from the WSL2 kernel, so peon-ping
 # misdetects "wsl" and hard-requires powershell.exe (unavailable here).
-su - "${USERNAME}" -c "curl -fsSL https://raw.githubusercontent.com/PeonPing/peon-ping/main/install.sh | REMOTE_CONTAINERS=true bash -s -- ${INSTALLER_ARGS}" || \
+# shellcheck disable=SC2086
+curl -fsSL https://raw.githubusercontent.com/PeonPing/peon-ping/main/install.sh | REMOTE_CONTAINERS=true bash -s -- ${INSTALLER_ARGS} || \
     echo "⚠️  peon-ping installer exited with errors (sound test failure at container creation is expected)"
 
 PEON_BIN="${USER_HOME}/.local/bin/peon"
-if [ ! -x "${PEON_BIN}" ] && ! su - "${USERNAME}" -c "command -v peon" > /dev/null 2>&1; then
+if [ ! -x "${PEON_BIN}" ] && ! command -v peon > /dev/null 2>&1; then
     echo "❌ peon binary not found after installation — install truly failed"
     exit 1
 fi
