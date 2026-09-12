@@ -150,6 +150,12 @@ npx playwright install
 
 ## Version History
 
+- **v1.3.1**: Code-review follow-up on v1.3.0's cache-sharing change — a failed Playwright
+  version lookup (offline, transient npx/registry hiccup) fell back to a generic
+  `.h4-installed-unknown-*` marker; on the now-shared volume, a *different* project hitting the
+  same failure could match that marker and wrongly skip installing a browser revision it
+  doesn't actually have. A failed lookup no longer participates in the marker shortcut at all —
+  it just re-runs the (idempotent, revision-aware) install for that one start instead.
 - **v1.3.0**: The browser-cache volume is now keyed by `${localEnv:USER}` instead of
   `${devcontainerId}` — shared across every local devcontainer for this host OS user instead of
   exclusive to one project, avoiding redundant downloads across your own projects. Safe unlike

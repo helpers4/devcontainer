@@ -71,7 +71,7 @@ version bump" below.
 | `angular-dev` | 1.2.3 | Angular dev, port 4200 |
 | `vite-plus` | 1.2.3 | vp CLI, Oxlint/Oxfmt, Vitest |
 | `package-auto-install` | 1.2.3 | Auto-detect and install packages (npm/yarn/pnpm/nub) |
-| `playwright-dev` | 1.3.0 | Playwright OS deps (Chromium/Firefox/WebKit) + shared browser-binary volume + VS Code extension |
+| `playwright-dev` | 1.3.1 | Playwright OS deps (Chromium/Firefox/WebKit) + shared browser-binary volume + VS Code extension |
 | `pnpm-store` | 1.3.0 | Shared pnpm store via Docker named volume (dependsOn helpers4-common) |
 | `auto-header` | 1.2.3 | LGPL-3.0 license headers |
 | `git-absorb` | 1.2.3 | git-absorb from GitHub releases |

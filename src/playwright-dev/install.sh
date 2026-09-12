@@ -135,14 +135,20 @@ h4_ensure_volume_writable "${BROWSERS_PATH}" --shared
 # namespaces binaries by revision (e.g. chromium-1091/) so this never collides — it only
 # guards our own "already installed" shortcut from wrongly skipping a download some other
 # project's version never actually fetched.
+# If the version can't be resolved (offline, transient npx/registry hiccup), don't fall back
+# to a generic marker — on this shared volume, a different project hitting the same failure
+# would collide on it and could wrongly skip a browser revision it doesn't actually have.
+# Skipping the marker check entirely instead just always re-runs the (idempotent, revision-
+# aware) install below for this one start.
 PLAYWRIGHT_VERSION="$(npx -y playwright --version 2>/dev/null | awk '{print $NF}')"
-MARKER="${BROWSERS_PATH}/.h4-installed-${PLAYWRIGHT_VERSION:-unknown}-${BROWSER_ARG:-all}"
-if [ ! -f "${MARKER}" ]; then
+MARKER=""
+[ -n "${PLAYWRIGHT_VERSION}" ] && MARKER="${BROWSERS_PATH}/.h4-installed-${PLAYWRIGHT_VERSION}-${BROWSER_ARG:-all}"
+if [ -z "${MARKER}" ] || [ ! -f "${MARKER}" ]; then
     echo "📥 playwright-dev: downloading browser binaries (${BROWSER_ARG:-all}) into ${BROWSERS_PATH}..."
     # No @latest pin — see install.sh's install-deps step for why.
     # shellcheck disable=SC2086
     if npx -y playwright install ${BROWSER_ARG}; then
-        touch "${MARKER}"
+        [ -n "${MARKER}" ] && touch "${MARKER}"
         echo "✅ playwright-dev: browsers installed"
     else
         echo "⚠️  playwright-dev: browser download failed — check network access, or run 'npx playwright install' manually"
