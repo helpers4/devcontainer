@@ -4,17 +4,20 @@
 # Copyright (C) 2025 baxyz
 # SPDX-License-Identifier: LGPL-3.0-or-later
 #
-# Exercises peon-ping alongside claude-dev: claude-dev's postStartCommand replaces ~/.claude
-# with a symlink to a persistent volume on every start, which would discard anything peon-ping
-# installed straight into it at build time — install.sh redirects around that instead (see its
-# own comments) and seed-claude-hooks.sh re-links the result in. Plain test.sh (installed
-# alone, without claude-dev) only exercises the direct-install code path and can't cover this.
+# Exercises peon-ping alongside claude-dev: both install via postCreateCommand (not at image
+# build time, when no volume is mounted yet), ordered by installsAfter so claude-dev's own
+# postCreateCommand (which links ~/.claude to its persistent volume) runs first. By the time
+# peon-ping's postCreateCommand runs, ~/.claude is already the real, volume-backed directory,
+# so peon-ping just installs straight into it — nothing claude-dev-specific to verify beyond
+# that install actually landing in the right (already-linked) place. Plain test.sh (installed
+# alone, without claude-dev) only exercises that same install against an ordinary directory
+# and can't tell the two cases apart.
 
 set -e
 
 echo "Testing peon-ping with claude-dev..."
 
-# Read the same TARGET_HOME claude-dev's own postStartCommand baked in and used — see
+# Read the same TARGET_HOME claude-dev's own postCreateCommand baked in and used — see
 # claude-dev's test.sh for why this can differ from test.sh's own $HOME.
 CLAUDE_DEV_SCRIPT="/usr/local/share/claude-dev/setup-credentials.sh"
 if [ ! -f "${CLAUDE_DEV_SCRIPT}" ]; then
@@ -30,18 +33,12 @@ if [ ! -L "${CLAUDE_DIR}" ]; then
 fi
 echo "✅ PASS: ${CLAUDE_DIR} is claude-dev's symlinked volume"
 
-STABLE_HOME="${TARGET_HOME}/.local/share/peon-ping/claude-home"
-if [ ! -d "${STABLE_HOME}/hooks/peon-ping" ]; then
-    echo "❌ FAIL: peon-ping's install not found at ${STABLE_HOME}/hooks/peon-ping"
+PEON_DIR="${CLAUDE_DIR}/hooks/peon-ping"
+if [ ! -d "${PEON_DIR}" ]; then
+    echo "❌ FAIL: ${PEON_DIR} not found — peon-ping's postCreateCommand didn't install into the real ~/.claude"
     exit 1
 fi
-echo "✅ PASS: peon-ping installed outside ~/.claude at ${STABLE_HOME}"
-
-if [ ! -L "${CLAUDE_DIR}/hooks/peon-ping" ] || [ "$(readlink -f "${CLAUDE_DIR}/hooks/peon-ping")" != "$(readlink -f "${STABLE_HOME}/hooks/peon-ping")" ]; then
-    echo "❌ FAIL: ${CLAUDE_DIR}/hooks/peon-ping is not linked to ${STABLE_HOME}/hooks/peon-ping — seed-claude-hooks.sh didn't run (or ran before claude-dev's postStartCommand)"
-    exit 1
-fi
-echo "✅ PASS: ${CLAUDE_DIR}/hooks/peon-ping linked into the real ~/.claude"
+echo "✅ PASS: peon-ping installed directly into the volume-backed ${PEON_DIR}"
 
 PEON_BIN="${TARGET_HOME}/.local/bin/peon"
 if [ ! -x "${PEON_BIN}" ]; then
@@ -71,9 +68,9 @@ found = any(
 )
 sys.exit(0 if found else 1)
 "; then
-    echo "❌ FAIL: no peon-ping command found in ${SETTINGS}'s hooks — merge into the real settings.json didn't happen"
+    echo "❌ FAIL: no peon-ping command found in ${SETTINGS}'s hooks"
     exit 1
 fi
-echo "✅ PASS: peon-ping hook entries merged into the real ${SETTINGS}"
+echo "✅ PASS: peon-ping hook entries present in the real ${SETTINGS}"
 
 echo "🎉 Test passed."

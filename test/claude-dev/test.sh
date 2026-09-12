@@ -20,11 +20,11 @@ fi
 
 echo "✅ PASS: setup-credentials.sh installed, executable, TARGET_HOME baked in"
 
-# devcontainer features test already ran postStartCommand (this script) as
+# devcontainer features test already ran postCreateCommand (this script) as
 # the feature's resolved target user before test.sh started — don't re-run
 # it here, since test.sh itself may run as a different user (root on plain
 # ubuntu:latest, even though claude-dev resolved a non-root "ubuntu" user
-# for its own postStartCommand). Read the same TARGET_HOME the script
+# for its own postCreateCommand). Read the same TARGET_HOME the script
 # baked in and already used, rather than assuming it matches test.sh's own
 # $HOME.
 eval "$(grep '^TARGET_HOME=' "${SCRIPT}")"

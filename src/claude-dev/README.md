@@ -74,9 +74,14 @@ convention would silently share one memory/settings bucket under that model.
    with the target user's home path baked in.
 2. **Mount** (`devcontainer-feature.json → mounts`): mounts the Docker named volume
    `helpers4-claude-credentials-${devcontainerId}` at `/mnt/h4claude` inside the container.
-3. **Every start** (`postStartCommand`): `setup-credentials.sh` replaces `~/.claude`
-   with a symlink to `/mnt/h4claude` — credentials, settings, and Claude Code memory
-   all survive rebuilds.
+3. **Once, at container creation** (`postCreateCommand`): `setup-credentials.sh` replaces
+   `~/.claude` with a symlink to `/mnt/h4claude` — credentials, settings, and Claude Code
+   memory all survive rebuilds. Runs exactly once per container instance (a rebuild creates a
+   new instance, so it runs again then, but never again on a plain restart of the same one) —
+   the volume is already mounted at container creation, before any command runs inside it, so
+   there's no need to redo this on every start. Anything another feature wrote into `~/.claude`
+   at *image build* time (before this volume existed to write into) is added to the volume
+   rather than discarded — see the script's own comments for exactly how.
 
 If `/mnt/h4claude` is not mounted (e.g. a standalone `install.sh` test), the
 script warns and exits cleanly — the container starts normally, just without
@@ -95,11 +100,20 @@ without depending on that user's shell profile already including
 
 ## Version History
 
-- **v1.3.1**: Documentation only, no functional change — centralized the exclusive-vs-shared
-  volume rationale onto `h4_ensure_volume_writable`'s own comment in `helpers4-common`, trimming
-  the near-identical explanation this file (and mistral-dev/pnpm-store/playwright-dev) used to
-  restate independently. Also cross-references peon-ping's dependency on this feature's exact
-  generated-script path, found during a code-review sweep of v1.3.0's coexistence fix.
+- **v1.3.1**: `setup-credentials.sh` now runs via `postCreateCommand` instead of
+  `postStartCommand` — the volume is already mounted by container creation (Docker attaches
+  mounts before any command runs inside a container, not later), so there's no need to redo
+  the swap on every start; it now happens exactly once per container instance instead. Also
+  no longer destructive: anything a feature wrote into `~/.claude` at *image build* time
+  (before this volume existed to write into) is added to the volume instead of being silently
+  discarded — `cp -rn` only adds what's missing, it never overwrites the volume's own
+  accumulated state (real credentials, an actual `settings.json`, memory). Also centralized
+  the exclusive-vs-shared volume rationale onto `h4_ensure_volume_writable`'s own comment in
+  `helpers4-common`, trimming the near-identical explanation this file (and
+  mistral-dev/pnpm-store/playwright-dev) used to restate independently, and cross-references
+  peon-ping's dependency on this feature's exact generated-script path. All found during a
+  code-review sweep of v1.3.0's coexistence fix with peon-ping — see peon-ping's own v1.3.1
+  entry for the other half.
 - **v1.3.0**: **Breaking**: the credentials volume is now keyed by `${devcontainerId}` instead
   of `${localEnv:USER}` — each devcontainer gets its own dedicated volume instead of sharing one
   across every local project. You'll need to log in again once per devcontainer instead of once

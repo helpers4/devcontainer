@@ -45,7 +45,7 @@ trap cleanup EXIT
 # Ensure apt is in non-interactive mode
 export DEBIAN_FRONTEND=noninteractive
 
-echo "🎮 Installing peon-ping feature..."
+echo "🎮 Configuring peon-ping feature..."
 echo "   Username: ${USERNAME}"
 echo "   Packs: ${PACKS}"
 [ -n "${PACKS_LANG}" ] && echo "   Packs language filter: ${PACKS_LANG}"
@@ -56,9 +56,7 @@ echo "   Volume: ${VOLUME}"
 echo "🔧 Installing prerequisites..."
 h4_ensure_packages curl ca-certificates python3 alsa-utils
 
-# ── Install peon-ping ────────────────────────────────────────────────────────
-
-echo "🔧 Installing peon-ping..."
+# ── Build the upstream installer's argument list ────────────────────────────
 
 INSTALLER_ARGS="--global"
 
@@ -81,86 +79,64 @@ if [ "${NO_RC}" = "true" ]; then
     INSTALLER_ARGS="${INSTALLER_ARGS} --no-rc"
 fi
 
-# Run installer as the target user (peon-ping handles non-interactive detection)
-# The installer may exit non-zero if its sound test fails (no audio device during
-# Docker build).  We tolerate that and verify the actual installation ourselves.
+# ── Generate the postCreateCommand install script ───────────────────────────
 #
-# REMOTE_CONTAINERS=true forces peon-ping's own platform detection down its
-# "devcontainer" branch. Without it, a BuildKit RUN sandbox on a WSL2-backed
-# Docker Desktop host has none of `/.dockerenv`/$CODESPACES yet still inherits
-# "microsoft" in /proc/version from the WSL2 kernel, so peon-ping misdetects
-# "wsl" and hard-requires powershell.exe (unavailable in the build sandbox),
-# exiting before the binary is even installed.
+# The actual peon-ping install (binary, sound packs, Claude Code hooks) runs once at
+# container creation instead of here at image build time, ordered after claude-dev via
+# installsAfter — so by the time it runs, ~/.claude is already whatever it's going to be for
+# this container (claude-dev's persistent volume if that feature is present, an ordinary
+# directory otherwise). Either way, this installs straight into the real ~/.claude with no
+# special-casing: nothing here needs to know or care which case it is.
 #
-# When the claude-dev feature is also installed (installsAfter guarantees it has already run,
-# so its generated setup-credentials.sh already exists), redirect the *entire* install (binary,
-# packs, adapters, skills, and the Claude Code hook entries the installer writes into its own
-# settings.json) away from ~/.claude via CLAUDE_CONFIG_DIR. claude-dev's own postStartCommand
-# does `rm -rf ~/.claude` and replaces it with a symlink to its persistent volume on *every*
-# container start (see claude-dev's setup-credentials.sh) — anything peon-ping wrote straight
-# into ~/.claude at build time would be lost the moment that runs, regardless of whether that
-# volume is exclusive to this devcontainer or shared with others. PEON_STABLE_HOME stays
-# entirely inside this container's own filesystem, unaffected by that swap. patch-hosts.sh's
-# postStartCommand sibling (seed-claude-hooks.sh) re-links ~/.claude/hooks/peon-ping and
-# ~/.claude/skills/peon-ping-* into it, and merges the Claude Code hook entries into the real
-# ~/.claude/settings.json, once claude-dev has finished swapping ~/.claude for the real one.
-#
-# Without claude-dev, ~/.claude is just an ordinary directory for the life of the container, so
-# there's nothing to work around — install straight into it, as peon-ping does by default.
-# peon-ping's own install.sh:36 generates this exact path — if claude-dev ever relocates or
-# renames it, this check just silently fails closed (falls back to installing straight into
-# ~/.claude, the pre-fix behavior) instead of erroring, so keep the two in sync.
-CLAUDE_DEV_MARKER="/usr/local/share/claude-dev/setup-credentials.sh"
-if [ -f "${CLAUDE_DEV_MARKER}" ]; then
-    CLAUDE_DEV_PRESENT=true
-    PEON_STABLE_HOME="${USER_HOME}/.local/share/peon-ping/claude-home"
-    INSTALL_ENV="CLAUDE_CONFIG_DIR='${PEON_STABLE_HOME}' "
-else
-    CLAUDE_DEV_PRESENT=false
-    PEON_STABLE_HOME="${USER_HOME}/.claude"
-    INSTALL_ENV=""
-fi
-su - "${USERNAME}" -c "curl -fsSL https://raw.githubusercontent.com/PeonPing/peon-ping/main/install.sh | ${INSTALL_ENV}REMOTE_CONTAINERS=true bash -s -- ${INSTALLER_ARGS}" || \
-    echo "⚠️  peon-ping installer exited with errors (sound test failure during build is expected)"
+# This also sidesteps a hazard that has nothing to do with claude-dev specifically: a named
+# volume isn't mounted yet during the image build that runs this script (only once the
+# container is actually created), so anything written into ~/.claude here would just be
+# baked into an image layer — invisible to whatever ends up mounted at that path afterward,
+# for any feature that does so, not just this one.
+SCRIPT="/usr/local/share/peon-ping/install-claude-hooks.sh"
+mkdir -p "$(dirname "${SCRIPT}")"
 
-# Verify the binary was actually installed (fail now if curl/download truly failed)
+{
+    cat << 'HEADER'
+#!/usr/bin/env bash
+# This file is part of helpers4.
+# Copyright (C) 2025 baxyz
+# SPDX-License-Identifier: LGPL-3.0-or-later
+#
+# Runs once, at container creation (postCreateCommand) — ordered after claude-dev's own
+# postCreateCommand via installsAfter (devcontainer-feature.json), so ~/.claude is already
+# whatever it's going to be for this container by the time this runs. Installs peon-ping
+# normally into it, no redirection or relinking needed either way.
+set -euo pipefail
+HEADER
+    printf 'USERNAME=%q\n' "${USERNAME}"
+    printf 'USER_HOME=%q\n' "${USER_HOME}"
+    printf 'INSTALLER_ARGS=%q\n' "${INSTALLER_ARGS}"
+    printf 'VOLUME=%q\n' "${VOLUME}"
+} > "${SCRIPT}"
+
+cat >> "${SCRIPT}" << 'EOF'
+
+echo "🎮 Installing peon-ping..."
+
+# The installer may exit non-zero if its sound test fails (no audio device attached yet at
+# container creation). Tolerate that and verify the actual installation ourselves.
+#
+# REMOTE_CONTAINERS=true forces peon-ping's own platform detection down its "devcontainer"
+# branch. Without it, a WSL2-backed Docker Desktop host has none of `/.dockerenv`/$CODESPACES
+# yet still inherits "microsoft" in /proc/version from the WSL2 kernel, so peon-ping
+# misdetects "wsl" and hard-requires powershell.exe (unavailable here).
+su - "${USERNAME}" -c "curl -fsSL https://raw.githubusercontent.com/PeonPing/peon-ping/main/install.sh | REMOTE_CONTAINERS=true bash -s -- ${INSTALLER_ARGS}" || \
+    echo "⚠️  peon-ping installer exited with errors (sound test failure at container creation is expected)"
+
 PEON_BIN="${USER_HOME}/.local/bin/peon"
 if [ ! -x "${PEON_BIN}" ] && ! su - "${USERNAME}" -c "command -v peon" > /dev/null 2>&1; then
     echo "❌ peon binary not found after installation — install truly failed"
     exit 1
 fi
+echo "   ✅ peon binary found"
 
-# With claude-dev, save the Claude Code hook entries the installer wrote into
-# PEON_STABLE_HOME/settings.json as a standalone fragment, with their absolute paths rewritten
-# from PEON_STABLE_HOME to the real ~/.claude — so seed-claude-hooks.sh can merge them into the
-# real settings.json later without needing to know anything about peon-ping's install layout.
-if [ "${CLAUDE_DEV_PRESENT}" = "true" ]; then
-    CLAUDE_REAL_DIR="${USER_HOME}/.claude"
-    PEON_HOOKS_SETTINGS="${PEON_STABLE_HOME}/settings.json"
-    PEON_HOOKS_FRAGMENT="${USER_HOME}/.local/share/peon-ping/claude-hooks.json"
-
-    if [ -f "${PEON_HOOKS_SETTINGS}" ] && command -v python3 > /dev/null 2>&1; then
-        python3 << PYEOF
-import json
-
-try:
-    with open("${PEON_HOOKS_SETTINGS}") as f:
-        hooks = json.load(f).get("hooks", {})
-    rewritten = json.dumps(hooks).replace("${PEON_STABLE_HOME}", "${CLAUDE_REAL_DIR}")
-    with open("${PEON_HOOKS_FRAGMENT}", "w") as f:
-        f.write(rewritten)
-except (json.JSONDecodeError, OSError) as e:
-    print(f"⚠️  Could not save Claude Code hooks fragment: {e}")
-PYEOF
-        chown "${USERNAME}:${USERNAME}" "${PEON_HOOKS_FRAGMENT}" 2>/dev/null || true
-    fi
-fi
-
-# ── Set volume ───────────────────────────────────────────────────────────────
-
-PEON_CONFIG_DIR="${PEON_STABLE_HOME}/hooks/peon-ping"
-PEON_CONFIG="${PEON_CONFIG_DIR}/config.json"
-
+PEON_CONFIG="${USER_HOME}/.claude/hooks/peon-ping/config.json"
 if [ -f "${PEON_CONFIG}" ] && command -v python3 > /dev/null 2>&1; then
     echo "🔧 Setting volume to ${VOLUME}..."
     python3 << PYEOF
@@ -178,6 +154,21 @@ except (json.JSONDecodeError, ValueError, OSError) as e:
     print(f"⚠️  Could not update volume in {path}: {e}", file=sys.stderr)
 PYEOF
 fi
+
+echo ""
+echo "🎮 peon-ping installation complete!"
+echo ""
+echo "   ⚠️  IMPORTANT — Audio in devcontainers:"
+echo "   Start the relay on your HOST machine:"
+echo ""
+echo "       peon relay --daemon"
+echo ""
+echo "   The container routes audio to host.docker.internal:19998 automatically."
+echo ""
+EOF
+
+chmod +x "${SCRIPT}"
+echo "  ✅ Installed ${SCRIPT} (runs at container creation)"
 
 # ── Hook configuration helpers ───────────────────────────────────────────────
 
@@ -383,37 +374,12 @@ EOF
     echo "   ✅ Codex hooks written to ${CODEX_CONFIG}"
 fi
 
-# ── postStartCommand scripts ─────────────────────────────────────────────────
+# ── postStartCommand script ──────────────────────────────────────────────────
 
 mkdir -p /usr/local/share/peon-ping
 cp "$(dirname "$0")/patch-hosts.sh" /usr/local/share/peon-ping/patch-hosts.sh
-cp "$(dirname "$0")/seed-claude-hooks.sh" /usr/local/share/peon-ping/seed-claude-hooks.sh
-chmod +x /usr/local/share/peon-ping/patch-hosts.sh /usr/local/share/peon-ping/seed-claude-hooks.sh
-
-# ── Verify installation ─────────────────────────────────────────────────────
+chmod +x /usr/local/share/peon-ping/patch-hosts.sh
 
 echo ""
-echo "🔍 Verifying installation..."
-
-if [ -x "${PEON_BIN}" ] || su - "${USERNAME}" -c "command -v peon" > /dev/null 2>&1; then
-    echo "   ✅ peon binary found"
-else
-    echo "   ⚠️  peon binary not found in PATH (may need shell restart)"
-fi
-
-if [ -d "${PEON_CONFIG_DIR}" ]; then
-    echo "   ✅ peon-ping config directory found at ${PEON_CONFIG_DIR}"
-else
-    echo "   ⚠️  peon-ping config directory not found"
-fi
-
-echo ""
-echo "🎮 peon-ping installation complete!"
-echo ""
-echo "   ⚠️  IMPORTANT — Audio in devcontainers:"
-echo "   Start the relay on your HOST machine:"
-echo ""
-echo "       peon relay --daemon"
-echo ""
-echo "   The container routes audio to host.docker.internal:19998 automatically."
-echo ""
+echo "🎮 peon-ping configuration complete — the peon binary and Claude Code hooks install"
+echo "   once the container is created (see ${SCRIPT})."
