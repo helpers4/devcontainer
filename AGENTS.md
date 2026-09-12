@@ -77,7 +77,7 @@ version bump" below.
 | `git-absorb` | 1.2.3 | git-absorb from GitHub releases |
 | `bitwarden-secrets-manager` | 1.2.4 | `bws` CLI from bitwarden/sdk-sm GitHub releases, token-only auth, no persisted state |
 | `dotfiles-sync` | 1.2.3 | Sync Git/SSH/GPG/npm/gh config from host; SSH key files opt-in (dependsOn helpers4-common) |
-| `peon-ping` | 1.3.0 | AI agent sound notifications |
+| `peon-ping` | 1.3.1 | AI agent sound notifications |
 | `shell-history-per-project` | 1.2.3 | Persistent shell history (zsh/bash/fish) |
 | `org-workspace` | 1.0.0 | Clones every repo of a GitHub org into sibling `/workspaces` folders + generates/merges a multi-root `.code-workspace` (dependsOn helpers4-common, github-dev) |
 

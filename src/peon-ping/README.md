@@ -238,6 +238,14 @@ peon packs list           # List installed packs
 
 ## Version History
 
+- **v1.3.1**: Code-review follow-ups to v1.3.0's fix, no user-visible behavior change —
+  `seed-claude-hooks.sh` now dedups by the same install-invariant substring `install.sh`'s own
+  `merge_hooks_json` already used (verified against a real installer-generated fragment that
+  multiple distinct peon-ping commands under one event, e.g. `UserPromptSubmit`'s sound player
+  plus its `/peon-ping-*` slash-command handlers, still both register and stay idempotent);
+  removed a redundant re-derivation of "is claude-dev present" that was computed twice by two
+  different means; added cross-reference comments between peon-ping's and claude-dev's install
+  scripts so a path rename on either side is caught by grep instead of failing silently.
 - **v1.3.0**: Fixed peon-ping never actually working for Claude Code when the `claude-dev`
   feature is also installed — its `postStartCommand` replaces `~/.claude` with a symlink to a
   persistent volume on every start, which silently discarded everything peon-ping had installed

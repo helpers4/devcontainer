@@ -59,11 +59,17 @@ def commands(entry):
     return [h.get("command", "") for h in entry.get("hooks", [])]
 
 
+# Dedup by the same "peon-ping" substring marker install.sh's own merge_hooks_json (Cursor/
+# Copilot) uses, not exact command equality — existing_cmds is a static snapshot taken before
+# this event's entries are appended (matching merge_hooks_json), so a second, distinct
+# peon-ping-owned entry for the same event (e.g. UserPromptSubmit's slash-command handlers
+# alongside its sound-player hook) still gets added within this same run; only a *previous*
+# run's already-registered entries get skipped on the next one.
 for event, entries in new_hooks.items():
     event_list = existing_hooks.setdefault(event, [])
     existing_cmds = {c for e in event_list for c in commands(e)}
     for entry in entries:
-        if not any(c in existing_cmds for c in commands(entry)):
+        if not any("peon-ping" in c for c in existing_cmds):
             event_list.append(entry)
 
 settings["hooks"] = existing_hooks

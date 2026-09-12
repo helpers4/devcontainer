@@ -107,11 +107,16 @@ fi
 #
 # Without claude-dev, ~/.claude is just an ordinary directory for the life of the container, so
 # there's nothing to work around — install straight into it, as peon-ping does by default.
+# peon-ping's own install.sh:36 generates this exact path — if claude-dev ever relocates or
+# renames it, this check just silently fails closed (falls back to installing straight into
+# ~/.claude, the pre-fix behavior) instead of erroring, so keep the two in sync.
 CLAUDE_DEV_MARKER="/usr/local/share/claude-dev/setup-credentials.sh"
 if [ -f "${CLAUDE_DEV_MARKER}" ]; then
+    CLAUDE_DEV_PRESENT=true
     PEON_STABLE_HOME="${USER_HOME}/.local/share/peon-ping/claude-home"
     INSTALL_ENV="CLAUDE_CONFIG_DIR='${PEON_STABLE_HOME}' "
 else
+    CLAUDE_DEV_PRESENT=false
     PEON_STABLE_HOME="${USER_HOME}/.claude"
     INSTALL_ENV=""
 fi
@@ -129,8 +134,8 @@ fi
 # PEON_STABLE_HOME/settings.json as a standalone fragment, with their absolute paths rewritten
 # from PEON_STABLE_HOME to the real ~/.claude — so seed-claude-hooks.sh can merge them into the
 # real settings.json later without needing to know anything about peon-ping's install layout.
-CLAUDE_REAL_DIR="${USER_HOME}/.claude"
-if [ "${PEON_STABLE_HOME}" != "${CLAUDE_REAL_DIR}" ]; then
+if [ "${CLAUDE_DEV_PRESENT}" = "true" ]; then
+    CLAUDE_REAL_DIR="${USER_HOME}/.claude"
     PEON_HOOKS_SETTINGS="${PEON_STABLE_HOME}/settings.json"
     PEON_HOOKS_FRAGMENT="${USER_HOME}/.local/share/peon-ping/claude-hooks.json"
 
