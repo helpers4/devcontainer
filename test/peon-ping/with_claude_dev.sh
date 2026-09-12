@@ -4,12 +4,11 @@
 # Copyright (C) 2025 baxyz
 # SPDX-License-Identifier: LGPL-3.0-or-later
 #
-# Exercises peon-ping alongside claude-dev — the combination that used to leave the peon binary
-# a dead symlink and every Claude Code hook silently unregistered, because claude-dev's own
-# postStartCommand replaces ~/.claude with a symlink to a persistent volume on every start,
-# discarding whatever peon-ping had installed straight into it at build time. Plain test.sh
-# (installed alone, without claude-dev) can't catch this — it only exercises the direct-install
-# code path.
+# Exercises peon-ping alongside claude-dev: claude-dev's postStartCommand replaces ~/.claude
+# with a symlink to a persistent volume on every start, which would discard anything peon-ping
+# installed straight into it at build time — install.sh redirects around that instead (see its
+# own comments) and seed-claude-hooks.sh re-links the result in. Plain test.sh (installed
+# alone, without claude-dev) only exercises the direct-install code path and can't cover this.
 
 set -e
 
