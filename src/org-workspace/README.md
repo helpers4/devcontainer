@@ -2,137 +2,95 @@
 
 > Code name: `org-workspace`
 
-Clones every repo of a GitHub org into sibling `/workspaces` folders and generates or updates a
-multi-root `.code-workspace` file — add this to one "bootstrap" project's `devcontainer.json`
-instead of hand-writing `mounts` entries and a workspace file per project (the pattern this
-org's own `.dev` repo uses by hand today).
+Clones the repos of a GitHub org next to your project and keeps a VS Code multi-root workspace
+file up to date. Add it to one project's `devcontainer.json` and the other repos are there when
+the container is created.
+
+Use it when several repos of the same org are developed together. For a single repo it does
+nothing useful.
 
 > **Also included automatically:** repairs broken host paths in your git config and restores
 > your SSH commit-signing key on every attach, on both local and cloud containers, with nothing
 > to set up on your end — see [`helpers4-common`](../helpers4-common) for how it works.
 
-## Example Usage
+## Usage
 
 ```jsonc
 {
   "features": {
-    "ghcr.io/helpers4/devcontainer/github-dev:1": {},
     "ghcr.io/helpers4/devcontainer/org-workspace:1": {}
   }
 }
 ```
 
-That's it — on container start, every non-fork, non-archived repo of the org that your `gh`
-auth can see (public and private; the org is auto-detected from this bootstrap repo's own
-`origin` remote) is cloned into a sibling `/workspaces/<repo>` folder, and
-a `<org>.code-workspace` file is generated at this repo's own root.
+With no options, it takes the org from your project's `origin` remote and clones every repo you
+can see, except forks and archived ones. Each repo goes to `/workspaces/<repo>` and a
+`<org>.code-workspace` file is created in your project's root folder. Open it once with
+**File > Open Workspace from File...**. VS Code cannot open it for you from inside a container.
 
-**Then, once**: `File > Open Workspace from File...` → select the generated file. VS Code
-currently has no way to auto-attach to a specific `.code-workspace` file inside a running
-container ([open upstream request](https://github.com/microsoft/vscode-remote-release/issues/9733)) —
-this is a one-click step, not something this feature can do for you.
-
-### Leaving some repos out
+To pick the repos yourself, or to skip some:
 
 ```jsonc
 "ghcr.io/helpers4/devcontainer/org-workspace:1": {
-  "exclude": "helpers4.github.io,some-old-repo"
+  "repos": "typescript,devcontainer,action",
+  "exclude": "website"
 }
 ```
 
-Applies to auto-discovered and explicit lists alike. Nothing to clean up by hand: see
-[Pruning](#pruning).
-
-### Explicit repo list instead of auto-discovery
-
-```jsonc
-{
-  "features": {
-    "ghcr.io/helpers4/devcontainer/github-dev:1": {},
-    "ghcr.io/helpers4/devcontainer/org-workspace:1": {
-      "repos": "typescript,devcontainer,action,website"
-    }
-  }
-}
-```
-
-Reproducible across rebuilds regardless of what repos the org gains or loses — prefer this over
-`autoDiscover` once you know the set you actually want. `repos` always wins over `autoDiscover`
-— there's no need to set `autoDiscover` to `false` alongside it.
+A fixed `repos` list gives the same result on every rebuild, even when the org adds or removes
+repos.
 
 ## Options
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
-| `org` | string | `""` | GitHub org (or user) to clone repos from. Left empty, detected automatically via `gh repo view` against this bootstrap repo's own `origin` remote. |
-| `repos` | string | `""` | Comma-separated explicit repo list (e.g. `"typescript,devcontainer,action"`). Takes precedence over `autoDiscover`. |
-| `autoDiscover` | string | `"true"` | Ignored whenever `repos` is set. `"false"`: discover nothing. `"true"` (default): sane defaults (public + private, no forks, no archived). Or a comma-separated token list — `public`, `private`, `internal`, `fork`, `archived` — each present token includes that category, e.g. `"public,fork"` includes public repos and forks but excludes private/internal/archived. |
-| `exclude` | string | `""` | Comma-separated repo names never cloned nor listed in the `.code-workspace`, applied to both `repos` and `autoDiscover`. |
-| `generateCodeWorkspace` | boolean | `true` | Generate (or update) a multi-root `.code-workspace` file. If one already exists — hand-written, or committed by a teammate — its `folders` list is merged into, not replaced; every other key (`settings`, `extensions`, `launch`, ...) is left untouched. |
-| `codeWorkspaceName` | string | `""` | Filename for the generated `.code-workspace`, written at the bootstrap repo's own root. Left empty, defaults to `<org>.code-workspace`. |
+| `org` | string | `""` | GitHub org (or user) to clone from. Empty means the owner of your `origin` remote. |
+| `repos` | string | `""` | Comma-separated repos to clone. When set, `autoDiscover` is ignored. |
+| `autoDiscover` | string | `"true"` | `"true"`: public and private repos, no forks, no archived. `"false"`: clone nothing. Or a list of categories, e.g. `"public,fork"`: `public`, `private`, `internal`, `fork`, `archived`. |
+| `exclude` | string | `""` | Comma-separated repos to skip, whether they come from `repos` or `autoDiscover`. |
+| `generateCodeWorkspace` | boolean | `true` | Create or update the `.code-workspace` file. |
+| `codeWorkspaceName` | string | `""` | File name. Empty means `<org>.code-workspace`. |
 
-## How it works
+## What it does
 
-1. **Build time** (`install.sh`): installs `/usr/local/share/org-workspace/clone-repos.sh` with the
-   resolved option values in an `options.env` next to it, and makes `/workspaces` (non-recursively)
-   writable by the remote user — the image ships it as `root:root`, and the script creates its
-   sibling symlinks directly under it.
-2. **Mount**: a Docker named volume (`helpers4-org-workspace-${devcontainerId}`, exclusive to
-   this devcontainer) at `/mnt/h4org-workspace` — the actual clones live here, not in the
-   container's own ephemeral layer, so a rebuild doesn't wipe out uncommitted local changes in
-   any of them.
-3. **Every start** (`postStartCommand`): `clone-repos.sh` resolves the org (option, or
-   auto-detected), resolves the repo list (`repos`, or `gh repo list` filtered per
-   `autoDiscover`), drops anything in `exclude`, and for each repo:
-   - Skips it entirely if a file or directory already exists at the sibling path — a manual
-     bind-mount, a previous manual clone, anything already there is never touched. (This
-     includes a `mounts` entry targeting `/workspaces/<repo>`: don't combine those with this
-     Feature, it replaces them.)
-   - Re-links it if it's already cloned into the volume from a prior run (the symlink is what a
-     rebuild loses, not the volume's own content).
-   - Otherwise clones it (`gh repo clone`, retried once) into a temporary directory in the
-     volume, renames it into place — so an interrupted clone never leaves a half-populated
-     folder mistaken for a finished one — then symlinks `/workspaces/<repo>` → the volume.
-4. If `generateCodeWorkspace` is on, enumerates every direct subdirectory of `/workspaces` that
-   looks like a real git checkout (has a `.git`) — covering the bootstrap repo itself, anything
-   pre-existing, and everything just cloned/linked — and merges it into the `.code-workspace`
-   file's `folders` array. Folders already listed are matched by resolved path (`.` and
-   `../.dev` are the same folder), hand-written names are kept, and the file's own indentation
-   is preserved. A file that isn't plain JSON (VS Code allows comments) is left untouched.
+1. **At build**, `install.sh` installs the script and makes `/workspaces` writable for your user.
+2. **When the container is created**, the script:
+   - clones each repo into a Docker volume (`helpers4-org-workspace-${devcontainerId}`, mounted
+     at `/mnt/h4org-workspace`) and links it from `/workspaces/<repo>`. The clones live in the
+     volume, so a rebuild keeps your local branches and uncommitted work;
+   - skips any repo that already has a folder in `/workspaces`;
+   - adds the new folders to the `.code-workspace` file. Names and settings you wrote in it are
+     kept, and a folder listed twice under different paths (`.` and `../my-project`) counts
+     once.
 
-## Pruning
+A failed clone, or no access to a repo, prints a warning and the rest carries on. The script
+always exits 0, because a failing lifecycle command would stop the ones after it.
 
-Every start, anything this Feature had cloned that is no longer in the final list — newly
-`exclude`d, archived or deleted upstream, dropped from `repos` — is removed automatically: its
-`/workspaces/<repo>` symlink and its `.code-workspace` entry always, and its clone in the volume
-**only if nothing could be lost with it** (no uncommitted change, no commit that exists on no
-remote, no stash). Otherwise the clone is kept in the volume and a warning says so.
+## Cleaning up
 
-Only runs when the list is trustworthy — an explicit `repos`, or a discovery that succeeded. A
-failed `gh repo list`, or `autoDiscover: "false"` with no `repos`, never prunes anything.
+A repo that is no longer wanted (you excluded it, or it was archived or deleted upstream) loses
+its link in `/workspaces` and its entry in the workspace file. Its clone is deleted only when git
+confirms nothing would be lost: no uncommitted or ignored files (except `node_modules`), no stash,
+no commit missing from the remote. Otherwise the clone stays in the volume and a warning says so.
 
-## Reliability
+Nothing is removed when the list of repos looks incomplete: when `gh repo list` fails, or when it
+returns nothing.
 
-`clone-repos.sh` **always exits 0.** A failing `postStartCommand` makes the devcontainer CLI skip
-every lifecycle command after it — for every other Feature and for your own project — so this
-script never takes that risk: each failure (unreachable `gh`, a repo you can't access, an
-unwritable `/workspaces`, an unparseable workspace file...) is warned about, counted in the final
-summary line, and skipped, and a top-level `EXIT` trap backstops anything unforeseen. Transient
-`gh` failures (auth or network not ready yet on a fresh start) are retried before giving up.
+## Limits
 
-## Auth
-
-Depends on [`github-dev`](../github-dev) for an authenticated `gh` CLI — both cloning
-(`gh repo clone`) and auto-discovery (`gh repo list`) go through it, reusing whatever auth `gh`
-already has (SSH-forwarded, a token, or Codespaces' own pre-authenticated `gh`). No separate
-auth mechanism to configure. GitHub only, for now — GitLab/Bitbucket/other forges aren't
-supported.
+- GitHub only, and one org per project.
+- The repos are cloned when the container is created. A repo added to the org later shows up
+  after the next rebuild.
+- A `.code-workspace` file with comments is left as it is, because it cannot be edited safely.
+  Otherwise the file is rewritten the way VS Code writes it: tabs, no final newline.
+- Needs an authenticated `gh`, which [`github-dev`](../github-dev) provides.
+- Don't also mount volumes on `/workspaces/<repo>` yourself. Those folders would be seen as
+  already present and skipped.
 
 ## Codespaces
 
-Designed to work there — `gh` is pre-authenticated in Codespaces, and named volumes work the
-same way there as locally (a Codespace runs an actual Docker container). Not yet verified in a
-live Codespaces environment.
+Should work, since `gh` is already authenticated there and named volumes behave the same. Not
+tested in a real Codespace yet.
 
 ## OS and Architecture Support
 
@@ -141,8 +99,8 @@ live Codespaces environment.
 
 ## Version History
 
-- **v1.0.1**: `autoDiscover` now defaults to `"true"` (still overridden by `repos`); new
-  `exclude` option; automatic pruning of repos no longer wanted; `clone-repos.sh` can no longer fail the attach and makes `/workspaces`
-  writable at build time; atomic clones; the `.code-workspace` merge dedupes by resolved path,
-  keeps names and indentation, and never overwrites a JSONC file.
+- **v1.0.1**: `autoDiscover` defaults to `"true"`. New `exclude` option. The script no longer
+  fails the container when something goes wrong, and `/workspaces` is writable at build time. It
+  now runs when the container is created instead of at every start, and removes repos that are
+  no longer wanted.
 - **v1.0.0**: Initial release.
