@@ -40,9 +40,8 @@ this is a one-click step, not something this feature can do for you.
 }
 ```
 
-Applies to auto-discovered and explicit lists alike. A repo excluded after an earlier run had
-already linked it loses its `/workspaces/<repo>` symlink and its `.code-workspace` entry; the
-clone in the volume is kept, so nothing local is lost.
+Applies to auto-discovered and explicit lists alike. Nothing to clean up by hand: see
+[Pruning](#pruning).
 
 ### Explicit repo list instead of auto-discovery
 
@@ -101,6 +100,17 @@ Reproducible across rebuilds regardless of what repos the org gains or loses —
    `../.dev` are the same folder), hand-written names are kept, and the file's own indentation
    is preserved. A file that isn't plain JSON (VS Code allows comments) is left untouched.
 
+## Pruning
+
+Every start, anything this Feature had cloned that is no longer in the final list — newly
+`exclude`d, archived or deleted upstream, dropped from `repos` — is removed automatically: its
+`/workspaces/<repo>` symlink and its `.code-workspace` entry always, and its clone in the volume
+**only if nothing could be lost with it** (no uncommitted change, no commit that exists on no
+remote, no stash). Otherwise the clone is kept in the volume and a warning says so.
+
+Only runs when the list is trustworthy — an explicit `repos`, or a discovery that succeeded. A
+failed `gh repo list`, or `autoDiscover: "false"` with no `repos`, never prunes anything.
+
 ## Reliability
 
 `clone-repos.sh` **always exits 0.** A failing `postStartCommand` makes the devcontainer CLI skip
@@ -132,7 +142,7 @@ live Codespaces environment.
 ## Version History
 
 - **v1.1.0**: `autoDiscover` now defaults to `"true"` (still overridden by `repos`); new
-  `exclude` option; `clone-repos.sh` can no longer fail the attach and makes `/workspaces`
+  `exclude` option; automatic pruning of repos no longer wanted; `clone-repos.sh` can no longer fail the attach and makes `/workspaces`
   writable at build time; atomic clones; the `.code-workspace` merge dedupes by resolved path,
   keeps names and indentation, and never overwrites a JSONC file.
 - **v1.0.0**: Initial release.
