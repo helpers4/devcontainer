@@ -103,7 +103,7 @@ every dependent feature picks it up on its next install.
 
 ## Version History
 
-- **v1.3.0**: Added `h4_require_root`. Thirteen `install.sh` scripts each carried their own
+- **v1.2.3**: Added `h4_require_root`. Thirteen `install.sh` scripts each carried their own
   `id -u` check, with five different wordings of the error message; features can now call this
   one instead. Nothing changes for existing features until they are migrated to it.
 - **v1.2.2**: Added two shared helpers, extracted from duplicated logic in `git-absorb` and
