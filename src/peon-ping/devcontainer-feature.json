@@ -1,6 +1,6 @@
 {
   "id": "peon-ping",
-  "version": "2.0.0",
+  "version": "1.3.2",
   "name": "Peon Ping — AI Agent Sound Notifications",
   "description": "Plays your host's peon-ping sounds when your AI coding agent finishes or needs permission — Claude Code, Cursor and Codex hooks, plus the Peon Pet VS Code extension. Nothing to configure: the sound and pack come from your host. Also self-heals your devcontainer setup.",
   "documentationURL": "https://github.com/helpers4/devcontainer/tree/main/src/peon-ping",

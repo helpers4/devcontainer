@@ -103,7 +103,7 @@ Settings: `peon-pet.size` (`small`, `medium` default, `large`) and `peon-pet.cha
 
 ## Version History
 
-- **v2.0.0**: The container no longer installs peon-ping or any sound pack. Hooks now ask your
+- **v1.3.2**: The container no longer installs peon-ping or any sound pack. Hooks now ask your
   host's relay to play a sound *category* and the host picks pack and volume, so there is nothing
   to mirror or configure. Everything is one script, `peon-ping` (`hook`, `register`, `check`).
   Removed the `packs`, `packsLang`, `volume`, `noRc` and `ideSetup` options (Claude Code, Cursor
@@ -116,4 +116,4 @@ Settings: `peon-pet.size` (`small`, `medium` default, `large`) and `peon-pet.cha
 - **v1.2.3**: `host.docker.internal` patched into `/etc/hosts` automatically on native Linux Docker.
 - **v1.1.0**: Depends on `helpers4-common` instead of an inline copy of its bootstrap.
 - **v1.0.6**: Fixed the build on WSL2-backed Docker Desktop hosts.
-- **v1.0.5**: Added `packsLang` *(removed in v2.0.0)*.
+- **v1.0.5**: Added `packsLang` *(removed in v1.3.2)*.
