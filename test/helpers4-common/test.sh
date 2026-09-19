@@ -17,7 +17,7 @@ fi
 # Test 2: common.sh exports the expected functions
 # shellcheck source=/dev/null
 . "${COMMON_SH}"
-for fn in h4_detect_user h4_resolve_home h4_apt_update h4_ensure_packages; do
+for fn in h4_require_root h4_detect_user h4_resolve_home h4_apt_update h4_ensure_packages; do
     if declare -f "${fn}" >/dev/null 2>&1; then
         echo "✅ PASS: function ${fn} defined"
     else
