@@ -287,6 +287,7 @@ Licensed under LGPL-3.0 - see LICENSE file for details
 
 ## Version History
 
+- **v1.2.4**: Added Rust (`.rs`) file headers, using `//` line comments.
 - **v1.2.3**: Documentation only, no functional change — added a "When to use this" section
   with alternatives, matching the equivalent sections other features in this catalog already had.
 - **v1.2.2**: Documentation only, no functional change — the previous wording sweep made the
