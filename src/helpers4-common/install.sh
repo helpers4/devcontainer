@@ -24,6 +24,12 @@ mkdir -p "${COMMON_DIR}"
 # check can extract and diff the canonical against all copies with one pattern.
 cat > "${COMMON_SH}" << 'H4_COMMON'
 # shellcheck shell=bash
+h4_require_root() {
+    if [ "$(id -u)" -ne 0 ]; then
+        echo 'Script must be run as root. Use sudo, su, or add "USER root" to your Dockerfile before running this script.' >&2
+        exit 1
+    fi
+}
 h4_detect_user() {
     USERNAME="${USERNAME:-${_REMOTE_USER:-automatic}}"
     if [ "${USERNAME}" = "auto" ] || [ "${USERNAME}" = "automatic" ]; then

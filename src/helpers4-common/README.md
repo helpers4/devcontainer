@@ -13,10 +13,11 @@ used to each carry their own inline copy of.
 
 ## What it provides
 
-`common.sh` defines eight shell functions, sourced by features that need them:
+`common.sh` defines nine shell functions, sourced by features that need them:
 
 | Function | Purpose |
 |----------|---------|
+| `h4_require_root` | Prints the standard "must be run as root" message to stderr and exits 1 unless the script runs as root — call it right after sourcing `common.sh`, in place of a hand-written `id -u` check |
 | `h4_detect_user` | Resolves the target container user (`vscode`, `node`, `codespace`, the first UID 1000 account, or `root`), respecting `USERNAME`/`_REMOTE_USER` and the `auto`/`automatic`/`none` conventions |
 | `h4_resolve_home` | Resolves that user's home directory (`/root` or the passwd entry, falling back to `/home/<user>`) |
 | `h4_apt_update` | Runs `apt-get update` once, skipped if the apt lists cache is already populated |
@@ -102,6 +103,9 @@ every dependent feature picks it up on its next install.
 
 ## Version History
 
+- **v1.3.0**: Added `h4_require_root`. Thirteen `install.sh` scripts each carried their own
+  `id -u` check, with five different wordings of the error message; features can now call this
+  one instead. Nothing changes for existing features until they are migrated to it.
 - **v1.2.2**: Added two shared helpers, extracted from duplicated logic in `git-absorb` and
   `bitwarden-secrets-manager`: `h4_arch_musl_triple` (maps `uname -m` to the
   `x86_64-unknown-linux-musl` / `aarch64-unknown-linux-musl` target-triple convention those two
