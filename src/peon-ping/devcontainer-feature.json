@@ -1,38 +1,11 @@
 {
   "id": "peon-ping",
-  "version": "1.3.1",
+  "version": "2.0.0",
   "name": "Peon Ping — AI Agent Sound Notifications",
-  "description": "Installs peon-ping and the Peon Pet VS Code extension for game character voice notifications when your AI coding agent finishes or needs permission. Supports VS Code/Copilot, Cursor, and Codex with audio relay for devcontainers. Also self-heals your devcontainer setup.",
+  "description": "Plays your host's peon-ping sounds when your AI coding agent finishes or needs permission — Claude Code, Cursor and Codex hooks, plus the Peon Pet VS Code extension. Nothing to configure: the sound and pack come from your host. Also self-heals your devcontainer setup.",
   "documentationURL": "https://github.com/helpers4/devcontainer/tree/main/src/peon-ping",
   "licenseURL": "https://github.com/helpers4/devcontainer/blob/main/LICENSE",
   "keywords": ["helpers4", "peon", "audio", "notifications", "ai"],
-  "options": {
-    "packs": {
-      "type": "string",
-      "default": "default",
-      "description": "Sound packs to install: 'default' (peon, peasant, sc_kerrigan, sc_battlecruiser, glados), 'all', or a comma-separated list (e.g. 'peon,glados,murloc')"
-    },
-    "packsLang": {
-      "type": "string",
-      "default": "",
-      "description": "Restrict pack selection to language(s), e.g. 'fr' or 'en,fr' — passed straight through to the installer's own --lang flag, which understands per-pack language metadata (not just name matching, e.g. matches 'peon_fr'). Left empty, no language filtering happens. If set while 'packs' is still 'default', searches the full pack registry instead of just the 5 default franchise picks — those 5 may not all have a matching-language variant."
-    },
-    "noRc": {
-      "type": "boolean",
-      "default": true,
-      "description": "Skip .bashrc/.zshrc modifications (recommended for devcontainers)"
-    },
-    "ideSetup": {
-      "type": "string",
-      "default": "vscode",
-      "description": "IDEs to configure: 'all' (vscode + cursor + codex), 'none', or a comma-separated list (e.g. 'vscode,cursor')"
-    },
-    "volume": {
-      "type": "string",
-      "default": "0.5",
-      "description": "Default volume level (0.0 – 1.0)"
-    }
-  },
   "customizations": {
     "vscode": {
       "extensions": [
@@ -43,8 +16,8 @@
       }
     }
   },
-  "postCreateCommand": "/usr/local/share/peon-ping/install-claude-hooks.sh",
-  "postStartCommand": "/usr/local/share/peon-ping/patch-hosts.sh",
+  "postCreateCommand": "/usr/local/bin/peon-ping register",
+  "postStartCommand": "/usr/local/bin/peon-ping check",
   "installsAfter": [
     "ghcr.io/devcontainers/features/common-utils",
     "ghcr.io/helpers4/devcontainer/claude-dev"

@@ -4,14 +4,11 @@
 # Copyright (C) 2025 baxyz
 # SPDX-License-Identifier: LGPL-3.0-or-later
 #
-# Exercises peon-ping alongside claude-dev: both install via postCreateCommand (not at image
-# build time, when no volume is mounted yet), ordered by installsAfter so claude-dev's own
-# postCreateCommand (which links ~/.claude to its persistent volume) runs first. By the time
-# peon-ping's postCreateCommand runs, ~/.claude is already the real, volume-backed directory,
-# so peon-ping just installs straight into it — nothing claude-dev-specific to verify beyond
-# that install actually landing in the right (already-linked) place. Plain test.sh (installed
-# alone, without claude-dev) only exercises that same install against an ordinary directory
-# and can't tell the two cases apart.
+# Exercises peon-ping alongside claude-dev: both register through postCreateCommand (not at
+# image build time, when no volume is mounted yet), ordered by installsAfter so claude-dev's
+# postCreateCommand (which links ~/.claude to its persistent volume) runs first. The hooks must
+# therefore land in the volume-backed settings.json — plain test.sh (no claude-dev) can't tell
+# that case from an ordinary ~/.claude directory.
 
 set -e
 
@@ -33,44 +30,15 @@ if [ ! -L "${CLAUDE_DIR}" ]; then
 fi
 echo "✅ PASS: ${CLAUDE_DIR} is claude-dev's symlinked volume"
 
-PEON_DIR="${CLAUDE_DIR}/hooks/peon-ping"
-if [ ! -d "${PEON_DIR}" ]; then
-    echo "❌ FAIL: ${PEON_DIR} not found — peon-ping's postCreateCommand didn't install into the real ~/.claude"
-    exit 1
-fi
-echo "✅ PASS: peon-ping installed directly into the volume-backed ${PEON_DIR}"
-
-PEON_BIN="${TARGET_HOME}/.local/bin/peon"
-if [ ! -x "${PEON_BIN}" ]; then
-    echo "❌ FAIL: ${PEON_BIN} missing or not executable"
-    exit 1
-fi
-if [ ! -e "$(readlink -f "${PEON_BIN}")" ]; then
-    echo "❌ FAIL: ${PEON_BIN} is a dead symlink — this is the exact bug being regression-tested"
-    exit 1
-fi
-echo "✅ PASS: ${PEON_BIN} resolves to a real file"
-
 SETTINGS="${CLAUDE_DIR}/settings.json"
 if [ ! -f "${SETTINGS}" ]; then
-    echo "❌ FAIL: ${SETTINGS} not found"
+    echo "❌ FAIL: ${SETTINGS} not found — peon-ping register didn't run into the real ~/.claude"
     exit 1
 fi
-if ! command -v python3 >/dev/null 2>&1 || ! python3 -c "
-import json, sys
-with open('${SETTINGS}') as f:
-    hooks = json.load(f).get('hooks', {})
-found = any(
-    'hooks/peon-ping/' in h.get('command', '')
-    for entries in hooks.values()
-    for entry in entries
-    for h in entry.get('hooks', [])
-)
-sys.exit(0 if found else 1)
-"; then
-    echo "❌ FAIL: no peon-ping command found in ${SETTINGS}'s hooks"
+if ! jq -e '[.hooks[][].hooks[] | select(.command | contains("peon-ping hook"))] | length > 0' "${SETTINGS}" >/dev/null; then
+    echo "❌ FAIL: no peon-ping hook command found in ${SETTINGS}'s hooks"
     exit 1
 fi
-echo "✅ PASS: peon-ping hook entries present in the real ${SETTINGS}"
+echo "✅ PASS: peon-ping hook entries present in the volume-backed ${SETTINGS}"
 
 echo "🎉 Test passed."
