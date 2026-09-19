@@ -97,6 +97,24 @@ if ! jq -e '.["psi-header.templates"][0].template[2] | test("SPDX-License-Identi
 fi
 echo "✅ SPDX license identifier present"
 
+# Every language the header is injected into needs both a template and a comment-syntax entry,
+# otherwise psi-header silently skips files of that language.
+for lang in typescript shell yaml rust; do
+    if ! jq -e --arg l "$lang" '.["psi-header.templates"] | any(.language == $l)' "$MACHINE_FILE" >/dev/null; then
+        echo "❌ No psi-header template for language '$lang'"
+        exit 1
+    fi
+    if ! jq -e --arg l "$lang" '.["psi-header.lang-config"] | any(.language == $l)' "$MACHINE_FILE" >/dev/null; then
+        echo "❌ No psi-header lang-config for language '$lang'"
+        exit 1
+    fi
+done
+if ! jq -e '.["psi-header.lang-config"][] | select(.language == "rust") | .prefix == "// "' "$MACHINE_FILE" >/dev/null; then
+    echo "❌ Rust header must use the '// ' line-comment prefix"
+    exit 1
+fi
+echo "✅ Templates and comment syntax present for typescript, shell, yaml, rust"
+
 echo ""
 echo "✅ All tests passed!"
 echo ""

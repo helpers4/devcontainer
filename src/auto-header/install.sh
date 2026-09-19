@@ -140,7 +140,8 @@ TEMPLATES=$(jq -s '.' \
     <(mk_template markdown) \
     <(mk_template html) \
     <(mk_template css) \
-    <(mk_template jsonc))
+    <(mk_template jsonc) \
+    <(mk_template rust))
 
 LANG_CONFIG=$(jq -s '.' \
     <(mk_lang_block typescript "/**" " * " " */") \
@@ -152,7 +153,8 @@ LANG_CONFIG=$(jq -s '.' \
     <(mk_lang_block markdown "<!--" "" "-->") \
     <(mk_lang_block html "<!--" "" "-->") \
     <(mk_lang_block css "/*" " * " " */") \
-    <(mk_lang_block jsonc "" "// " ""))
+    <(mk_lang_block jsonc "" "// " "") \
+    <(mk_lang_block rust "" "// " ""))
 
 PSI=$(jq -n \
     --arg author "$COPYRIGHT_ENTITY" \
