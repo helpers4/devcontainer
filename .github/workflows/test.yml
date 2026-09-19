@@ -187,6 +187,7 @@ jobs:
           - features: claude-dev
           - features: cline-dev
           - features: mistral-dev
+          - features: org-workspace
           - features: peon-ping
 
     steps:
