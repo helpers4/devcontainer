@@ -120,8 +120,13 @@ fi
 # ── Resolve the repo list ────────────────────────────────────────────────────
 # An explicit 'repos' always wins over 'autoDiscover'.
 REPO_LIST=()
+# Set only when REPO_LIST is a list we can trust as "everything wanted" — an explicit 'repos',
+# or a discovery that actually succeeded. Pruning below is gated on it: a transient
+# `gh repo list` failure must never look like "the org has no repos any more".
+LIST_RELIABLE=false
 if [ -n "${REPOS_OPTION}" ]; then
     csv_to_array "${REPOS_OPTION}" REPO_LIST
+    LIST_RELIABLE=true
 elif [ "${AUTO_DISCOVER_OPTION}" != "false" ]; then
     TOKENS="${AUTO_DISCOVER_OPTION:-true}"
     [ "${TOKENS}" = "true" ] && TOKENS="public,private"
@@ -153,6 +158,7 @@ elif [ "${AUTO_DISCOVER_OPTION}" != "false" ]; then
     discover() { DISCOVERED="$(gh repo list "${ORG}" "${GH_LIST_ARGS[@]}" 2>/dev/null)"; }
     if retry 3 discover; then
         mapfile -t REPO_LIST <<<"${DISCOVERED}"
+        LIST_RELIABLE=true
     else
         warn "'gh repo list ${ORG}' failed after 3 attempts — nothing discovered."
     fi
@@ -172,12 +178,52 @@ for repo in "${REPO_LIST[@]}"; do
 done
 REPO_LIST=("${FILTERED[@]}")
 
-# A repo excluded after a previous run linked it: drop the stale symlink (never the clone in
-# the volume, so nothing local is lost) — otherwise it would keep showing up in the workspace.
+# ── Prune what is no longer wanted ───────────────────────────────────────────
+# Anything this Feature cloned into the volume that isn't in the final list any more — newly
+# excluded, archived, deleted from the org, dropped from 'repos' — loses its symlink and its
+# .code-workspace entry. The clone itself is only deleted when nothing could be lost with it
+# (no uncommitted change, no commit that exists nowhere else, no stash); otherwise it stays in
+# the volume with a warning.
+declare -A WANTED=()
+for repo in "${REPO_LIST[@]}"; do WANTED["${repo}"]=1; done
+
+# Names to drop from an existing .code-workspace: everything excluded, plus what gets pruned.
+UNLISTED=("${EXCLUDE_LIST[@]}")
+
+clone_is_disposable() {
+    local dir="$1"
+    [ -z "$(git -C "${dir}" status --porcelain 2>/dev/null)" ] || return 1
+    [ -z "$(git -C "${dir}" stash list 2>/dev/null)" ] || return 1
+    [ -z "$(git -C "${dir}" log --branches --not --remotes --oneline -1 2>/dev/null)" ] || return 1
+}
+
+prune_repo() {
+    local name="$1" dir="${STAGED}/$1" link="${WORKSPACE_ROOT}/$1"
+    if [ -L "${link}" ] && [[ "$(readlink "${link}")" == "${STAGED}/"* ]]; then
+        rm -f "${link}" && UNLISTED+=("${name}")
+    fi
+    if [ -d "${dir}/.git" ]; then
+        if clone_is_disposable "${dir}"; then
+            rm -rf "${dir}" && echo "   ➖ ${name}: no longer wanted, removed"
+        else
+            warn "${name}: no longer wanted but its clone in ${STAGED} has local changes or unpushed commits — kept."
+        fi
+    fi
+}
+
+if [ "${LIST_RELIABLE}" = true ]; then
+    for dir in "${STAGED}"/*/; do
+        [ -d "${dir}/.git" ] || continue
+        name="$(basename "${dir}")"
+        [ -n "${WANTED[${name}]:-}" ] || prune_repo "${name}"
+    done
+fi
+# An excluded repo may be linked while never having been cloned by this Feature (an old link).
 for name in "${EXCLUDE_LIST[@]}"; do
+    [ -n "${WANTED[${name}]:-}" ] && continue
     link="${WORKSPACE_ROOT}/${name}"
     if [ -L "${link}" ] && [[ "$(readlink "${link}")" == "${STAGED}/"* ]]; then
-        rm -f "${link}" && echo "   ➖ ${name}: excluded, symlink removed (clone kept in ${STAGED})"
+        rm -f "${link}"
     fi
 done
 
@@ -295,7 +341,7 @@ update_code_workspace() {
             || warn "could not write ${ws_path}"
     else
         local ex_json="[]" name
-        for name in "${EXCLUDE_LIST[@]}"; do
+        for name in "${UNLISTED[@]}"; do
             ex_json="$(jq -c --arg n "${name}" '. + [$n]' <<<"${ex_json}")"
         done
 
@@ -311,8 +357,8 @@ update_code_workspace() {
         fi
 
         local tmp="${ws_path}.tmp"
-        # Existing entries for excluded repos are dropped (the user asked for them not to be
-        # there); every other key and entry — names, emoji, settings — is left as it was.
+        # Existing entries for excluded or just-pruned repos are dropped; every other key and
+        # entry — names, emoji, settings — is left as it was.
         if ! jq "${indent[@]}" --argjson new "${new_json}" --argjson ex "${ex_json}" '
                 .folders = (
                     ((.folders // []) | map(select(((.path // "") | split("/") | .[-1]) as $b | ($ex | index($b)) | not)))

@@ -149,13 +149,47 @@ run_case
 [ "${RC}" -eq 0 ] && grep -q "my folders" "${CASE}/ws/boot/acme.code-workspace" \
     && pass "JSONC workspace file left untouched" || fail "JSONC workspace file was overwritten"
 
-# 7. excluding a previously linked repo removes the stale symlink but keeps the clone
-new_case "REPOS_OPTION=a,b"
+# 7. pruning: a repo no longer wanted loses its symlink and workspace entry; its clone is
+# deleted only when nothing could be lost with it
+GIT_ID=(-c user.name=t -c user.email=t@t)
+prune_case() {  # prune_case <options...> — first run clones a b c, the caller changes the list
+    new_case "AUTO_DISCOVER_OPTION=true" "$@"
+    FAKE_REPOS="a b c" run_case
+    [ "${RC}" -eq 0 ] && [ -L "${CASE}/ws/b" ] || fail "prune setup failed"
+}
+
+prune_case
+FAKE_REPOS="a c" run_case
+[ "${RC}" -eq 0 ] && [ ! -e "${CASE}/ws/b" ] && [ ! -e "${CASE}/staged/b" ] && [ "$(folders)" = "../a ../boot ../c " ] \
+    && pass "repo dropped from discovery: symlink, clone and workspace entry removed" || fail "clean stale repo not pruned: $(folders)"
+
+prune_case
+echo "EXCLUDE_OPTION=b" >>"${CASE}/options.env"
 run_case
-sed -i 's/^REPOS_OPTION=.*/REPOS_OPTION=a,b\nEXCLUDE_OPTION=b/' "${CASE}/options.env"
+[ ! -e "${CASE}/ws/b" ] && [ ! -e "${CASE}/staged/b" ] && ! folders | grep -q '\.\./b ' \
+    && pass "newly excluded repo pruned automatically" || fail "excluded repo not pruned"
+
+prune_case
+touch "${CASE}/staged/b/uncommitted"
+FAKE_REPOS="a c" run_case
+[ "${RC}" -eq 0 ] && [ ! -e "${CASE}/ws/b" ] && [ -d "${CASE}/staged/b/.git" ] && echo "${OUT}" | grep -q "kept" \
+    && pass "clone with uncommitted changes: unlinked but kept, with a warning" || fail "dirty clone was deleted or not warned about"
+
+prune_case
+git -C "${CASE}/staged/b" "${GIT_ID[@]}" commit -q --allow-empty -m local
+FAKE_REPOS="a c" run_case
+[ -d "${CASE}/staged/b/.git" ] && [ ! -e "${CASE}/ws/b" ] \
+    && pass "clone with an unpushed commit: kept" || fail "unpushed commit lost"
+
+prune_case
+FAKE_REPOS="a c" FAKE_LIST_FAIL=1 run_case
+[ "${RC}" -eq 0 ] && [ -L "${CASE}/ws/b" ] && [ -d "${CASE}/staged/b/.git" ] \
+    && pass "failed discovery prunes nothing" || fail "a failed discovery pruned repos"
+
+new_case "AUTO_DISCOVER_OPTION=false"
+mkdir -p "${CASE}/staged/old" && git init -q "${CASE}/staged/old"
 run_case
-[ ! -e "${CASE}/ws/b" ] && [ -d "${CASE}/staged/b/.git" ] && ! folders | grep -q '\.\./b ' \
-    && pass "newly excluded repo unlinked, clone kept" || fail "exclude cleanup wrong"
+[ -d "${CASE}/staged/old/.git" ] && pass "no list configured: nothing pruned" || fail "pruned without a reliable list"
 
 echo ""
 echo "✅ All org-workspace feature tests passed!"
