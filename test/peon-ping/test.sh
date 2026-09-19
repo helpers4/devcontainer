@@ -8,85 +8,57 @@ set -e
 
 echo "Testing peon-ping feature..."
 
-# Test 1: Check if peon binary is accessible
-if command -v peon >/dev/null 2>&1; then
-    echo "✅ PASS: peon binary is accessible"
+if [ -x /usr/local/bin/peon-ping ]; then
+    echo "✅ PASS: /usr/local/bin/peon-ping installed and executable"
 else
-    # Check common install location directly
-    PEON_BIN="${HOME}/.local/bin/peon"
-    if [ -x "${PEON_BIN}" ]; then
-        echo "✅ PASS: peon binary found at ${PEON_BIN}"
-    else
-        echo "❌ FAIL: peon binary not found"
+    echo "❌ FAIL: /usr/local/bin/peon-ping not found or not executable"
+    exit 1
+fi
+
+if ! command -v jq >/dev/null 2>&1; then
+    echo "❌ FAIL: jq is not available"
+    exit 1
+fi
+echo "✅ PASS: jq is available"
+
+# postCreateCommand (peon-ping register) isn't guaranteed to have run when test.sh does, so run
+# it here: it must be safe to run any number of times.
+peon-ping register >/dev/null
+peon-ping register >/dev/null
+
+SETTINGS="${HOME}/.claude/settings.json"
+for event in SessionStart Stop PermissionRequest; do
+    count="$(jq --arg e "${event}" '[.hooks[$e][].hooks[] | select(.command | contains("peon-ping hook"))] | length' "${SETTINGS}")"
+    if [ "${count}" != "1" ]; then
+        echo "❌ FAIL: ${event}: expected exactly one peon-ping hook entry in ${SETTINGS}, got ${count}"
         exit 1
     fi
-fi
+done
+echo "✅ PASS: Claude Code hooks registered once, idempotently"
 
-# Test 2: Check peon-ping runtime directory
-PEON_DIR="${HOME}/.claude/hooks/peon-ping"
-if [ -d "${PEON_DIR}" ]; then
-    echo "✅ PASS: peon-ping runtime directory exists at ${PEON_DIR}"
-else
-    echo "❌ FAIL: peon-ping runtime directory not found at ${PEON_DIR}"
+if ! grep -q "peon-ping" "${HOME}/.cursor/hooks.json" "${HOME}/.codex/config.toml"; then
+    echo "❌ FAIL: Cursor and/or Codex hooks not registered"
     exit 1
 fi
+echo "✅ PASS: Cursor and Codex hooks registered"
 
-# Test 3: Check config.json exists
-PEON_CONFIG="${PEON_DIR}/config.json"
-if [ -f "${PEON_CONFIG}" ]; then
-    echo "✅ PASS: config.json exists"
-else
-    echo "❌ FAIL: config.json not found at ${PEON_CONFIG}"
+# The hook must never fail or block the agent, even with no relay listening.
+if ! echo '{"hook_event_name":"Stop","session_id":"123e4567-e89b-12d3-a456-426614174000"}' \
+    | PEON_RELAY_HOST=127.0.0.1 PEON_RELAY_PORT=1 peon-ping hook claude; then
+    echo "❌ FAIL: peon-ping hook exited non-zero with no relay running"
     exit 1
 fi
-
-# Test 4: Check that adapters directory exists
-ADAPTERS_DIR="${PEON_DIR}/adapters"
-if [ -d "${ADAPTERS_DIR}" ]; then
-    echo "✅ PASS: adapters directory exists"
-else
-    echo "⚠️  WARN: adapters directory not found at ${ADAPTERS_DIR}"
-fi
-
-# Test 5: Check copilot adapter is available
-if [ -f "${ADAPTERS_DIR}/copilot.sh" ]; then
-    echo "✅ PASS: copilot adapter found"
-else
-    echo "⚠️  WARN: copilot adapter not found"
-fi
-
-# Test 6: Check peon-ping-copilot-setup helper is installed
-if [ -x /usr/local/bin/peon-ping-copilot-setup ]; then
-    echo "✅ PASS: peon-ping-copilot-setup helper installed"
-else
-    echo "⚠️  WARN: peon-ping-copilot-setup helper not found"
-fi
-
-# Test 7: Check that python3 is available (required dependency)
-if command -v python3 >/dev/null 2>&1; then
-    echo "✅ PASS: python3 is available"
-else
-    echo "❌ FAIL: python3 is not available"
+if [ "$(jq -r .last_active.event "${HOME}/.claude/hooks/peon-ping/.state.json")" != "Stop" ]; then
+    echo "❌ FAIL: hook didn't record the event for Peon Pet"
     exit 1
 fi
+echo "✅ PASS: hook exits 0 without a relay and records the event for Peon Pet"
 
-# Test 8: Check that the host.docker.internal patch script is installed
-PATCH_HOSTS="/usr/local/share/peon-ping/patch-hosts.sh"
-if [ -x "${PATCH_HOSTS}" ]; then
-    echo "✅ PASS: patch-hosts.sh installed and executable"
-else
-    echo "❌ FAIL: ${PATCH_HOSTS} not found or not executable"
-    exit 1
-fi
-
-# Test 9: host.docker.internal should resolve — either postStartCommand already patched
-# /etc/hosts by the time this test runs, or Docker Desktop already provides it. A WARN
-# rather than a hard FAIL: whether the test harness actually runs postStartCommand before
-# test.sh isn't guaranteed here, so this isn't proof of a real bug either way.
+# Whether host.docker.internal resolves depends on whether the harness ran postStartCommand.
 if getent hosts host.docker.internal >/dev/null 2>&1; then
     echo "✅ PASS: host.docker.internal resolves"
 else
-    echo "⚠️  WARN: host.docker.internal does not resolve yet — re-run ${PATCH_HOSTS} manually if the test harness doesn't trigger postStartCommand"
+    echo "⚠️  WARN: host.docker.internal does not resolve yet — peon-ping check runs on postStartCommand"
 fi
 
 echo ""

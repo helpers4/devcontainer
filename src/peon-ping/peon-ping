@@ -1,0 +1,131 @@
+#!/usr/bin/env bash
+
+# This file is part of helpers4.
+# Copyright (C) 2025 baxyz
+# SPDX-License-Identifier: LGPL-3.0-or-later
+#
+#   peon-ping hook <claude|cursor|codex> [arg]   Called by the agents: asks the peon-ping relay
+#                                                on the host to play a sound category and
+#                                                records the event for Peon Pet.
+#   peon-ping register                           postCreateCommand: adds the hooks to the
+#                                                agents' config (idempotent).
+#   peon-ping check                              postStartCommand: makes host.docker.internal
+#                                                resolve and warns if the relay is down.
+
+set -u
+
+BIN="/usr/local/bin/peon-ping"
+STATE_FILE="${HOME}/.claude/hooks/peon-ping/.state.json"
+RELAY_HOST="${PEON_RELAY_HOST:-host.docker.internal}"
+RELAY_PORT="${PEON_RELAY_PORT:-19998}"
+
+hook() {
+    local ide="${1:-claude}" arg="${2:-}" payload="" event category
+
+    if [ "${ide}" = "codex" ]; then
+        payload="${arg}"
+    elif [ ! -t 0 ]; then
+        payload="$(timeout 1 cat 2>/dev/null)"
+    fi
+    field() { sed -n "s/.*\"$1\" *: *\"\([^\"]*\)\".*/\1/p" <<<"${payload}" | head -n 1; }
+    escape() { printf '%s' "$1" | sed 's/\\/\\\\/g; s/"/\\"/g'; }
+
+    case "${ide}" in
+        codex) [ "$(field type)" = "agent-turn-complete" ] && event="Stop" || event="" ;;
+        cursor) [ "${arg}" = "stop" ] && event="Stop" || event="" ;;
+        *) event="$(field hook_event_name)" ;;
+    esac
+
+    case "${event}" in
+        SessionStart) category="session.start" ;;
+        Stop) category="task.complete" ;;
+        PermissionRequest) category="input.required" ;;
+        PostToolUseFailure) category="task.error" ;;
+        UserPromptSubmit | PreCompact | SessionEnd) category="" ;;
+        *) return 0 ;;
+    esac
+
+    if mkdir -p "$(dirname "${STATE_FILE}")" 2>/dev/null; then
+        printf '{"last_active": {"timestamp": %s, "event": "%s", "session_id": "%s", "cwd": "%s"}}\n' \
+            "$(date +%s.%N)" "${event}" "$(escape "$(field session_id)")" "$(escape "$(field cwd)")" \
+            >"${STATE_FILE}.tmp" 2>/dev/null && mv "${STATE_FILE}.tmp" "${STATE_FILE}" 2>/dev/null
+    fi
+
+    if [ -n "${category}" ]; then
+        curl -sf --noproxy '*' -m 2 "http://${RELAY_HOST}:${RELAY_PORT}/play?category=${category}" \
+            >/dev/null 2>&1 </dev/null &
+    fi
+}
+
+# add_hook <file> <initial-json> <event> <entry-json>
+add_hook() {
+    local file="$1" initial="$2" event="$3" entry="$4" merged
+    if [ ! -f "${file}" ]; then
+        mkdir -p "$(dirname "${file}")" && printf '%s\n' "${initial}" >"${file}"
+    fi
+    if ! merged="$(jq --arg e "${event}" --argjson entry "${entry}" '
+        if ((.hooks[$e] // []) | tostring | contains("peon-ping hook")) then .
+        else .hooks[$e] = ((.hooks[$e] // []) + [$entry]) end' "${file}" 2>/dev/null)"; then
+        echo "⚠️  peon-ping: ${file} isn't valid JSON — left untouched" >&2
+        return 0
+    fi
+    printf '%s\n' "${merged}" >"${file}"
+}
+
+register() {
+    local entry event codex="${HOME}/.codex/config.toml"
+
+    entry="$(jq -nc --arg c "${BIN} hook claude" '{hooks: [{type: "command", command: $c}]}')"
+    for event in SessionStart UserPromptSubmit Stop PermissionRequest PostToolUseFailure PreCompact SessionEnd; do
+        add_hook "${HOME}/.claude/settings.json" '{}' "${event}" "${entry}"
+    done
+
+    add_hook "${HOME}/.cursor/hooks.json" '{"version": 1}' stop \
+        "$(jq -nc --arg c "${BIN} hook cursor stop" '{command: $c}')"
+
+    # A top-level TOML key must precede every [table], so prepend rather than append.
+    if grep -qs 'peon-ping' "${codex}"; then
+        :
+    elif grep -Eqs '^[[:space:]]*notify[[:space:]]*=' "${codex}"; then
+        echo "⚠️  peon-ping: ${codex} already has a notify command — left untouched" >&2
+    else
+        mkdir -p "$(dirname "${codex}")"
+        { printf 'notify = ["%s", "hook", "codex"]\n' "${BIN}"; cat "${codex}" 2>/dev/null; } >"${codex}.tmp" \
+            && mv "${codex}.tmp" "${codex}"
+    fi
+
+    echo "🎮 peon-ping: hooks registered for Claude Code, Cursor and Codex"
+}
+
+check() {
+    # shellcheck source=/dev/null
+    . /usr/local/share/helpers4/common.sh 2>/dev/null || return 0
+    h4_detect_cloud_env
+    [ "${IS_CLOUD_ENV}" = "true" ] && return 0
+
+    # Docker Desktop resolves host.docker.internal itself; native Linux Docker doesn't. Add the
+    # default gateway (what --add-host=host.docker.internal:host-gateway would resolve to),
+    # read from /proc/net/route as a little-endian hex IP.
+    if ! getent hosts host.docker.internal >/dev/null 2>&1; then
+        local hex ip
+        hex="$(awk '$2 == "00000000" { print $3; exit }' /proc/net/route 2>/dev/null)"
+        if [ -n "${hex}" ]; then
+            ip="$(printf '%d.%d.%d.%d' "0x${hex:6:2}" "0x${hex:4:2}" "0x${hex:2:2}" "0x${hex:0:2}")"
+            echo "${ip} host.docker.internal" >>/etc/hosts 2>/dev/null \
+                || echo "${ip} host.docker.internal" | sudo tee -a /etc/hosts >/dev/null 2>&1 \
+                || echo "⚠️  peon-ping: could not write /etc/hosts — see README 'host.docker.internal on native Linux Docker'" >&2
+        fi
+    fi
+
+    curl -sf --noproxy '*' --connect-timeout 1 -m 2 "http://${RELAY_HOST}:${RELAY_PORT}/health" >/dev/null 2>&1 && return 0
+    echo "🔇 peon-ping: no sound this session — the audio relay isn't running on your host." >&2
+    echo "   Start it on your HOST machine (not in this container):  peon relay --daemon" >&2
+}
+
+case "${1:-}" in
+    hook) shift; hook "$@" ;;
+    register) register ;;
+    check) check ;;
+    *) echo "Usage: peon-ping <hook|register|check>" >&2; exit 2 ;;
+esac
+exit 0

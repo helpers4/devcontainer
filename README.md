@@ -255,13 +255,13 @@ Automatically configures file headers with customizable templates based on proje
 
 ### peon-ping
 
-Installs [peon-ping](https://peonping.com/) for game character voice notifications when your AI coding agent finishes or needs permission. Includes the Peon Pet VS Code extension.
+Plays your host's [peon-ping](https://peonping.com/) game-character sounds when your AI coding agent finishes or needs permission. Includes the Peon Pet VS Code extension.
 
 **Key benefits:**
-- Sound notifications from 165+ packs (Warcraft, StarCraft, Portal, Zelda…)
-- Multi-IDE hooks: Claude Code, Copilot, Cursor, Codex, and more
+- Uses the pack and volume of your host's peon-ping — nothing to configure or keep in sync
+- Hooks for Claude Code, Cursor and Codex, always all configured
 - Animated Peon Pet sidebar companion in VS Code
-- Devcontainer-aware audio relay to host machine
+- No download, no `initializeCommand`: sound goes through a relay you start once on your host
 - Non-interactive, idempotent installation
 
 [📖 Documentation](./src/peon-ping/README.md)
@@ -337,7 +337,7 @@ Features from this repository are available via GitHub Container Registry. Refer
 | [git-absorb](./src/git-absorb) | Automatic absorption of staged changes into logical commits | [README](./src/git-absorb/README.md) |
 | [dotfiles-sync](./src/dotfiles-sync) | Sync local Git, SSH, GPG, and npm config — works on macOS, Linux, WSL, Codespaces | [README](./src/dotfiles-sync/README.md) |
 | [bitwarden-secrets-manager](./src/bitwarden-secrets-manager) | `bws` CLI from Bitwarden's own GitHub releases, token-only auth, no persisted state | [README](./src/bitwarden-secrets-manager/README.md) |
-| [peon-ping](./src/peon-ping) | AI agent sound notifications with multi-IDE hooks and Peon Pet extension | [README](./src/peon-ping/README.md) |
+| [peon-ping](./src/peon-ping) | AI agent sound notifications played by your host's peon-ping, multi-IDE hooks and Peon Pet extension | [README](./src/peon-ping/README.md) |
 | [org-workspace](./src/org-workspace) | Clone an entire GitHub org into sibling workspace folders with one feature | [README](./src/org-workspace/README.md) |
 
 ## Dependency Graph
