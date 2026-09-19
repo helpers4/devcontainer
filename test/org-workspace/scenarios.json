@@ -1,0 +1,14 @@
+{
+  "with_options": {
+    "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+    "features": {
+      "org-workspace": {
+        "org": "acme",
+        "repos": "one, two",
+        "exclude": "two three",
+        "autoDiscover": "false",
+        "codeWorkspaceName": "my space.code-workspace"
+      }
+    }
+  }
+}
