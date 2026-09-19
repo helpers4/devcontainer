@@ -13,10 +13,7 @@ set -euo pipefail
 # shellcheck source=/dev/null
 . /usr/local/share/helpers4/common.sh
 
-if [ "$(id -u)" -ne 0 ]; then
-    echo -e 'Script must be run as root. Use sudo, su, or add "USER root" to your Dockerfile before running this script.'
-    exit 1
-fi
+h4_require_root
 
 cleanup() {
     rm -rf /var/lib/apt/lists/*
