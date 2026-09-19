@@ -141,7 +141,7 @@ live Codespaces environment.
 
 ## Version History
 
-- **v1.1.0**: `autoDiscover` now defaults to `"true"` (still overridden by `repos`); new
+- **v1.0.1**: `autoDiscover` now defaults to `"true"` (still overridden by `repos`); new
   `exclude` option; automatic pruning of repos no longer wanted; `clone-repos.sh` can no longer fail the attach and makes `/workspaces`
   writable at build time; atomic clones; the `.code-workspace` merge dedupes by resolved path,
   keeps names and indentation, and never overwrites a JSONC file.
