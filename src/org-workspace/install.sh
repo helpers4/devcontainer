@@ -4,9 +4,7 @@
 # Copyright (C) 2025 baxyz
 # SPDX-License-Identifier: LGPL-3.0-or-later
 #
-# Installs org-workspace: ships a postStartCommand script that clones every target repo of
-# a GitHub org into a persistent named volume, symlinks each into a sibling /workspaces folder,
-# and generates/merges a multi-root .code-workspace file at the bootstrap repo's own root.
+# Installs org-workspace: puts clone-repos.sh and its options in place.
 
 set -euo pipefail
 
@@ -20,29 +18,23 @@ fi
 
 h4_ensure_packages jq
 
-# Feature options — env var names are the option id uppercased (devcontainers CLI convention).
+# The CLI passes every option as an env var, with the defaults from devcontainer-feature.json.
 ORG_OPTION="${ORG:-}"
 REPOS_OPTION="${REPOS:-}"
-AUTO_DISCOVER_OPTION="${AUTODISCOVER:-true}"
+AUTO_DISCOVER_OPTION="${AUTODISCOVER:-}"
 EXCLUDE_OPTION="${EXCLUDE:-}"
-GENERATE_CODE_WORKSPACE_OPTION="${GENERATECODEWORKSPACE:-true}"
+GENERATE_CODE_WORKSPACE_OPTION="${GENERATECODEWORKSPACE:-}"
 CODE_WORKSPACE_NAME_OPTION="${CODEWORKSPACENAME:-}"
 
-# clone-repos.sh creates its sibling symlinks directly under /workspaces, which the image
-# ships as root:root — with no per-repo mountpoint pre-creating them (the hand-written `mounts`
-# this Feature replaces did that as a side effect), the remote user couldn't create anything
-# there. Non-recursive: only the directory itself, never what's inside it.
+# clone-repos.sh creates its links in /workspaces, which the image owns as root.
 mkdir -p /workspaces
 if [ -n "${_REMOTE_USER:-}" ] && [ "${_REMOTE_USER}" != "root" ] && id "${_REMOTE_USER}" >/dev/null 2>&1; then
-    chown "${_REMOTE_USER}" /workspaces || echo "⚠️  could not chown /workspaces to ${_REMOTE_USER}" >&2
+    chown "${_REMOTE_USER}" /workspaces || echo "Warning: could not chown /workspaces to ${_REMOTE_USER}" >&2
 fi
 
+# The options only exist as env vars during this install, so save them for clone-repos.sh.
 INSTALL_DIR="/usr/local/share/org-workspace"
 mkdir -p "${INSTALL_DIR}"
-
-# The script itself is a regular file shipped with the Feature (so it can be shellcheck'd and
-# tested); only the option values are baked in — feature options are only available as env
-# vars during this install.sh run, not later when postStartCommand actually executes it.
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 install -m 0755 "${SCRIPT_DIR}/clone-repos.sh" "${INSTALL_DIR}/clone-repos.sh"
 {
@@ -54,4 +46,4 @@ install -m 0755 "${SCRIPT_DIR}/clone-repos.sh" "${INSTALL_DIR}/clone-repos.sh"
     printf 'CODE_WORKSPACE_NAME_OPTION=%q\n' "${CODE_WORKSPACE_NAME_OPTION}"
 } >"${INSTALL_DIR}/options.env"
 
-echo "  ✅ Installed ${INSTALL_DIR}/clone-repos.sh"
+echo "  Installed ${INSTALL_DIR}/clone-repos.sh"

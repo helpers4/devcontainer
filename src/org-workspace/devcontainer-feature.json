@@ -2,7 +2,7 @@
   "id": "org-workspace",
   "version": "1.0.1",
   "name": "Org Workspace",
-  "description": "Clones every repo of a GitHub org into sibling /workspaces folders (persisted across rebuilds via a named volume) and generates or updates a multi-root .code-workspace file. Also self-heals your devcontainer setup.",
+  "description": "Clones the repos of a GitHub org into sibling /workspaces folders and keeps a multi-root .code-workspace file up to date.",
   "documentationURL": "https://github.com/helpers4/devcontainer/tree/main/src/org-workspace",
   "licenseURL": "https://github.com/helpers4/devcontainer/blob/main/LICENSE",
   "keywords": [
@@ -16,32 +16,32 @@
     "org": {
       "type": "string",
       "default": "",
-      "description": "GitHub org (or user) to clone repos from. Left empty, detected automatically from the bootstrap repo's own 'origin' remote via 'gh repo view'."
+      "description": "GitHub org (or user) to clone from. Empty means the owner of this project's origin remote."
     },
     "repos": {
       "type": "string",
       "default": "",
-      "description": "Comma-separated explicit list of repo names to clone (e.g. 'typescript,devcontainer,action'). Takes precedence over autoDiscover — set this for a stable, reproducible set that doesn't change if the org's repo list does."
+      "description": "Comma-separated repos to clone, e.g. \"typescript,action\". When set, autoDiscover is ignored."
     },
     "autoDiscover": {
       "type": "string",
       "default": "true",
-      "description": "Discover the org's repos automatically. Ignored whenever 'repos' is set ('repos' always wins). 'true' (default): sane defaults (public + private, no forks, no archived). 'false': discover nothing. Or a comma-separated token list to control exactly what's included: 'public', 'private', 'internal', 'fork', 'archived' — e.g. 'public,fork' includes public repos and forks, excluding private/internal/archived."
+      "description": "Clone the org's repos automatically. \"true\" means public and private, no forks, no archived. \"false\" clones nothing. A list such as \"public,fork\" picks the categories: public, private, internal, fork, archived."
     },
     "exclude": {
       "type": "string",
       "default": "",
-      "description": "Comma-separated repo names to never clone or list in the .code-workspace, applied to both 'repos' and autoDiscover results (e.g. 'helpers4.github.io,archive-2019')."
+      "description": "Comma-separated repos to skip, whether they come from repos or autoDiscover."
     },
     "generateCodeWorkspace": {
       "type": "boolean",
       "default": true,
-      "description": "Generate (or update) a VS Code multi-root .code-workspace file listing every sibling repo under /workspaces. If one already exists (e.g. committed to the bootstrap repo), its folders list is merged into rather than replaced — other keys (settings, extensions, launch, ...) are left untouched."
+      "description": "Create or update the .code-workspace file. Existing folder names and settings are kept."
     },
     "codeWorkspaceName": {
       "type": "string",
       "default": "",
-      "description": "Filename for the generated .code-workspace, written at the bootstrap repo's own root. Left empty, defaults to '<org>.code-workspace'."
+      "description": "Name of the .code-workspace file, in the project's root folder. Empty means <org>.code-workspace."
     }
   },
   "mounts": [
@@ -51,7 +51,7 @@
       "type": "volume"
     }
   ],
-  "postStartCommand": "/usr/local/share/org-workspace/clone-repos.sh",
+  "postCreateCommand": "/usr/local/share/org-workspace/clone-repos.sh",
   "installsAfter": [
     "ghcr.io/devcontainers/features/common-utils"
   ],
