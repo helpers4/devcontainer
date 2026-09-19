@@ -1,6 +1,6 @@
 {
   "id": "org-workspace",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "name": "Org Workspace",
   "description": "Clones every repo of a GitHub org into sibling /workspaces folders (persisted across rebuilds via a named volume) and generates or updates a multi-root .code-workspace file. Also self-heals your devcontainer setup.",
   "documentationURL": "https://github.com/helpers4/devcontainer/tree/main/src/org-workspace",
@@ -25,8 +25,13 @@
     },
     "autoDiscover": {
       "type": "string",
-      "default": "false",
-      "description": "Only used when 'repos' is empty. 'false': discover nothing. 'true': discover with sane defaults (public + private, no forks, no archived). Or a comma-separated token list to control exactly what's included: 'public', 'private', 'internal', 'fork', 'archived' — e.g. 'public,fork' includes public repos and forks, excluding private/internal/archived."
+      "default": "true",
+      "description": "Discover the org's repos automatically. Ignored whenever 'repos' is set ('repos' always wins). 'true' (default): sane defaults (public + private, no forks, no archived). 'false': discover nothing. Or a comma-separated token list to control exactly what's included: 'public', 'private', 'internal', 'fork', 'archived' — e.g. 'public,fork' includes public repos and forks, excluding private/internal/archived."
+    },
+    "exclude": {
+      "type": "string",
+      "default": "",
+      "description": "Comma-separated repo names to never clone or list in the .code-workspace, applied to both 'repos' and autoDiscover results (e.g. 'helpers4.github.io,archive-2019')."
     },
     "generateCodeWorkspace": {
       "type": "boolean",
