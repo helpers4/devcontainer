@@ -1,6 +1,6 @@
 {
   "id": "org-workspace",
-  "version": "1.1.0",
+  "version": "1.0.1",
   "name": "Org Workspace",
   "description": "Clones every repo of a GitHub org into sibling /workspaces folders (persisted across rebuilds via a named volume) and generates or updates a multi-root .code-workspace file. Also self-heals your devcontainer setup.",
   "documentationURL": "https://github.com/helpers4/devcontainer/tree/main/src/org-workspace",
