@@ -97,9 +97,11 @@ jobs:
           - features: mistral-dev
             baseImage: mcr.microsoft.com/devcontainers/base:ubuntu
 
-          # cline-dev — IDE-config-only feature
+          # cline-dev — extension + ~/.cline named volume
           - features: cline-dev
             baseImage: ubuntu:latest
+          - features: cline-dev
+            baseImage: mcr.microsoft.com/devcontainers/base:ubuntu
 
           # auto-header - requires jq (installed by helpers4-common)
           - features: auto-header
