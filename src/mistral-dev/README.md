@@ -75,20 +75,23 @@ The feature declares the `mistralai.mistral-vibe-code` extension via the
 installs it automatically.
 
 ### Credential persistence
-1. **Build time** (`install.sh`): generates `/usr/local/share/mistral-dev/setup-credentials.sh`
-   with the target user's home path baked in.
+1. **Build time** (`install.sh`): links `~/.vibe` to `/mnt/h4vibe`, and generates
+   `/usr/local/share/mistral-dev/setup-credentials.sh` with the target user's home path baked in.
 2. **Mount** (`devcontainer-feature.json → mounts`): mounts the Docker named volume
-   `helpers4-mistral-credentials-${devcontainerId}` at `/mnt/h4vibe` inside the container.
-3. **Every start** (`postStartCommand`): `setup-credentials.sh` replaces `~/.vibe`
-   with a symlink to `/mnt/h4vibe` — credentials and config survive rebuilds.
+   `helpers4-mistral-credentials-${devcontainerId}` at `/mnt/h4vibe` inside the container —
+   the link from step 1 is valid from the very first process that runs in it.
+3. **Once per container** (`postCreateCommand`): `setup-credentials.sh` makes sure the volume is
+   writable by the container user, and restores the link if something replaced it.
 
 This means:
 - Credentials survive container rebuilds (including `--no-cache`) and Codespaces.
 - First-time auth inside the container writes back to the volume automatically.
+- The extension never starts against an empty `~/.vibe`, even while a rebuild's slower
+  `postCreateCommand`s (repo clones, package installs) are still running.
 - `VIBE_HOME` is not required — the symlink is transparent to Mistral Vibe.
 
-If `/mnt/h4vibe` is not mounted (e.g. a standalone `install.sh` test), the
-script warns and exits cleanly — the container starts normally, just without
+If `/mnt/h4vibe` is not a mounted volume (e.g. a standalone `install.sh` test), the
+script warns and carries on — the container starts normally, just without
 persistence.
 
 ### CLI (optional)
@@ -102,6 +105,12 @@ When `installCli: true`, the `vibe` command is installed at build time via `uv`
 
 ## Version History
 
+- **v1.3.2**: Fixed the extension showing you signed out after a rebuild, and a login made right
+  after a rebuild being lost. `~/.vibe` was only linked to the volume by `postStartCommand`, which
+  runs after every feature's `postCreateCommand` — minutes after VS Code had already started the
+  extension against a plain, empty `~/.vibe`; the link then deleted that directory, with whatever
+  was written into it. The link is now created at image build time, so it's in place before
+  anything runs; the runtime script moved to `postCreateCommand` and only fixes ownership.
 - **v1.3.1**: Documentation only, no functional change — centralized the exclusive-vs-shared
   volume rationale onto `h4_ensure_volume_writable`'s own comment in `helpers4-common`, trimming
   the near-identical explanation this file (and claude-dev/pnpm-store/playwright-dev) used to
