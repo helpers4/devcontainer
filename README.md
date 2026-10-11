@@ -71,12 +71,12 @@ Installs the Mistral Vibe IDE extension across supported editors for AI-assisted
 
 ### cline-dev
 
-Installs the Cline AI coding agent extension for VS Code and Cursor, and optionally the `cline` CLI. Unlike `claude-dev`/`mistral-dev`, it persists no credentials of its own across rebuilds.
+Installs the Cline AI coding agent extension for VS Code and Cursor, and optionally the `cline` CLI. Provider keys, settings and task history persist in a Docker named volume, surviving every rebuild including Codespaces.
 
 **Key benefits:**
-- Cline extension pre-installed and ready to sign in
-- Optional CLI install via `installCli`
-- No named-volume persistence to manage — Cline handles its own auth
+- Provider keys and settings survive every rebuild, `--no-cache` and Codespaces included
+- Dedicated volume per devcontainer — no cross-project bleed of settings
+- Optional CLI install via `installCli`, sharing the same keys as the extension
 
 [📖 Documentation](./src/cline-dev/README.md)
 
@@ -324,7 +324,7 @@ Features from this repository are available via GitHub Container Registry. Refer
 | [copilot-dev](./src/copilot-dev) | Copilot Chat + gh copilot CLI + shared commit/PR/review instructions | [README](./src/copilot-dev/README.md) |
 | [claude-dev](./src/claude-dev) | Claude Code extension + CLI + persistent `~/.claude` across rebuilds | [README](./src/claude-dev/README.md) |
 | [mistral-dev](./src/mistral-dev) | Mistral Vibe extension + persistent `~/.vibe` across rebuilds | [README](./src/mistral-dev/README.md) |
-| [cline-dev](./src/cline-dev) | Cline AI coding agent extension + optional CLI | [README](./src/cline-dev/README.md) |
+| [cline-dev](./src/cline-dev) | Cline AI coding agent extension + optional CLI + persistent `~/.cline` across rebuilds | [README](./src/cline-dev/README.md) |
 | [nub](./src/nub) | Fast TS/JS/script runner on top of the container's own Node + package manager | [README](./src/nub/README.md) |
 | [auto-header](./src/auto-header) | Automatic file headers with customizable templates (simple or custom) | [README](./src/auto-header/README.md) |
 | [vite-plus](./src/vite-plus) | Complete Vite+ toolchain with Oxc, Vitest, and VS Code integration | [README](./src/vite-plus/README.md) |
@@ -362,10 +362,10 @@ flowchart BT
     org["org-workspace"] --> github
     org --> common
 
-    leaves["auto-header, git-absorb, angular-dev, dotfiles-sync,<br/>package-auto-install, pnpm-store, peon-ping,<br/>shell-history-per-project, claude-dev, mistral-dev,<br/>bitwarden-secrets-manager"] --> common
+    leaves["auto-header, git-absorb, angular-dev, dotfiles-sync,<br/>package-auto-install, pnpm-store, peon-ping,<br/>shell-history-per-project, claude-dev, mistral-dev,<br/>cline-dev, bitwarden-secrets-manager"] --> common
 ```
 
-`github-dev`, `copilot-dev`, and `cline-dev` have no `dependsOn` at all — they only install VS Code extensions and CLI tools, with no shared bootstrap logic to pull in.
+`github-dev` and `copilot-dev` have no `dependsOn` at all — they only install VS Code extensions and CLI tools, with no shared bootstrap logic to pull in.
 
 ## Ready-to-Copy Stacks
 

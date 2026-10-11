@@ -1,18 +1,31 @@
 {
   "id": "cline-dev",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "name": "Cline Development Environment",
-  "description": "Installs the Cline AI coding agent extension (saoudrizwan.claude-dev) for VS Code and Cursor, and optionally the cline CLI.",
+  "description": "Installs the Cline AI coding agent extension (saoudrizwan.claude-dev) for VS Code and Cursor, and optionally the cline CLI. Persists ~/.cline (provider keys, settings, history) across rebuilds and Codespaces via a Docker named volume, dedicated to this devcontainer. Also self-heals your devcontainer setup.",
   "documentationURL": "https://github.com/helpers4/devcontainer/tree/main/src/cline-dev",
   "licenseURL": "https://github.com/helpers4/devcontainer/blob/main/LICENSE",
   "keywords": ["helpers4", "cline", "ai", "vscode", "cli"],
   "options": {
+    "username": {
+      "type": "string",
+      "default": "auto",
+      "description": "Username in the container that should receive the Cline data symlink. 'auto' detects vscode/node/codespace/uid-1000, in that order."
+    },
     "installCli": {
       "type": "boolean",
       "default": false,
       "description": "Install the Cline CLI (cline command) via npm. Requires Node.js/npm to be present in the container. Skipped with a warning if npm is not found."
     }
   },
+  "mounts": [
+    {
+      "source": "helpers4-cline-credentials-${devcontainerId}",
+      "target": "/mnt/h4cline",
+      "type": "volume"
+    }
+  ],
+  "postCreateCommand": "/usr/local/share/cline-dev/setup-credentials.sh",
   "customizations": {
     "vscode": {
       "extensions": [
@@ -22,5 +35,8 @@
   },
   "installsAfter": [
     "ghcr.io/devcontainers/features/common-utils"
-  ]
+  ],
+  "dependsOn": {
+    "ghcr.io/helpers4/devcontainer/helpers4-common:1": {}
+  }
 }
