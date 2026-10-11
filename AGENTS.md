@@ -64,7 +64,7 @@ version bump" below.
 | `github-dev` | 1.0.7 | gh CLI, Copilot Chat, PR/Issues/Actions extensions |
 | `copilot-dev` | 1.0.4 | Copilot Chat + AI instructions (commits, PRs, code review) |
 | `claude-dev` | 1.3.1 | Claude Code extension + CLI + `~/.claude` named-volume persistence (credentials + memory) |
-| `mistral-dev` | 1.3.1 | Mistral Vibe extension + `~/.vibe` named-volume persistence |
+| `mistral-dev` | 1.3.2 | Mistral Vibe extension + `~/.vibe` named-volume persistence |
 | `cline-dev` | 1.0.1 | Cline extension (`saoudrizwan.claude-dev`) + optional CLI, no credential persistence |
 | `nub` | 1.2.3 | Fast TS/JS/script runner on top of existing node+package-manager (dependsOn node) |
 | `typescript-dev` | 1.0.8 | TS/JS dev, import management (dependsOn essential-dev) |

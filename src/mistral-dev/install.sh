@@ -31,9 +31,40 @@ echo "  Home:        ${USER_HOME}"
 echo "  Install CLI: ${INSTALL_CLI}"
 
 # ============================================================================
-# 1. Generate the runtime credentials script with TARGET_HOME baked in.
+# 1. Link ~/.vibe to the volume's mount point, right now, at build time.
 # ============================================================================
-# Generating rather than copying means postStartCommand always targets the
+# The link dangles in the image and becomes valid the moment Docker attaches the
+# volume at container creation — before any process runs inside it, so the Vibe
+# extension can never see a plain, empty ~/.vibe. Linking at postStartCommand
+# instead (up to v1.3.1) lost that race on every rebuild: postStartCommand only
+# fires after every feature's postCreateCommand (repo clones, package installs —
+# minutes), long after VS Code had started the extension against a fresh ~/.vibe,
+# showing it signed out; a login made in that window landed in that plain
+# directory, which the swap then deleted.
+#
+# Creating the mount point here, owned by the target user, also hands a brand-new
+# volume to that user: Docker copies a mount point's ownership (and content) into
+# an empty named volume the first time it's attached.
+
+STAGED="/mnt/h4vibe"
+TARGET="${USER_HOME}/.vibe"
+USER_GROUP="$(id -gn "${USERNAME}" 2>/dev/null || echo "${USERNAME}")"
+
+mkdir -p "${STAGED}"
+if [ -d "${TARGET}" ] && [ ! -L "${TARGET}" ]; then
+    cp -a "${TARGET}/." "${STAGED}/"
+    rm -rf "${TARGET}"
+fi
+ln -sfn "${STAGED}" "${TARGET}"
+chown -R "${USERNAME}:${USER_GROUP}" "${STAGED}"
+chown -h "${USERNAME}:${USER_GROUP}" "${TARGET}"
+chmod 700 "${STAGED}"
+echo "  ✅ Linked ${TARGET} -> ${STAGED}"
+
+# ============================================================================
+# 2. Generate the runtime script with TARGET_HOME baked in.
+# ============================================================================
+# Generating rather than copying means postCreateCommand always targets the
 # correct user's home regardless of which user the container runtime invokes
 # the script as.
 
@@ -47,9 +78,9 @@ mkdir -p "$(dirname "${SCRIPT}")"
 # Copyright (C) 2025 baxyz
 # SPDX-License-Identifier: LGPL-3.0-or-later
 #
-# Runs at container START (postStartCommand) — the named volume is mounted.
-# Replaces TARGET_HOME/.vibe with a symlink to it so credentials and all
-# Mistral Vibe config persist across rebuilds.
+# Runs once per container instance (postCreateCommand) — the named volume is mounted.
+# ~/.vibe already points at it since the image build; this only makes sure the volume
+# is writable by the current user, and restores the link if something replaced it.
 set -euo pipefail
 # shellcheck source=/dev/null
 . /usr/local/share/helpers4/common.sh
@@ -62,9 +93,8 @@ cat >> "${SCRIPT}" << 'EOF'
 STAGED="/mnt/h4vibe"
 TARGET="${TARGET_HOME}/.vibe"
 
-if [ ! -d "${STAGED}" ]; then
-    echo "[mistral-dev] WARN: ${STAGED} not mounted — ~/.vibe not linked, no persistence across rebuilds" >&2
-    exit 0
+if ! grep -qs " ${STAGED} " /proc/mounts; then
+    echo "[mistral-dev] WARN: ${STAGED} is not a mounted volume — ~/.vibe won't persist across rebuilds" >&2
 fi
 
 # Exclusive to this devcontainer (${devcontainerId} — see devcontainer-feature.json), so no
@@ -72,16 +102,23 @@ fi
 # that flag choice follows the volume's scoping key.
 h4_ensure_volume_writable "${STAGED}"
 
-rm -rf "${TARGET}"
-ln -sf "${STAGED}" "${TARGET}"
-echo "[mistral-dev] ~/.vibe linked to host — credentials persist across rebuilds."
+# Something replaced the build-time link with a plain directory: keep what's in it
+# (never overwriting the volume's own state), then link again.
+if [ ! -L "${TARGET}" ]; then
+    if [ -d "${TARGET}" ]; then
+        cp -rn "${TARGET}/." "${STAGED}/" 2>/dev/null || true
+        rm -rf "${TARGET}"
+    fi
+    ln -sfn "${STAGED}" "${TARGET}"
+fi
+echo "[mistral-dev] ~/.vibe linked to the volume — credentials persist across rebuilds."
 EOF
 
 chmod +x "${SCRIPT}"
 echo "  ✅ Installed ${SCRIPT}"
 
 # ============================================================================
-# 2. Optionally install the Mistral Vibe CLI.
+# 3. Optionally install the Mistral Vibe CLI.
 # ============================================================================
 
 if [ "${INSTALL_CLI}" = "true" ]; then
