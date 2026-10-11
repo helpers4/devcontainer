@@ -21,7 +21,7 @@
   "peon-ping",
   "playwright-dev",
   "pnpm-store",
-  "shell-history-per-project",
+  "shell-history",
   "typescript-dev",
   "vite-plus"
 ]

@@ -199,7 +199,7 @@ Combine with other features for a complete development environment:
     "ghcr.io/helpers4/devcontainer/vite-plus:1": {},
     "ghcr.io/helpers4/devcontainer/package-auto-install:1": {},
     "ghcr.io/helpers4/devcontainer/dotfiles-sync:1": {},
-    "ghcr.io/helpers4/devcontainer/shell-history-per-project:1": {},
+    "ghcr.io/helpers4/devcontainer/shell-history:1": {},
     "ghcr.io/helpers4/devcontainer/git-absorb:1": {}
   }
 }

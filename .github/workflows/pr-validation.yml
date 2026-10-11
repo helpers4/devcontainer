@@ -97,11 +97,11 @@ jobs:
             baseImage: ubuntu:latest
           - features: essential-dev
             baseImage: mcr.microsoft.com/devcontainers/base:ubuntu
-          - features: shell-history-per-project
+          - features: shell-history
             baseImage: mcr.microsoft.com/devcontainers/base:debian
-          - features: shell-history-per-project
+          - features: shell-history
             baseImage: ubuntu:latest
-          - features: shell-history-per-project
+          - features: shell-history
             baseImage: mcr.microsoft.com/devcontainers/base:ubuntu
           - features: git-absorb
             baseImage: mcr.microsoft.com/devcontainers/base:debian

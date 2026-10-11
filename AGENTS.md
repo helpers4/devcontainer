@@ -78,7 +78,7 @@ version bump" below.
 | `bitwarden-secrets-manager` | 1.2.4 | `bws` CLI from bitwarden/sdk-sm GitHub releases, token-only auth, no persisted state |
 | `dotfiles-sync` | 1.2.3 | Sync Git/SSH/GPG/npm/gh config from host; SSH key files opt-in (dependsOn helpers4-common) |
 | `peon-ping` | 1.3.2 | AI agent sound notifications: one script, hooks ask the host's peon-ping relay to play a category (no packs in the container) |
-| `shell-history-per-project` | 1.2.3 | Persistent shell history (zsh/bash/fish) |
+| `shell-history` | 1.0.0 | Shell history (bash/zsh/fish) kept across rebuilds in a named volume per devcontainer |
 | `org-workspace` | 1.0.1 | Clones every repo of a GitHub org into sibling `/workspaces` folders + generates/merges a multi-root `.code-workspace` (dependsOn helpers4-common, github-dev) |
 
 **Adding a new feature — checklist:**

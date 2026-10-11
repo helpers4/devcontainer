@@ -28,12 +28,12 @@ jobs:
           - features: essential-dev
             baseImage: mcr.microsoft.com/devcontainers/base:ubuntu
 
-          # shell-history-per-project - works on any base image
-          - features: shell-history-per-project
+          # shell-history - works on any base image
+          - features: shell-history
             baseImage: mcr.microsoft.com/devcontainers/base:debian
-          - features: shell-history-per-project
+          - features: shell-history
             baseImage: ubuntu:latest
-          - features: shell-history-per-project
+          - features: shell-history
             baseImage: mcr.microsoft.com/devcontainers/base:ubuntu
 
           # git-absorb - works on any base image

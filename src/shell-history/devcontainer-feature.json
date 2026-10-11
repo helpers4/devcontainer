@@ -1,0 +1,35 @@
+{
+  "id": "shell-history",
+  "version": "1.0.0",
+  "name": "Shell History",
+  "description": "Keeps your bash, zsh and fish history across rebuilds and Codespaces via a Docker named volume, dedicated to this devcontainer. Also self-heals your devcontainer setup.",
+  "documentationURL": "https://github.com/helpers4/devcontainer/tree/main/src/shell-history",
+  "licenseURL": "https://github.com/helpers4/devcontainer/blob/main/LICENSE",
+  "keywords": ["helpers4", "shell", "history", "zsh", "bash", "fish"],
+  "options": {
+    "username": {
+      "type": "string",
+      "default": "auto",
+      "description": "Container user whose shells keep their history. 'auto' detects vscode/node/codespace/uid-1000, in that order."
+    },
+    "maxHistorySize": {
+      "type": "string",
+      "default": "10000",
+      "description": "Number of history entries to keep, in memory and in the history file (bash and zsh)."
+    }
+  },
+  "mounts": [
+    {
+      "source": "helpers4-shell-history-${devcontainerId}",
+      "target": "/mnt/h4history",
+      "type": "volume"
+    }
+  ],
+  "postCreateCommand": "/usr/local/share/shell-history/setup-volume.sh",
+  "installsAfter": [
+    "ghcr.io/devcontainers/features/common-utils"
+  ],
+  "dependsOn": {
+    "ghcr.io/helpers4/devcontainer/helpers4-common:1": {}
+  }
+}

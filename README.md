@@ -156,18 +156,16 @@ Angular-specific development environment with VS Code extensions and CLI autocom
 
 [📖 Documentation](./src/angular-dev/README.md)
 
-### shell-history-per-project
+### shell-history
 
-Persist shell history per project by automatically detecting and configuring all available shells (zsh, bash, fish). Supports auto-detection or manual shell selection.
+Keeps your bash, zsh and fish history across rebuilds and Codespaces, in a Docker named volume dedicated to this devcontainer. Formerly `shell-history-per-project` — see the [migration notes](./deprecated/shell-history-per-project/).
 
 **Key benefits:**
-- Per-project history isolation
-- Persistent across container rebuilds
-- Multiple shell support (zsh, bash, fish)
-- Team collaboration friendly
-- Clean separation between personal and project commands
+- History survives every rebuild, `--no-cache` and Codespaces included
+- Each project keeps its own history, never mixed with another's
+- Every installed shell configured, each command saved as soon as it runs
 
-[📖 Documentation](./src/shell-history-per-project/README.md)
+[📖 Documentation](./src/shell-history/README.md)
 
 ### git-absorb
 
@@ -306,7 +304,7 @@ Features from this repository are available via GitHub Container Registry. Refer
             "projectName": "my-project"
         },
         "ghcr.io/helpers4/devcontainer/angular-dev:1": {},
-        "ghcr.io/helpers4/devcontainer/shell-history-per-project:1": {},
+        "ghcr.io/helpers4/devcontainer/shell-history:1": {},
         "ghcr.io/helpers4/devcontainer/git-absorb:1": {},
         "ghcr.io/helpers4/devcontainer/dotfiles-sync:1": {},
         "ghcr.io/helpers4/devcontainer/peon-ping:1": {}
@@ -333,7 +331,7 @@ Features from this repository are available via GitHub Container Registry. Refer
 | [pnpm-store](./src/pnpm-store) | Shared pnpm store on the same filesystem as your code — no stray .pnpm-store in repos | [README](./src/pnpm-store/README.md) |
 | [typescript-dev](./src/typescript-dev) | TypeScript/JavaScript dev with indexing and web tools (requires essential-dev) | [README](./src/typescript-dev/README.md) |
 | [angular-dev](./src/angular-dev) | Angular development environment with extensions and CLI autocompletion | [README](./src/angular-dev/README.md) |
-| [shell-history-per-project](./src/shell-history-per-project) | Per-project shell history persistence with multi-shell auto-detection | [README](./src/shell-history-per-project/README.md) |
+| [shell-history](./src/shell-history) | Shell history (bash/zsh/fish) kept across rebuilds, per devcontainer | [README](./src/shell-history/README.md) |
 | [git-absorb](./src/git-absorb) | Automatic absorption of staged changes into logical commits | [README](./src/git-absorb/README.md) |
 | [dotfiles-sync](./src/dotfiles-sync) | Sync local Git, SSH, GPG, and npm config — works on macOS, Linux, WSL, Codespaces | [README](./src/dotfiles-sync/README.md) |
 | [bitwarden-secrets-manager](./src/bitwarden-secrets-manager) | `bws` CLI from Bitwarden's own GitHub releases, token-only auth, no persisted state | [README](./src/bitwarden-secrets-manager/README.md) |
@@ -362,7 +360,7 @@ flowchart BT
     org["org-workspace"] --> github
     org --> common
 
-    leaves["auto-header, git-absorb, angular-dev, dotfiles-sync,<br/>package-auto-install, pnpm-store, peon-ping,<br/>shell-history-per-project, claude-dev, mistral-dev,<br/>cline-dev, bitwarden-secrets-manager"] --> common
+    leaves["auto-header, git-absorb, angular-dev, dotfiles-sync,<br/>package-auto-install, pnpm-store, peon-ping,<br/>shell-history, claude-dev, mistral-dev,<br/>cline-dev, bitwarden-secrets-manager"] --> common
 ```
 
 `github-dev` and `copilot-dev` have no `dependsOn` at all — they only install VS Code extensions and CLI tools, with no shared bootstrap logic to pull in.
@@ -444,7 +442,7 @@ This repository follows the [DevContainer Features specification](https://contai
 Features can be tested locally using the [DevContainer CLI](https://github.com/devcontainers/cli):
 
 ```bash
-devcontainer features test --features shell-history-per-project
+devcontainer features test --features shell-history
 ```
 
 That installs the CLI on your host. To have it available **inside** a devcontainer instead —
