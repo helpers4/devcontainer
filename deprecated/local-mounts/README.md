@@ -6,7 +6,7 @@ SPDX-License-Identifier: LGPL-3.0-or-later
 
 # Local Mounts — Deprecated
 
-> ⚠️ **This feature has been removed.** It was renamed and superseded by [`dotfiles-sync`](../src/dotfiles-sync/).
+> ⚠️ **This feature has been removed.** It was renamed and superseded by [`dotfiles-sync`](../../src/dotfiles-sync/README.md).
 >
 > Existing images that already pulled `ghcr.io/helpers4/devcontainer/local-mounts:1` keep working from their local cache. New builds referencing this feature will fail to resolve — **you must migrate**.
 
@@ -25,7 +25,7 @@ Replace the feature reference in your `devcontainer.json`:
 
 The `username` option is identical. Runtime behavior is the same, with extra files supported (cargo, pip, yarn, pnpm, gh CLI prefs, …) and opt-in cloud credentials (AWS profiles, kube config, Docker auth, gh OAuth token).
 
-See the [`dotfiles-sync` README](../src/dotfiles-sync/) for full documentation.
+See the [`dotfiles-sync` README](../../src/dotfiles-sync/README.md) for full documentation.
 
 ## Why was it renamed?
 
