@@ -251,19 +251,6 @@ Automatically configures file headers with customizable templates based on proje
 
 [📖 Documentation](./src/auto-header/README.md)
 
-### peon-ping
-
-Plays your host's [peon-ping](https://peonping.com/) game-character sounds when your AI coding agent finishes or needs permission. Includes the Peon Pet VS Code extension.
-
-**Key benefits:**
-- Uses the pack and volume of your host's peon-ping — nothing to configure or keep in sync
-- Hooks for Claude Code, Cursor and Codex, always all configured
-- Animated Peon Pet sidebar companion in VS Code
-- No download, no `initializeCommand`: sound goes through a relay you start once on your host
-- Non-interactive, idempotent installation
-
-[📖 Documentation](./src/peon-ping/README.md)
-
 ### bitwarden-secrets-manager
 
 Installs `bws`, the official Bitwarden Secrets Manager CLI, straight from Bitwarden's own GitHub releases. Scoped to non-interactive, machine-account-token auth only — no vault login, no persisted state, no host bind-mounts.
@@ -306,8 +293,7 @@ Features from this repository are available via GitHub Container Registry. Refer
         "ghcr.io/helpers4/devcontainer/angular-dev:1": {},
         "ghcr.io/helpers4/devcontainer/shell-history:1": {},
         "ghcr.io/helpers4/devcontainer/git-absorb:1": {},
-        "ghcr.io/helpers4/devcontainer/dotfiles-sync:1": {},
-        "ghcr.io/helpers4/devcontainer/peon-ping:1": {}
+        "ghcr.io/helpers4/devcontainer/dotfiles-sync:1": {}
     }
 }
 ```
@@ -335,7 +321,6 @@ Features from this repository are available via GitHub Container Registry. Refer
 | [git-absorb](./src/git-absorb) | Automatic absorption of staged changes into logical commits | [README](./src/git-absorb/README.md) |
 | [dotfiles-sync](./src/dotfiles-sync) | Sync local Git, SSH, GPG, and npm config — works on macOS, Linux, WSL, Codespaces | [README](./src/dotfiles-sync/README.md) |
 | [bitwarden-secrets-manager](./src/bitwarden-secrets-manager) | `bws` CLI from Bitwarden's own GitHub releases, token-only auth, no persisted state | [README](./src/bitwarden-secrets-manager/README.md) |
-| [peon-ping](./src/peon-ping) | AI agent sound notifications played by your host's peon-ping, multi-IDE hooks and Peon Pet extension | [README](./src/peon-ping/README.md) |
 | [org-workspace](./src/org-workspace) | Clone an entire GitHub org into sibling workspace folders with one feature | [README](./src/org-workspace/README.md) |
 
 ## Dependency Graph
@@ -360,7 +345,7 @@ flowchart BT
     org["org-workspace"] --> github
     org --> common
 
-    leaves["auto-header, git-absorb, angular-dev, dotfiles-sync,<br/>package-auto-install, pnpm-store, peon-ping,<br/>shell-history, claude-dev, mistral-dev,<br/>cline-dev, bitwarden-secrets-manager"] --> common
+    leaves["auto-header, git-absorb, angular-dev, dotfiles-sync,<br/>package-auto-install, pnpm-store,<br/>shell-history, claude-dev, mistral-dev,<br/>cline-dev, bitwarden-secrets-manager"] --> common
 ```
 
 `github-dev` and `copilot-dev` have no `dependsOn` at all — they only install VS Code extensions and CLI tools, with no shared bootstrap logic to pull in.
@@ -400,7 +385,7 @@ Same as above, plus `playwright-dev` for browser automation:
 
 ### AI pairing
 
-`github-dev` for the `gh` CLI and PR/Issues tooling, `copilot-dev` and `claude-dev` for two AI assistants side by side, and `peon-ping` so you hear when either one finishes or needs input:
+`github-dev` for the `gh` CLI and PR/Issues tooling, and `copilot-dev` and `claude-dev` for two AI assistants side by side:
 
 ```jsonc
 {
@@ -408,8 +393,7 @@ Same as above, plus `playwright-dev` for browser automation:
     "ghcr.io/helpers4/devcontainer/essential-dev:1": {},
     "ghcr.io/helpers4/devcontainer/github-dev:1": {},
     "ghcr.io/helpers4/devcontainer/copilot-dev:1": {},
-    "ghcr.io/helpers4/devcontainer/claude-dev:1": {},
-    "ghcr.io/helpers4/devcontainer/peon-ping:1": {}
+    "ghcr.io/helpers4/devcontainer/claude-dev:1": {}
   }
 }
 ```
