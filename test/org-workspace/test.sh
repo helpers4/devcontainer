@@ -45,7 +45,16 @@ cat >"${SANDBOX}/bin/gh" <<'GH'
 #!/usr/bin/env bash
 case "$1 $2" in
     "repo view") echo "${FAKE_ORG:-acme}" ;;
-    "repo list") [ -n "${FAKE_LIST_FAIL:-}" ] && exit 1; printf '%s\n' ${FAKE_REPOS:-} ;;
+    # FAKE_REPOS="a b:private c:fork d:archived e:internal"
+    "repo list")
+        [ -n "${FAKE_LIST_FAIL:-}" ] && { echo "fake: list failed" >&2; exit 1; }
+        for r in ${FAKE_REPOS:-}; do
+            jq -n --arg n "${r%%:*}" --arg t "$([ "${r#*:}" != "${r}" ] && echo "${r#*:}")" '{
+                name: $n,
+                visibility: (if $t == "private" or $t == "internal" then ($t | ascii_upcase) else "PUBLIC" end),
+                isFork: ($t == "fork"),
+                isArchived: ($t == "archived")}'
+        done | jq -cs . ;;
     "repo clone")
         name="${3#*/}"
         case " ${FAKE_CLONE_FAIL:-} " in *" ${name} "*) echo "fake: no access" >&2; exit 1 ;; esac
@@ -91,7 +100,7 @@ new_case "EXCLUDE_OPTION=' skip-me , other '"
 FAKE_REPOS="a b skip-me other" run_case
 [ "${RC}" -eq 0 ] && [ -L "${CASE}/ws/a" ] && [ -L "${CASE}/ws/b" ] || fail "discovered repos were not linked (rc=${RC})"
 [ ! -e "${CASE}/ws/skip-me" ] && [ ! -e "${CASE}/ws/other" ] || fail "excluded repos were cloned"
-[ "$(folders)" = "../a ../b ../boot " ] && pass "autoDiscover and exclude" || fail "unexpected folders: $(folders)"
+[ "$(folders)" = ". ../a ../b " ] && pass "autoDiscover and exclude" || fail "unexpected folders: $(folders)"
 
 new_case "REPOS_OPTION='x, y ,z'" "EXCLUDE_OPTION=z"
 FAKE_REPOS="a b" run_case
@@ -101,6 +110,25 @@ FAKE_REPOS="a b" run_case
 new_case "AUTO_DISCOVER_OPTION=false"
 FAKE_REPOS="a" run_case
 [ "${RC}" -eq 0 ] && [ ! -e "${CASE}/ws/a" ] && pass "autoDiscover=false clones nothing" || fail "autoDiscover=false"
+
+ALL="a b:private c:internal d:fork e:archived"
+for spec in "true:a b" "internal:c" "public,private,fork:a b d" "public,archived:a e"; do
+    new_case "AUTO_DISCOVER_OPTION='${spec%%:*}'"
+    FAKE_REPOS="${ALL}" run_case
+    got="$(cd "${CASE}/ws" && find . -mindepth 1 -maxdepth 1 -type l -printf '%f ' | tr ' ' '\n' | sort | xargs)"
+    [ "${got}" = "${spec#*:}" ] && pass "autoDiscover=${spec%%:*} picks ${spec#*:}" \
+        || fail "autoDiscover=${spec%%:*} picked '${got}', expected '${spec#*:}'"
+done
+
+new_case
+git -C "${CASE}/ws/boot" remote add origin "https://github.com/acme/.dev.git"
+FAKE_REPOS=".dev a" run_case
+[ ! -e "${CASE}/ws/.dev" ] && [ -L "${CASE}/ws/a" ] \
+    && pass "the project's own repo is not cloned again under its repo name" || fail "the project was cloned twice"
+
+new_case
+FAKE_REPOS="a" FAKE_LIST_FAIL=1 run_case
+echo "${OUT}" | grep -q "fake: list failed" && pass "gh's error is shown" || fail "gh's error was swallowed"
 
 new_case "AUTO_DISCOVER_OPTION=publik"
 FAKE_REPOS="a" run_case
@@ -200,7 +228,7 @@ kept() { [ ! -e "${CASE}/ws/$1" ] && [ -d "${CASE}/volume/$1/.git" ]; }
 
 prune_case
 FAKE_REPOS="a c" run_case
-[ ! -e "${CASE}/ws/b" ] && [ ! -e "${CASE}/volume/b" ] && [ "$(folders)" = "../a ../boot ../c " ] \
+[ ! -e "${CASE}/ws/b" ] && [ ! -e "${CASE}/volume/b" ] && [ "$(folders)" = ". ../a ../c " ] \
     && pass "a clean repo that left the list is removed" || fail "a clean repo was not removed: $(folders)"
 
 prune_case
@@ -273,6 +301,12 @@ sed -i 's/^AUTO_DISCOVER_OPTION=.*/AUTO_DISCOVER_OPTION=false/' "${CASE}/options
 FAKE_REPOS="a c" run_case
 [ -d "${CASE}/volume/b/.git" ] && pass "with no list configured nothing is removed" || fail "repos were removed without a list"
 
+prune_case
+rm -f "${CASE}/ws/b"
+FAKE_REPOS="a c b:archived" run_case
+[ ! -e "${CASE}/ws/b" ] && [ "$(folders)" = ". ../a ../c " ] \
+    && pass "after a rebuild, an archived repo is not linked again and leaves the file" || fail "archived repo after a rebuild: $(folders)"
+
 new_case
 FAKE_REPOS=".github a" run_case
 FAKE_REPOS="a" run_case
@@ -280,3 +314,44 @@ FAKE_REPOS="a" run_case
 
 echo ""
 echo "✅ All org-workspace feature tests passed!"
+
+# ── Mounted folders and other entries ──
+
+new_case
+mkdir "${CASE}/ws/m" && git init -q "${CASE}/ws/m" && touch "${CASE}/ws/m/mine"
+FAKE_REPOS="a m" run_case
+[ -d "${CASE}/ws/m" ] && [ ! -L "${CASE}/ws/m" ] && [ -e "${CASE}/ws/m/mine" ] && [ ! -e "${CASE}/volume/m" ] \
+    && pass "a mounted org repo is not cloned over" || fail "a mounted repo was replaced"
+[ "$(folders)" = ". ../a ../m " ] && pass "a mounted org repo is listed" || fail "mounted repo missing: $(folders)"
+FAKE_REPOS="a" run_case
+[ -e "${CASE}/ws/m/mine" ] && [ "$(folders)" = ". ../a ../m " ] \
+    && pass "a mounted repo that left the org list stays, on disk and in the file" || fail "a mounted repo was removed: $(folders)"
+
+new_case "REPOS_OPTION=a"
+mkdir "${CASE}/ws/other" && git init -q "${CASE}/ws/other"
+printf '{"folders":[{"path":"."},{"path":"../ghost"},{"path":"/elsewhere/x"},{"uri":"vscode-remote://x"},{"path":"../a"},{"path":"/WS/a"}]}' \
+    | sed "s#/WS#${CASE}/ws#" >"$(ws_file)"
+FAKE_REPOS="a" run_case
+[ "$(jq -c '[.folders[] | .path // .uri]' "$(ws_file)")" = '[".","/elsewhere/x","vscode-remote://x","../a","../other"]' ] \
+    && pass "dead and duplicate entries go, entries outside /workspaces stay, other checkouts are added" \
+    || fail "unexpected folders: $(jq -c '[.folders[] | .path // .uri]' "$(ws_file)")"
+
+# ── Folder names ──
+
+names() { jq -r '[.folders[] | .name // "-"] | join("|")' "$(ws_file)"; }
+
+new_case
+git -C "${CASE}/ws/boot" remote add origin "https://github.com/acme/boot.git"
+FAKE_REPOS="boot a b:private c:internal d:fork" run_case
+sed -i 's/^AUTO_DISCOVER_OPTION=.*/AUTO_DISCOVER_OPTION=public,private,internal,fork/' "${CASE}/options.env"
+FAKE_REPOS="boot a b:private c:internal d:fork" run_case
+[ "$(names)" = "🌍 boot|🌍 a|🔒 b|🏢 c|🔀 d" ] && pass "names get the status icon" || fail "unexpected names: $(names)"
+
+jq '.folders[1].name = "my a" | .folders[2].name = "b"' "$(ws_file)" >"${CASE}/tmp" && mv "${CASE}/tmp" "$(ws_file)"
+FAKE_REPOS="boot a:private b c:internal d:fork" run_case
+[ "$(names)" = "🌍 boot|my a|🌍 b|🏢 c|🔀 d" ] \
+    && pass "a renamed folder keeps its name, the others follow their status" || fail "unexpected names: $(names)"
+
+FAKE_REPOS="boot a b c:internal d:fork" FAKE_LIST_FAIL=1 run_case
+[ "$(names)" = "🌍 boot|my a|🌍 b|🏢 c|🔀 d" ] && pass "names are left alone when gh fails" || fail "names changed: $(names)"
+

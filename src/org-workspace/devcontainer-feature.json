@@ -1,6 +1,6 @@
 {
   "id": "org-workspace",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "name": "Org Workspace",
   "description": "Clones the repos of a GitHub org into sibling /workspaces folders and keeps a multi-root .code-workspace file up to date.",
   "documentationURL": "https://github.com/helpers4/devcontainer/tree/main/src/org-workspace",
@@ -36,7 +36,7 @@
     "generateCodeWorkspace": {
       "type": "boolean",
       "default": true,
-      "description": "Create or update the .code-workspace file. Existing folder names and settings are kept."
+      "description": "Create or update the .code-workspace file. Folders get a status icon; names you wrote and settings are kept."
     },
     "codeWorkspaceName": {
       "type": "string",

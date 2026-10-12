@@ -400,7 +400,7 @@ Same as above, plus `playwright-dev` for browser automation:
 
 ### Multi-repo org bootstrap
 
-This org's own `.dev` repo hand-writes a `mounts` entry per sibling repo to bring `.github`, `action`, `devcontainer`, `typescript`, and `website` into one workspace. [`org-workspace`](./src/org-workspace) replaces that with one feature reference — point it at the org and it clones every repo and generates the multi-root `.code-workspace` file for you:
+This org's own `.dev` repo used to hand-write a `mounts` entry per sibling repo to bring them into one workspace. [`org-workspace`](./src/org-workspace) replaces that with one feature reference — point it at the org and it clones every repo and generates the multi-root `.code-workspace` file for you:
 
 ```jsonc
 {
