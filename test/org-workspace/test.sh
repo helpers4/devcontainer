@@ -307,6 +307,26 @@ FAKE_REPOS="a c b:archived" run_case
 [ ! -e "${CASE}/ws/b" ] && [ "$(folders)" = ". ../a ../c " ] \
     && pass "after a rebuild, an archived repo is not linked again and leaves the file" || fail "archived repo after a rebuild: $(folders)"
 
+for opt in "REPOS_OPTION=boot" "EXCLUDE_OPTION=a,b,c"; do
+    prune_case
+    git -C "${CASE}/ws/boot" remote add origin "https://github.com/acme/boot.git"
+    echo "${opt}" >>"${CASE}/options.env"
+    FAKE_REPOS="a b c boot" run_case
+    [ -L "${CASE}/ws/b" ] && [ -d "${CASE}/volume/b/.git" ] \
+        && pass "a list that ends up empty (${opt}) removes nothing" || fail "${opt} emptied the volume"
+done
+
+prune_case
+mkdir "${CASE}/volume/.gone.clone-tmp"
+FAKE_REPOS="a b c" run_case
+[ ! -e "${CASE}/volume/.gone.clone-tmp" ] && pass "a leftover .clone-tmp is cleaned" || fail "a .clone-tmp was left behind"
+
+new_case "REPOS_OPTION='../../escape,a/b,..,ok'"
+run_case
+[ -L "${CASE}/ws/ok" ] && [ ! -e "${SANDBOX}/escape" ] && [ ! -e "${CASE}/escape" ] && [ ! -e "${CASE}/ws/a" ] \
+    && echo "${OUT}" | grep -q "'../../escape' is not a valid repo name" \
+    && pass "repo names that are paths are skipped" || fail "a repo name escaped the volume"
+
 new_case
 FAKE_REPOS=".github a" run_case
 FAKE_REPOS="a" run_case
