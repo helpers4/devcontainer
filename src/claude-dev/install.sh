@@ -33,6 +33,9 @@ echo "  Install CLI: ${INSTALL_CLI}"
 # Generate the runtime credentials script with TARGET_HOME baked in via printf %q.
 # Generating rather than copying means postCreateCommand always targets the correct
 # user's home regardless of which user the container runtime invokes the script as.
+#
+# This exact path is also peon-ping's own proxy for "is claude-dev installed" (its
+# install.sh checks for this file directly) — keep the two in sync if it ever moves.
 SCRIPT="/usr/local/share/claude-dev/setup-credentials.sh"
 mkdir -p "$(dirname "${SCRIPT}")"
 
