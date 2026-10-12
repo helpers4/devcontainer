@@ -200,9 +200,18 @@ resolve_repos() {
 
     local -a kept=()
     for repo in "${REPO_LIST[@]}"; do
-        [ -z "${repo}" ] || [ -n "${EXCLUDED[${repo}]:-}" ] || [ "${repo}" = "${MASTER_REPO}" ] || kept+=("${repo}")
+        [ -z "${repo}" ] || [ -n "${EXCLUDED[${repo}]:-}" ] || [ "${repo}" = "${MASTER_REPO}" ] && continue
+        # A repo name becomes a path: no "/", no "." or "..".
+        if [[ ! "${repo}" =~ ^[A-Za-z0-9._-]+$ ]] || [ "${repo}" = . ] || [ "${repo}" = .. ]; then
+            warn "'${repo}' is not a valid repo name, skipped."
+            continue
+        fi
+        kept+=("${repo}")
     done
     REPO_LIST=("${kept[@]}")
+    # A list that ends up empty (only the project's repo, or everything excluded) is not trusted
+    # as "everything we want": nothing is unlinked, as when there is no list at all.
+    [ "${#kept[@]}" -gt 0 ] || REPO_LIST_COMPLETE=false
 }
 
 # is_our_link <path>: true for a link this script made, into the volume.
@@ -230,6 +239,9 @@ clone_is_disposable() {
 # prune_repos: unlinks the repos that are no longer wanted and deletes their clones when that
 # is safe. Only our links are touched: the project folder and mounted folders never are.
 prune_repos() {
+    # Left by an interrupted clone. A repo still wanted clears its own on the next clone, but
+    # not one that left the list.
+    rm -rf "${VOLUME_DIR}"/.*.clone-tmp
     [ "${REPO_LIST_COMPLETE}" = true ] || return 0
     local -A wanted=()
     local repo path name

@@ -103,8 +103,11 @@ its link in `/workspaces` and its entry in the workspace file. Its clone is dele
 confirms nothing would be lost: no uncommitted or ignored files (except `node_modules`), no stash,
 no commit missing from the remote. Otherwise the clone stays in the volume and a warning says so.
 
-Nothing is unlinked when the list of repos looks incomplete: when `gh repo list` fails, or when
-it returns nothing.
+Nothing is unlinked when the list of repos looks incomplete: when `gh repo list` fails, when it
+returns nothing, or when nothing is left once `exclude` and your project's repo are taken out.
+
+A `repos` list is taken as it is: a typo in it (`typscript`) unlinks the repo you meant, as if you
+had removed it.
 
 ## Limits
 
