@@ -146,10 +146,6 @@ jobs:
             baseImage: mcr.microsoft.com/devcontainers/typescript-node:20
           - features: auto-header
             baseImage: mcr.microsoft.com/devcontainers/base:ubuntu
-          - features: peon-ping
-            baseImage: ubuntu:latest
-          - features: peon-ping
-            baseImage: mcr.microsoft.com/devcontainers/base:ubuntu
           - features: dotfiles-sync
             baseImage: mcr.microsoft.com/devcontainers/base:debian
           - features: dotfiles-sync
@@ -232,7 +228,6 @@ jobs:
           - features: cline-dev
           - features: mistral-dev
           - features: org-workspace
-          - features: peon-ping
 
     steps:
       - name: Checkout
