@@ -58,13 +58,43 @@ repos.
    - clones each repo into a Docker volume (`helpers4-org-workspace-${devcontainerId}`, mounted
      at `/mnt/h4org-workspace`) and links it from `/workspaces/<repo>`. The clones live in the
      volume, so a rebuild keeps your local branches and uncommitted work;
-   - skips any repo that already has a folder in `/workspaces`;
-   - adds the new folders to the `.code-workspace` file. Names and settings you wrote in it are
-     kept, and a folder listed twice under different paths (`.` and `../my-project`) counts
-     once.
+   - updates the `.code-workspace` file to match what is in `/workspaces`.
 
 A failed clone, or no access to a repo, prints a warning and the rest carries on. The script
 always exits 0, because a failing lifecycle command would stop the ones after it.
+
+## Your project and mounted folders
+
+Three kinds of folders live in `/workspaces`, and only one is managed on disk:
+
+| Folder | On disk | In the `.code-workspace` file |
+|--------|---------|-------------------------------|
+| Your project (where `devcontainer.json` is) | never touched, and its repo is never cloned again, even under another folder name | always listed (`.`) |
+| A link into the volume, made by this feature | created and removed to follow the repo list | listed while it exists |
+| Anything else: a folder you mounted, cloned or copied there | never touched, and not cloned over | listed while it is a git checkout |
+
+So a repo you mount yourself at `/workspaces/<repo>` wins over the clone. It stays even when the
+repo leaves the list: you mounted it, you remove it.
+
+## The `.code-workspace` file
+
+The entries that point at `/workspaces/<name>` follow the disk: a git checkout there is added,
+and an entry whose folder is gone or excluded is removed. Other entries (outside `/workspaces`,
+`uri` entries) and your settings are left alone.
+
+Each org repo is named with an icon for its status, the first that applies:
+
+| Icon | Status |
+|------|--------|
+| 📦 | archived |
+| 🔀 | fork |
+| 🔒 | private |
+| 🏢 | internal |
+| 🌍 | public |
+
+A name you wrote yourself is kept. Only a missing name, the plain repo name or a name with one of
+these icons is updated, so the icon follows when a repo changes status. Folders outside the org
+keep their plain name.
 
 ## Cleaning up
 
@@ -73,19 +103,17 @@ its link in `/workspaces` and its entry in the workspace file. Its clone is dele
 confirms nothing would be lost: no uncommitted or ignored files (except `node_modules`), no stash,
 no commit missing from the remote. Otherwise the clone stays in the volume and a warning says so.
 
-Nothing is removed when the list of repos looks incomplete: when `gh repo list` fails, or when it
-returns nothing.
+Nothing is unlinked when the list of repos looks incomplete: when `gh repo list` fails, or when
+it returns nothing.
 
 ## Limits
 
 - GitHub only, and one org per project.
-- The repos are cloned when the container is created. A repo added to the org later shows up
-  after the next rebuild.
+- The repos are cloned when the container is created. A repo added to the org, or archived,
+  shows up (or goes) after the next rebuild.
 - A `.code-workspace` file with comments is left as it is, because it cannot be edited safely.
   Otherwise the file is rewritten the way VS Code writes it: tabs, no final newline.
 - Needs an authenticated `gh`, which [`github-dev`](../github-dev) provides.
-- Don't also mount volumes on `/workspaces/<repo>` yourself. Those folders would be seen as
-  already present and skipped.
 
 ## Codespaces
 
@@ -99,6 +127,11 @@ tested in a real Codespace yet.
 
 ## Version History
 
+- **v1.1.0**: Folder names get a status icon (public, private, internal, fork, archived). The
+  workspace file now matches what is in `/workspaces`: an archived repo no longer stays in it
+  after a rebuild, and dead entries are removed. `autoDiscover` with two visibilities no longer
+  lets the third one in. Your project's repo is never cloned again under another folder name.
+  Mounted folders are listed, and `gh` errors are shown.
 - **v1.0.1**: `autoDiscover` defaults to `"true"`. New `exclude` option. The script no longer
   fails the container when something goes wrong, and `/workspaces` is writable at build time. It
   now runs when the container is created instead of at every start, and removes repos that are
