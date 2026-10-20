@@ -154,7 +154,7 @@ jobs:
         # Trigganator (used by this same repo's trigger-website job below)
         # doesn't have the Workflows app permission granted. Pushinator does
         # — scoped here to only what this specific push needs.
-        uses: actions/create-github-app-token@v3.2.0
+        uses: actions/create-github-app-token@v3.3.0
         with:
           client-id: ${{ vars.PUSHINATOR_ID }}
           private-key: ${{ secrets.PUSHINATOR_KEY }}
