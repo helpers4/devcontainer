@@ -1,0 +1,48 @@
+{
+  "id": "kimi-dev",
+  "version": "1.0.0",
+  "name": "Kimi Code Development Environment",
+  "description": "Installs the Kimi Code IDE extension (moonshot-ai.kimi-code) for VS Code and Cursor, and optionally the kimi CLI. Persists ~/.kimi-code (credentials, config) across rebuilds and Codespaces via a Docker named volume, dedicated to this devcontainer. Also self-heals your devcontainer setup.",
+  "documentationURL": "https://github.com/helpers4/devcontainer/tree/main/src/kimi-dev",
+  "licenseURL": "https://github.com/helpers4/devcontainer/blob/main/LICENSE",
+  "keywords": [
+    "helpers4",
+    "kimi",
+    "moonshot",
+    "ai",
+    "vscode"
+  ],
+  "options": {
+    "username": {
+      "type": "string",
+      "default": "auto",
+      "description": "Username in the container that should receive the Kimi Code credentials symlink. 'auto' detects vscode/node/codespace/uid-1000, in that order."
+    },
+    "installCli": {
+      "type": "boolean",
+      "default": false,
+      "description": "Also install the Kimi Code CLI (kimi command) via the official native installer."
+    }
+  },
+  "mounts": [
+    {
+      "source": "helpers4-kimi-credentials-${devcontainerId}",
+      "target": "/mnt/h4kimicode",
+      "type": "volume"
+    }
+  ],
+  "postCreateCommand": "/usr/local/share/kimi-dev/setup-credentials.sh",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "moonshot-ai.kimi-code"
+      ]
+    }
+  },
+  "installsAfter": [
+    "ghcr.io/devcontainers/features/common-utils"
+  ],
+  "dependsOn": {
+    "ghcr.io/helpers4/devcontainer/helpers4-common:1": {}
+  }
+}

@@ -80,6 +80,17 @@ Installs the Cline AI coding agent extension for VS Code and Cursor, and optiona
 
 [📖 Documentation](./src/cline-dev/README.md)
 
+### kimi-dev
+
+Installs the Kimi Code IDE extension for VS Code and Cursor, and optionally the `kimi` CLI. Credentials and configuration (`~/.kimi-code`) persist in a Docker named volume, surviving every rebuild including Codespaces.
+
+**Key benefits:**
+- Credentials and configuration survive every rebuild, `--no-cache` and Codespaces included
+- Dedicated volume per devcontainer — no cross-project bleed of settings
+- Optional CLI install via `installCli`, via the official native installer (no Node.js required)
+
+[📖 Documentation](./src/kimi-dev/README.md)
+
 ### nub
 
 Installs [nub](https://nubjs.com/), a single Rust binary that runs TypeScript/JavaScript files, `package.json` scripts, and local CLIs directly on the Node.js and package manager already in the container — no new runtime, no lock-in. Doesn't manage Node versions itself, so it never competes with the container's own version-selection mechanism.
@@ -309,6 +320,7 @@ Features from this repository are available via GitHub Container Registry. Refer
 | [claude-dev](./src/claude-dev) | Claude Code extension + CLI + persistent `~/.claude` across rebuilds | [README](./src/claude-dev/README.md) |
 | [mistral-dev](./src/mistral-dev) | Mistral Vibe extension + persistent `~/.vibe` across rebuilds | [README](./src/mistral-dev/README.md) |
 | [cline-dev](./src/cline-dev) | Cline AI coding agent extension + optional CLI + persistent `~/.cline` across rebuilds | [README](./src/cline-dev/README.md) |
+| [kimi-dev](./src/kimi-dev) | Kimi Code extension + optional CLI + persistent `~/.kimi-code` across rebuilds | [README](./src/kimi-dev/README.md) |
 | [nub](./src/nub) | Fast TS/JS/script runner on top of the container's own Node + package manager | [README](./src/nub/README.md) |
 | [auto-header](./src/auto-header) | Automatic file headers with customizable templates (simple or custom) | [README](./src/auto-header/README.md) |
 | [vite-plus](./src/vite-plus) | Complete Vite+ toolchain with Oxc, Vitest, and VS Code integration | [README](./src/vite-plus/README.md) |
@@ -345,7 +357,7 @@ flowchart BT
     org["org-workspace"] --> github
     org --> common
 
-    leaves["auto-header, git-absorb, angular-dev, dotfiles-sync,<br/>package-auto-install, pnpm-store,<br/>shell-history, claude-dev, mistral-dev,<br/>cline-dev, bitwarden-secrets-manager"] --> common
+    leaves["auto-header, git-absorb, angular-dev, dotfiles-sync,<br/>package-auto-install, pnpm-store,<br/>shell-history, claude-dev, mistral-dev,<br/>cline-dev, kimi-dev, bitwarden-secrets-manager"] --> common
 ```
 
 `github-dev` and `copilot-dev` have no `dependsOn` at all — they only install VS Code extensions and CLI tools, with no shared bootstrap logic to pull in.

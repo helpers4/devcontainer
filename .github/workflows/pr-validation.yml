@@ -168,6 +168,10 @@ jobs:
             # Same rationale as claude-dev above — exercises the named-volume
             # EACCES regression on a base image with a non-root default user.
             baseImage: mcr.microsoft.com/devcontainers/base:ubuntu
+          - features: kimi-dev
+            baseImage: ubuntu:latest
+          - features: kimi-dev
+            baseImage: mcr.microsoft.com/devcontainers/base:ubuntu
           - features: org-workspace
             baseImage: mcr.microsoft.com/devcontainers/base:debian
 
@@ -226,6 +230,7 @@ jobs:
           # scenarios.json; see AGENTS.md "Testing non-default options".
           - features: claude-dev
           - features: cline-dev
+          - features: kimi-dev
           - features: mistral-dev
           - features: org-workspace
 
