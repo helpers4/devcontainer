@@ -15,6 +15,11 @@ if [ "$(id -u)" -ne 0 ]; then
 fi
 
 INSTALL_CLI="${INSTALLCLI:-false}"
+REMOTE_CONTROL="${REMOTECONTROL:-false}"
+REMOTE_CONTROL_NAME="${REMOTECONTROLNAME:-}"
+REMOTE_CONTROL_DIR="${REMOTECONTROLDIR:-}"
+REMOTE_CONTROL_SPAWN="${REMOTECONTROLSPAWN:-same-dir}"
+REMOTE_CONTROL_PERMISSION_MODE="${REMOTECONTROLPERMISSIONMODE:-}"
 
 # shellcheck source=/dev/null
 . /usr/local/share/helpers4/common.sh
@@ -29,6 +34,13 @@ echo "🔧 Configuring claude-dev feature..."
 echo "  Username:    ${USERNAME}"
 echo "  Home:        ${USER_HOME}"
 echo "  Install CLI: ${INSTALL_CLI}"
+echo "  Remote Control: ${REMOTE_CONTROL}"
+
+# Remote Control is a CLI feature: asking for it implies the CLI.
+if [ "${REMOTE_CONTROL}" = "true" ] && [ "${INSTALL_CLI}" != "true" ]; then
+    echo "  remoteControl is on — installing the CLI too."
+    INSTALL_CLI="true"
+fi
 
 # Generate the runtime credentials script with TARGET_HOME baked in via printf %q.
 # Generating rather than copying means postCreateCommand always targets the correct
@@ -121,6 +133,29 @@ if [ "${INSTALL_CLI}" = "true" ]; then
         fi
     else
         echo "  ⚠️  curl not found — skipping Claude Code CLI install." >&2
+    fi
+fi
+
+# claude-rc is always installed — postStartCommand calls it unconditionally (a feature
+# manifest can't make a lifecycle command conditional on an option), and it's a silent no-op
+# unless remoteControl is on. Options only exist as env vars during this install, so save them.
+install -m 0755 "$(dirname "$0")/claude-rc" /usr/local/bin/claude-rc
+{
+    printf 'RC_ENABLED=%q\n' "${REMOTE_CONTROL}"
+    printf 'RC_NAME_OPTION=%q\n' "${REMOTE_CONTROL_NAME}"
+    printf 'RC_DIR_OPTION=%q\n' "${REMOTE_CONTROL_DIR}"
+    printf 'RC_SPAWN_OPTION=%q\n' "${REMOTE_CONTROL_SPAWN}"
+    printf 'RC_PERMISSION_MODE_OPTION=%q\n' "${REMOTE_CONTROL_PERMISSION_MODE}"
+} > /usr/local/share/claude-dev/remote-control.env
+echo "  ✅ Installed /usr/local/bin/claude-rc"
+
+if [ "${REMOTE_CONTROL}" = "true" ]; then
+    export DEBIAN_FRONTEND=noninteractive
+    if command -v dpkg >/dev/null 2>&1; then
+        h4_ensure_packages tmux
+        rm -rf /var/lib/apt/lists/*
+    elif ! command -v tmux >/dev/null 2>&1; then
+        echo "  ⚠️  tmux not found and this image isn't Debian-based — install tmux for Remote Control to start." >&2
     fi
 fi
 
