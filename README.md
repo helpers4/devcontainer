@@ -55,7 +55,7 @@ Installs the Claude Code IDE extension across supported editors and persists `~/
 - Credentials, config, and memory survive every rebuild, `--no-cache` included
 - Dedicated volume per devcontainer — no cross-project bleed of settings or memory
 - Optional `claude` CLI alongside the IDE extension
-- Optional Remote Control server: start and drive sessions in the devcontainer from claude.ai/code or the Claude app
+- Optional Remote Control server: start and drive sessions in the devcontainer from claude.ai/code or the Claude app (off by default — connected session transcripts are stored by Anthropic)
 
 [📖 Documentation](./src/claude-dev/README.md)
 
