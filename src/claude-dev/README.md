@@ -57,16 +57,19 @@ without a terminal or VS Code window open on it. Code runs here; claude.ai is on
 One devcontainer per org (each with its own `~/.claude` volume) gives one server per org; the
 name prefixes every session in the list, so `baxyz-…` and `tuxery-…` stay apart.
 
-**Once per devcontainer** (the answers live in the `~/.claude` volume and survive rebuilds):
+**Once per devcontainer** (the answers live in the `~/.claude` volume and survive rebuilds),
+in a terminal of the devcontainer:
 
 ```bash
-claude-rc attach   # in a terminal of the devcontainer
+claude-rc login    # claude auth login: open the printed URL, paste the code back
+claude-rc attach   # accept the workspace-trust and "Enable Remote Control?" prompts, then Ctrl-b d
 ```
 
-then run `claude auth login` there if asked (a claude.ai account: API keys and
-`claude setup-token` / `CLAUDE_CODE_OAUTH_TOKEN` tokens can't use Remote Control), accept the
-workspace-trust and "Enable Remote Control?" prompts, and leave with `Ctrl-b d`. The server keeps
-running.
+Until the login, the server isn't started at all: its tmux pane only says it's waiting and checks
+every 30 s, so nothing registers with Remote Control and nothing shows up in the session list. Log in with a
+claude.ai account — API keys and `claude setup-token` / `CLAUDE_CODE_OAUTH_TOKEN` tokens can't
+use Remote Control. A login done another way in the devcontainer (e.g. `claude` then `/login`)
+counts too. After `Ctrl-b d` the server keeps running.
 
 **Day to day:** `claude-rc status` shows whether it runs, its name, directory and last output;
 `claude-rc stop` / `start` / `restart` do what they say. A stopped server's sessions come back
@@ -183,7 +186,7 @@ without depending on that user's shell profile already including
   `remoteControlDir`, `remoteControlSpawn` and `remoteControlPermissionMode` options: keeps a
   Claude Code Remote Control server running in a background tmux session, started on every
   container start, so this devcontainer can be driven from claude.ai/code or the Claude app.
-  New `claude-rc` command (`start`, `stop`, `restart`, `attach`, `status`). `remoteControl`
+  New `claude-rc` command (`start`, `login`, `stop`, `restart`, `attach`, `status`). `remoteControl`
   implies `installCli` and installs tmux.
 - **v1.3.1**: `setup-credentials.sh` now runs via `postCreateCommand` instead of
   `postStartCommand` — the volume is already mounted by container creation (Docker attaches
