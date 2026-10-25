@@ -64,7 +64,7 @@ version bump" below.
 | `github-dev` | 1.0.7 | gh CLI, Copilot Chat, PR/Issues/Actions extensions |
 | `graphite-dev` | 1.0.0 | Graphite CLI (`gt`, via npm) + Graphite VS Code extension, `gt auth` from `GRAPHITE_TOKEN` on start (dependsOn node) |
 | `copilot-dev` | 1.0.4 | Copilot Chat + AI instructions (commits, PRs, code review) |
-| `claude-dev` | 1.3.1 | Claude Code extension + CLI + `~/.claude` named-volume persistence (credentials + memory) |
+| `claude-dev` | 1.4.0 | Claude Code extension + CLI + `~/.claude` named-volume persistence (credentials + memory) + optional Remote Control server (`claude-rc`) |
 | `mistral-dev` | 1.3.2 | Mistral Vibe extension + `~/.vibe` named-volume persistence |
 | `cline-dev` | 1.1.0 | Cline extension (`saoudrizwan.claude-dev`) + optional CLI + `~/.cline` named-volume persistence |
 | `kimi-dev` | 1.0.0 | Kimi Code extension (`moonshot-ai.kimi-code`) + optional CLI + `~/.kimi-code` named-volume persistence |

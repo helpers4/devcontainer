@@ -53,4 +53,20 @@ if [ "$(id -u)" != "0" ]; then
     echo "✅ PASS: ${TARGET} writable as uid $(id -u)"
 fi
 
+# remoteControl defaults to false: claude-rc is installed (postStartCommand calls it
+# unconditionally) but its lifecycle start must have been a silent no-op.
+if [ ! -x /usr/local/bin/claude-rc ]; then
+    echo "❌ FAIL: /usr/local/bin/claude-rc is missing"
+    exit 1
+fi
+if ! grep -q '^RC_ENABLED=false$' /usr/local/share/claude-dev/remote-control.env; then
+    echo "❌ FAIL: remote-control.env doesn't record RC_ENABLED=false"
+    exit 1
+fi
+if pgrep -f 'claude-rc loop$' >/dev/null 2>&1; then
+    echo "❌ FAIL: the Remote Control loop runs although remoteControl is off"
+    exit 1
+fi
+echo "✅ PASS: claude-rc installed, Remote Control off by default"
+
 echo "🎉 Test passed."

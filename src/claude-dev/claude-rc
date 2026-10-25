@@ -1,0 +1,262 @@
+#!/usr/bin/env bash
+
+# This file is part of helpers4.
+# Copyright (C) 2025 baxyz
+# SPDX-License-Identifier: LGPL-3.0-or-later
+#
+# claude-rc — keeps a Claude Code Remote Control server (`claude remote-control`) running
+# inside this devcontainer, in a detached tmux session, so sessions can be started and
+# driven from claude.ai/code or the Claude mobile app without opening a terminal here.
+#
+# Started by claude-dev's postStartCommand (`claude-rc start --lifecycle`), which is a no-op
+# unless the feature's `remoteControl` option is true. postStartCommand, not an entrypoint:
+# it runs after postCreateCommand has linked ~/.claude to the persistent volume, so the
+# server never writes credentials or trust decisions into the ephemeral image directory.
+#
+# Usage: claude-rc <start|stop|restart|attach|status|help>
+
+set -uo pipefail
+
+OPTIONS_FILE="/usr/local/share/claude-dev/remote-control.env"
+SESSION="claude-rc"
+STATE_DIR="${XDG_RUNTIME_DIR:-/tmp}/claude-rc-$(id -u)"
+STATE_FILE="${STATE_DIR}/state.env"
+
+RC_ENABLED="false"
+RC_NAME_OPTION=""
+RC_DIR_OPTION=""
+RC_SPAWN_OPTION="same-dir"
+RC_PERMISSION_MODE_OPTION=""
+# shellcheck source=/dev/null
+[ -f "${OPTIONS_FILE}" ] && . "${OPTIONS_FILE}"
+
+log() { echo "[claude-rc] $*"; }
+warn() { echo "[claude-rc] ⚠️  $*" >&2; }
+
+# Session names show up in claude.ai/code and the mobile app: keep them to a safe charset.
+sanitize_name() {
+    printf '%s' "$1" | tr -c 'A-Za-z0-9._-' '-' | sed -e 's/--*/-/g' -e 's/^-//' -e 's/-$//'
+}
+
+# origin_owner <dir>: prints the owner of a GitHub-style origin remote, nothing otherwise.
+origin_owner() {
+    local url
+    url="$(git -C "$1" remote get-url origin 2>/dev/null)" || return 0
+    url="${url%.git}"
+    url="${url#*://}"     # https://github.com/owner/repo → github.com/owner/repo
+    url="${url#*@}"       # git@github.com:owner/repo    → github.com:owner/repo
+    url="${url#*[:/]}"    # → owner/repo
+    case "${url}" in
+        */*) printf '%s' "${url%%/*}" ;;
+    esac
+}
+
+org_workspace_option() {
+    local file="/usr/local/share/org-workspace/options.env" ORG_OPTION=""
+    # shellcheck source=/dev/null
+    [ -f "${file}" ] && . "${file}"
+    printf '%s' "${ORG_OPTION}"
+}
+
+# resolve_dir <workspace-folder>: where the server runs, i.e. what its sessions can see.
+resolve_dir() {
+    if [ -n "${RC_DIR_OPTION}" ]; then
+        printf '%s' "${RC_DIR_OPTION}"
+    elif [ -f /usr/local/share/org-workspace/clone-repos.sh ] && [ -d /workspaces ]; then
+        # org-workspace clones the whole org as sibling folders of /workspaces: serve all of
+        # them, not just the one repo the devcontainer was opened on.
+        printf '%s' "/workspaces"
+    else
+        printf '%s' "$1"
+    fi
+}
+
+# resolve_name <workspace-folder>: first non-empty of option, $CLAUDE_RC_NAME, org-workspace's
+# org option, the origin owner, the folder name, the hostname.
+resolve_name() {
+    local name
+    for name in "${RC_NAME_OPTION}" "${CLAUDE_RC_NAME:-}" "$(org_workspace_option)" \
+        "$(origin_owner "$1")" "$(basename "$1")" "$(hostname 2>/dev/null)"; do
+        name="$(sanitize_name "${name}")"
+        if [ -n "${name}" ] && [ "${name}" != "workspaces" ]; then
+            printf '%s' "${name}"
+            return
+        fi
+    done
+    printf 'devcontainer'
+}
+
+logged_in() {
+    claude auth status --json 2>/dev/null | grep -Eq '"loggedIn"[[:space:]]*:[[:space:]]*true'
+}
+
+running() {
+    tmux has-session -t "${SESSION}" 2>/dev/null
+}
+
+cmd_start() {
+    local lifecycle="false"
+    [ "${1:-}" = "--lifecycle" ] && lifecycle="true"
+
+    if [ "${RC_ENABLED}" != "true" ]; then
+        # From postStartCommand: the option is off, stay silent. By hand: say why nothing runs.
+        [ "${lifecycle}" = "true" ] && return 0
+        log "remoteControl is off for this devcontainer — starting anyway because you asked."
+    fi
+
+    # Never fail the container start over this: warn and return 0.
+    if ! command -v claude >/dev/null 2>&1; then
+        warn "claude CLI not found — Remote Control needs it (set installCli or remoteControl to true)."
+        return 0
+    fi
+    if ! command -v tmux >/dev/null 2>&1; then
+        warn "tmux not found — cannot keep the Remote Control server running in the background."
+        return 0
+    fi
+    if running; then
+        log "already running — 'claude-rc status' for details, 'claude-rc attach' to see it."
+        return 0
+    fi
+
+    local workspace dir name RC_DIR="" RC_NAME=""
+    # postStartCommand runs in the workspace folder, so resolve from there. A later manual
+    # start/restart may run from anywhere: reuse what the last start resolved, if anything.
+    if [ "${lifecycle}" != "true" ] && [ -f "${STATE_FILE}" ]; then
+        # shellcheck source=/dev/null
+        . "${STATE_FILE}"
+    fi
+    if [ -n "${RC_DIR}" ] && [ -n "${RC_NAME}" ]; then
+        dir="${RC_DIR}"
+        name="${RC_NAME}"
+    else
+        workspace="$(pwd)"
+        dir="$(resolve_dir "${workspace}")"
+        name="$(resolve_name "${workspace}")"
+    fi
+    if [ ! -d "${dir}" ]; then
+        warn "${dir} does not exist — not starting."
+        return 0
+    fi
+
+    mkdir -p "${STATE_DIR}" && chmod 700 "${STATE_DIR}"
+    {
+        printf 'RC_DIR=%q\n' "${dir}"
+        printf 'RC_NAME=%q\n' "${name}"
+    } >"${STATE_FILE}"
+
+    if ! tmux new-session -d -s "${SESSION}" -c "${dir}" "$(command -v claude-rc || echo "$0") loop"; then
+        warn "could not start the tmux session."
+        return 0
+    fi
+    log "Remote Control server '${name}' starting in ${dir}."
+    log "First time in this devcontainer? Run 'claude-rc attach' to log in and accept the prompts."
+}
+
+cmd_loop() {
+    # shellcheck source=/dev/null
+    . "${STATE_FILE}"
+    cd "${RC_DIR}" || exit 1
+
+    local v
+    for v in CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC DISABLE_GROWTHBOOK ANTHROPIC_BASE_URL ANTHROPIC_API_KEY ANTHROPIC_AUTH_TOKEN CLAUDE_CODE_OAUTH_TOKEN; do
+        [ -n "${!v:-}" ] && warn "${v} is set — Remote Control will likely refuse to start (see the claude-dev README)."
+    done
+
+    local spawn="${RC_SPAWN_OPTION:-same-dir}"
+    if [ "${spawn}" = "worktree" ] && ! git -C "${RC_DIR}" rev-parse --git-dir >/dev/null 2>&1; then
+        warn "spawn mode 'worktree' needs a git repository and ${RC_DIR} isn't one — using 'same-dir'."
+        spawn="same-dir"
+    fi
+
+    local args=(remote-control --name "${RC_NAME}" --remote-control-session-name-prefix "${RC_NAME}" --spawn "${spawn}")
+    [ -n "${RC_PERMISSION_MODE_OPTION}" ] && args+=(--permission-mode "${RC_PERMISSION_MODE_OPTION}")
+
+    if ! logged_in; then
+        log "Not logged in. Run 'claude auth login' in this pane (claude.ai account — API keys and"
+        log "setup-token tokens can't use Remote Control). Waiting for a login…"
+        until logged_in; do sleep 30; done
+        log "Logged in."
+    fi
+
+    # Restart forever: the server exits after ~10 min without network, and a restart in the same
+    # directory brings back the sessions it was serving. Back off when it keeps dying right away
+    # (e.g. a policy or eligibility error) instead of hammering the API.
+    local delay=15 started elapsed
+    while true; do
+        log "claude ${args[*]}"
+        started="$(date +%s)"
+        claude "${args[@]}"
+        elapsed=$(($(date +%s) - started))
+        if [ "${elapsed}" -lt 60 ]; then
+            delay=$((delay * 2))
+            [ "${delay}" -gt 300 ] && delay=300
+        else
+            delay=15
+        fi
+        log "server exited after ${elapsed}s — restarting in ${delay}s (Ctrl-C now to stop the loop)."
+        sleep "${delay}"
+    done
+}
+
+cmd_stop() {
+    if running; then
+        tmux kill-session -t "${SESSION}"
+        log "stopped. Its sessions can be brought back for about 4 hours with 'claude-rc start'."
+    else
+        log "not running."
+    fi
+}
+
+cmd_attach() {
+    if ! running; then
+        log "not running — 'claude-rc start' first."
+        return 1
+    fi
+    log "attaching — detach with Ctrl-b then d (the server keeps running)."
+    if [ -n "${TMUX:-}" ]; then
+        tmux switch-client -t "${SESSION}"
+    else
+        tmux attach-session -t "${SESSION}"
+    fi
+}
+
+cmd_status() {
+    echo "remoteControl option: ${RC_ENABLED}"
+    if running; then
+        # shellcheck source=/dev/null
+        [ -f "${STATE_FILE}" ] && . "${STATE_FILE}"
+        echo "server:               running (tmux session '${SESSION}')"
+        echo "name:                 ${RC_NAME:-?}"
+        echo "directory:            ${RC_DIR:-?}"
+        echo "--- last output ---"
+        tmux capture-pane -p -t "${SESSION}" 2>/dev/null | grep -v '^[[:space:]]*$' | tail -n 15
+    else
+        echo "server:               not running"
+        return 1
+    fi
+}
+
+usage() {
+    cat <<'EOF'
+claude-rc — Claude Code Remote Control server for this devcontainer
+
+  claude-rc start     start the server in a detached tmux session (idempotent)
+  claude-rc stop      stop it
+  claude-rc restart   stop, then start
+  claude-rc attach    open the server's terminal (login, first-run prompts); Ctrl-b d to leave
+  claude-rc status    show whether it runs, its name, directory and last output
+
+Sessions show up at claude.ai/code and in the Claude app's Code tab, prefixed by the name.
+EOF
+}
+
+case "${1:-help}" in
+    start) shift; cmd_start "$@" ;;
+    loop) cmd_loop ;;
+    stop) cmd_stop ;;
+    restart) cmd_stop; cmd_start ;;
+    attach) cmd_attach ;;
+    status) cmd_status ;;
+    help | -h | --help) usage ;;
+    *) usage >&2; exit 2 ;;
+esac
