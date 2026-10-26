@@ -150,6 +150,8 @@ npx playwright install
 
 ## Version History
 
+- **v1.3.2**: `dependsOn` now targets the official `node` feature v2 (was v1), matching
+  current devcontainers that install `node:2` — keeps a single Node install.
 - **v1.3.1**: Code-review follow-up on v1.3.0's cache-sharing change — a failed Playwright
   version lookup (offline, transient npx/registry hiccup) fell back to a generic
   `.h4-installed-unknown-*` marker; on the now-shared volume, a *different* project hitting the

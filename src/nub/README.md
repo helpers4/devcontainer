@@ -71,6 +71,8 @@ No VS Code extension — nub doesn't have one. This feature is CLI tooling only.
 
 ## Version History
 
+- **v1.2.4**: `dependsOn` now targets the official `node` feature v2 (was v1), matching
+  current devcontainers that install `node:2` — keeps a single Node install.
 - **v1.2.3**: Documentation only, no functional change — added a "Compatibility with pnpm-store"
   section documenting a verified finding: `nub install` hardlinks package content from
   `pnpm-store`'s shared store instead of duplicating it.
