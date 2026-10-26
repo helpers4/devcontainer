@@ -68,12 +68,12 @@ version bump" below.
 | `mistral-dev` | 1.3.2 | Mistral Vibe extension + `~/.vibe` named-volume persistence |
 | `cline-dev` | 1.1.0 | Cline extension (`saoudrizwan.claude-dev`) + optional CLI + `~/.cline` named-volume persistence |
 | `kimi-dev` | 1.0.0 | Kimi Code extension (`moonshot-ai.kimi-code`) + optional CLI + `~/.kimi-code` named-volume persistence |
-| `nub` | 1.2.3 | Fast TS/JS/script runner on top of existing node+package-manager (dependsOn node) |
+| `nub` | 1.2.4 | Fast TS/JS/script runner on top of existing node+package-manager (dependsOn node) |
 | `typescript-dev` | 1.0.8 | TS/JS dev, import management (dependsOn essential-dev) |
 | `angular-dev` | 1.2.3 | Angular dev, port 4200 |
 | `vite-plus` | 1.2.3 | vp CLI, Oxlint/Oxfmt, Vitest |
 | `package-auto-install` | 1.2.3 | Auto-detect and install packages (npm/yarn/pnpm/nub) |
-| `playwright-dev` | 1.3.1 | Playwright OS deps (Chromium/Firefox/WebKit) + shared browser-binary volume + VS Code extension |
+| `playwright-dev` | 1.3.2 | Playwright OS deps (Chromium/Firefox/WebKit) + shared browser-binary volume + VS Code extension |
 | `pnpm-store` | 1.3.1 | Shared pnpm store via Docker named volume (dependsOn helpers4-common) |
 | `auto-header` | 1.2.4 | LGPL-3.0 license headers |
 | `git-absorb` | 1.2.3 | git-absorb from GitHub releases |
