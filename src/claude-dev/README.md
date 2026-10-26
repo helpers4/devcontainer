@@ -58,7 +58,8 @@ without a terminal or VS Code window open on it. Code runs here; claude.ai is on
 ```
 
 One devcontainer per org (each with its own `~/.claude` volume) gives one server per org; the
-name prefixes every session in the list, so `baxyz-…` and `tuxery-…` stay apart.
+name prefixes every session in the list (the environment label above them is the git
+repository's name — rename the repo to change it), so `baxyz-…` and `tuxery-…` stay apart.
 
 **First start of a devcontainer:** log in from the Claude extension. The server waits for the
 login, answers its one-time "Enable Remote Control?" question itself and starts; from then on it
@@ -141,7 +142,7 @@ convention would silently share one memory/settings bucket under that model.
 | `username` | string | `auto` | Container user that receives the `~/.claude` symlink. `auto` detects vscode/node/codespace/uid-1000, in that order; set an explicit username to override. |
 | `installCli` | boolean | `false` | Install the Claude Code CLI (`claude` command) via the official native installer. |
 | `remoteControl` | boolean | `false` | Keep a Remote Control server running in a background tmux session — see [Remote Control](#remote-control-drive-this-devcontainer-from-your-phone-or-another-computer). Implies `installCli`. |
-| `remoteControlName` | string | `""` | Name shown in claude.ai/code and prefix of every session name. Empty: automatic (see above). |
+| `remoteControlName` | string | `""` | Title of the first session and prefix of every session name. Not the environment label, which is the git repo name. Empty: automatic (see above). |
 | `remoteControlDir` | string | `""` | Directory the server runs in. Empty: the workspace folder (the one you opened in VS Code). |
 | `remoteControlSpawn` | `same-dir` \| `worktree` | `same-dir` | How the server creates sessions. |
 | `remoteControlAutoTrust` | boolean | `false` | Answer yes to "Trust this folder?" for the server's folder — see [Trusting the folder](#remote-control-drive-this-devcontainer-from-your-phone-or-another-computer). Without it, run `claude` once in the folder and accept. |
