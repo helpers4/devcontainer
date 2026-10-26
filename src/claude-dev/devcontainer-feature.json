@@ -31,7 +31,7 @@
     "remoteControlName": {
       "type": "string",
       "default": "",
-      "description": "Name shown in claude.ai/code and used as the prefix of every session name. Empty means: $CLAUDE_RC_NAME, then org-workspace's org, then the owner of the origin remote, then the workspace folder name."
+      "description": "Title of the server's first session and prefix of every session name in claude.ai/code (not the environment label, which Claude Code takes from the git repository name). Empty means: $CLAUDE_RC_NAME, then org-workspace's org, then the owner of the origin remote, then the workspace folder name."
     },
     "remoteControlDir": {
       "type": "string",
