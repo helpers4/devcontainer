@@ -36,7 +36,7 @@
     "remoteControlDir": {
       "type": "string",
       "default": "",
-      "description": "Directory the server runs in (what its sessions start in). Empty means the workspace folder, the one you trust in the Claude extension."
+      "description": "Directory the server runs in (what its sessions start in). Empty means the workspace folder, the one you opened in VS Code."
     },
     "remoteControlSpawn": {
       "type": "string",
@@ -46,6 +46,11 @@
       ],
       "default": "same-dir",
       "description": "How the server creates sessions: same-dir (all share the directory) or worktree (one git worktree per session; needs the directory to be a git repository)."
+    },
+    "remoteControlAutoTrust": {
+      "type": "boolean",
+      "default": false,
+      "description": "Answer yes to Claude Code's 'Trust this folder?' question for the Remote Control folder, so the server starts with no manual step. Trusting applies that folder's project settings (hooks, MCP servers, permission rules) to the server's sessions: enable it only for code you trust. Off: you run `claude` once in the folder and accept it yourself."
     },
     "remoteControlPermissionMode": {
       "type": "string",

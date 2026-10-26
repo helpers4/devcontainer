@@ -20,6 +20,7 @@ REMOTE_CONTROL_NAME="${REMOTECONTROLNAME:-}"
 REMOTE_CONTROL_DIR="${REMOTECONTROLDIR:-}"
 REMOTE_CONTROL_SPAWN="${REMOTECONTROLSPAWN:-same-dir}"
 REMOTE_CONTROL_PERMISSION_MODE="${REMOTECONTROLPERMISSIONMODE:-}"
+REMOTE_CONTROL_AUTO_TRUST="${REMOTECONTROLAUTOTRUST:-false}"
 
 # shellcheck source=/dev/null
 . /usr/local/share/helpers4/common.sh
@@ -154,6 +155,7 @@ install -m 0755 "$(dirname "$0")/claude-rc" /usr/local/bin/claude-rc
     printf 'RC_DIR_OPTION=%q\n' "${REMOTE_CONTROL_DIR}"
     printf 'RC_SPAWN_OPTION=%q\n' "${REMOTE_CONTROL_SPAWN}"
     printf 'RC_PERMISSION_MODE_OPTION=%q\n' "${REMOTE_CONTROL_PERMISSION_MODE}"
+    printf 'RC_AUTO_TRUST_OPTION=%q\n' "${REMOTE_CONTROL_AUTO_TRUST}"
 } > /usr/local/share/claude-dev/remote-control.env
 echo "  ✅ Installed /usr/local/bin/claude-rc"
 
