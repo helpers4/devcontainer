@@ -183,9 +183,13 @@ cmd_loop() {
     # (e.g. a policy or eligibility error) instead of hammering the API.
     local delay=15 started elapsed watcher
     while true; do
-        log "claude ${args[*]}"
         started="$(date +%s)"
         rm -f "${UNTRUSTED_FILE}"
+        # answer_prompts reads the visible pane: clear it, or the previous run's questions
+        # still on screen get answered again, as keystrokes into a server that no longer asks.
+        printf '\033[H\033[2J'
+        tmux clear-history -t "${SESSION}" 2>/dev/null
+        log "claude ${args[*]}"
         answer_prompts &
         watcher=$!
         claude "${args[@]}"
