@@ -36,7 +36,7 @@
     "remoteControlDir": {
       "type": "string",
       "default": "",
-      "description": "Directory the server runs in (what its sessions can see). Empty means /workspaces when org-workspace is installed, the workspace folder otherwise."
+      "description": "Directory the server runs in (what its sessions start in). Empty means the workspace folder, the one you trust in the Claude extension."
     },
     "remoteControlSpawn": {
       "type": "string",
@@ -52,6 +52,9 @@
       "default": "",
       "description": "Starting permission mode for the server's sessions (e.g. acceptEdits, plan). Empty means Claude Code's default."
     }
+  },
+  "containerEnv": {
+    "CLAUDE_CONFIG_DIR": "/mnt/h4claude"
   },
   "mounts": [
     {

@@ -100,6 +100,14 @@ if [ -d "${TARGET}" ] && [ ! -L "${TARGET}" ]; then
     cp -rn "${TARGET}/." "${STAGED}/" 2>/dev/null || true
 fi
 
+# Claude Code keeps its global state (account, workspace trust, one-time confirmations) in
+# ~/.claude.json, outside ~/.claude — so the symlink below doesn't cover it. containerEnv sets
+# CLAUDE_CONFIG_DIR to the volume, which moves that file into it. Seed it from an existing
+# home-level file so a devcontainer created before this keeps its login and trust.
+if [ -f "${TARGET_HOME}/.claude.json" ] && [ ! -e "${STAGED}/.claude.json" ]; then
+    cp -p "${TARGET_HOME}/.claude.json" "${STAGED}/.claude.json" 2>/dev/null || true
+fi
+
 rm -rf "${TARGET}"
 ln -sf "${STAGED}" "${TARGET}"
 echo "[claude-dev] ~/.claude linked to host — credentials persist across rebuilds."
