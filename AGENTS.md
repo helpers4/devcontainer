@@ -62,6 +62,7 @@ version bump" below.
 | `helpers4-common` | 1.2.3 | Bootstrap: `common.sh` (root check, user detection, apt helpers, cloud-env detection) + automatic git-config self-heal on every attach — all features depend on this |
 | `essential-dev` | 1.2.4 | Git visualization, editor enhancements, Markdown |
 | `github-dev` | 1.0.7 | gh CLI, Copilot Chat, PR/Issues/Actions extensions |
+| `graphite-dev` | 1.0.0 | Graphite CLI (`gt`, via npm) + Graphite VS Code extension, `gt auth` from `GRAPHITE_TOKEN` on start (dependsOn node) |
 | `copilot-dev` | 1.0.4 | Copilot Chat + AI instructions (commits, PRs, code review) |
 | `claude-dev` | 1.3.1 | Claude Code extension + CLI + `~/.claude` named-volume persistence (credentials + memory) |
 | `mistral-dev` | 1.3.2 | Mistral Vibe extension + `~/.vibe` named-volume persistence |

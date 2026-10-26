@@ -1,0 +1,32 @@
+{
+  "id": "graphite-dev",
+  "version": "1.0.0",
+  "name": "Graphite Development Environment",
+  "description": "Installs the Graphite CLI (gt) for stacked pull requests and the Graphite VS Code extension (Graphite.gti-vscode). Authenticates gt from a GRAPHITE_TOKEN environment variable on every container start — no token stored in the image. Also self-heals your devcontainer setup.",
+  "documentationURL": "https://github.com/helpers4/devcontainer/tree/main/src/graphite-dev",
+  "licenseURL": "https://github.com/helpers4/devcontainer/blob/main/LICENSE",
+  "keywords": ["helpers4", "graphite", "gt", "stacked-prs", "git", "cli"],
+  "options": {
+    "version": {
+      "type": "string",
+      "default": "stable",
+      "description": "Version or npm dist-tag of @withgraphite/graphite-cli to install ('stable', 'latest', or a specific version like '1.8.6')."
+    }
+  },
+  "postStartCommand": "/usr/local/share/graphite-dev/auth.sh",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "Graphite.gti-vscode"
+      ]
+    }
+  },
+  "installsAfter": [
+    "ghcr.io/devcontainers/features/common-utils",
+    "ghcr.io/devcontainers/features/git"
+  ],
+  "dependsOn": {
+    "ghcr.io/devcontainers/features/node:1": {},
+    "ghcr.io/helpers4/devcontainer/helpers4-common:1": {}
+  }
+}
