@@ -178,6 +178,17 @@ Keeps your bash, zsh and fish history across rebuilds and Codespaces, in a Docke
 
 [📖 Documentation](./src/shell-history/README.md)
 
+### graphite-dev
+
+Installs the Graphite CLI (`gt`) for stacked pull requests, plus the Graphite VS Code extension. Signs `gt` in from a `GRAPHITE_TOKEN` environment variable each time the container starts.
+
+**Key benefits:**
+- `gt` ready to use, authenticated without a manual step
+- Token never stored in the image or in a volume
+- Pulls in Node.js through the official node feature
+
+[📖 Documentation](./src/graphite-dev/README.md)
+
 ### git-absorb
 
 Installs git-absorb, a tool that automatically absorbs staged changes into their logical commits. Like 'git commit --fixup' but automatic.
@@ -331,6 +342,7 @@ Features from this repository are available via GitHub Container Registry. Refer
 | [angular-dev](./src/angular-dev) | Angular development environment with extensions and CLI autocompletion | [README](./src/angular-dev/README.md) |
 | [shell-history](./src/shell-history) | Shell history (bash/zsh/fish) kept across rebuilds, per devcontainer | [README](./src/shell-history/README.md) |
 | [git-absorb](./src/git-absorb) | Automatic absorption of staged changes into logical commits | [README](./src/git-absorb/README.md) |
+| [graphite-dev](./src/graphite-dev) | Graphite CLI (`gt`) + VS Code extension, auto-auth from `GRAPHITE_TOKEN` | [README](./src/graphite-dev/README.md) |
 | [dotfiles-sync](./src/dotfiles-sync) | Sync local Git, SSH, GPG, and npm config — works on macOS, Linux, WSL, Codespaces | [README](./src/dotfiles-sync/README.md) |
 | [bitwarden-secrets-manager](./src/bitwarden-secrets-manager) | `bws` CLI from Bitwarden's own GitHub releases, token-only auth, no persisted state | [README](./src/bitwarden-secrets-manager/README.md) |
 | [org-workspace](./src/org-workspace) | Clone an entire GitHub org into sibling workspace folders with one feature | [README](./src/org-workspace/README.md) |

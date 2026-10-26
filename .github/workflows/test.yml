@@ -44,6 +44,12 @@ jobs:
           - features: git-absorb
             baseImage: mcr.microsoft.com/devcontainers/base:ubuntu
 
+          # graphite-dev - node feature is pulled in via dependsOn
+          - features: graphite-dev
+            baseImage: mcr.microsoft.com/devcontainers/base:ubuntu
+          - features: graphite-dev
+            baseImage: ubuntu:latest
+
           # bitwarden-secrets-manager - works on any base image
           - features: bitwarden-secrets-manager
             baseImage: ubuntu:latest

@@ -109,6 +109,10 @@ jobs:
             baseImage: ubuntu:latest
           - features: git-absorb
             baseImage: mcr.microsoft.com/devcontainers/base:ubuntu
+          - features: graphite-dev
+            baseImage: mcr.microsoft.com/devcontainers/base:ubuntu
+          - features: graphite-dev
+            baseImage: ubuntu:latest
           - features: bitwarden-secrets-manager
             baseImage: ubuntu:latest
           - features: bitwarden-secrets-manager
