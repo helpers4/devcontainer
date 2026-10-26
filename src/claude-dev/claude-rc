@@ -13,6 +13,9 @@
 # it runs after postCreateCommand has linked ~/.claude to the persistent volume, so the
 # server never writes credentials or trust decisions into the ephemeral image directory.
 #
+# First run: log in and trust the workspace folder from the Claude extension — the loop waits for
+# both, answers "Enable Remote Control?" itself, then keeps the server up.
+#
 # Usage: claude-rc <start|login|stop|restart|attach|status|help>
 
 set -uo pipefail
@@ -21,6 +24,7 @@ OPTIONS_FILE="/usr/local/share/claude-dev/remote-control.env"
 SESSION="claude-rc"
 STATE_DIR="${XDG_RUNTIME_DIR:-/tmp}/claude-rc-$(id -u)"
 STATE_FILE="${STATE_DIR}/state.env"
+UNTRUSTED_FILE="${STATE_DIR}/untrusted"
 
 RC_ENABLED="false"
 RC_NAME_OPTION=""
@@ -58,17 +62,12 @@ org_workspace_option() {
     printf '%s' "${ORG_OPTION}"
 }
 
-# resolve_dir <workspace-folder>: where the server runs, i.e. what its sessions can see.
+# resolve_dir <workspace-folder>: where the server runs, i.e. where its sessions start. The
+# workspace folder by default: it is the one the Claude extension asks you to trust, and trust
+# is per directory (a parent such as /workspaces, which org-workspace fills with sibling
+# repos, would be a different, untrusted directory — and isn't a git repository either).
 resolve_dir() {
-    if [ -n "${RC_DIR_OPTION}" ]; then
-        printf '%s' "${RC_DIR_OPTION}"
-    elif [ -f /usr/local/share/org-workspace/clone-repos.sh ] && [ -d /workspaces ]; then
-        # org-workspace clones the whole org as sibling folders of /workspaces: serve all of
-        # them, not just the one repo the devcontainer was opened on.
-        printf '%s' "/workspaces"
-    else
-        printf '%s' "$1"
-    fi
+    printf '%s' "${RC_DIR_OPTION:-$1}"
 }
 
 # resolve_name <workspace-folder>: first non-empty of option, $CLAUDE_RC_NAME, org-workspace's
@@ -149,11 +148,7 @@ cmd_start() {
         return 0
     fi
     log "Remote Control server '${name}' starting in ${dir}."
-    if logged_in; then
-        log "First time in this devcontainer? Run 'claude-rc attach' to accept the prompts."
-    else
-        log "Not logged in yet: run 'claude-rc login', then 'claude-rc attach' to accept the prompts."
-    fi
+    log "First time in this devcontainer? Log in and trust ${dir} from the Claude extension: the server starts by itself."
 }
 
 cmd_loop() {
@@ -176,9 +171,9 @@ cmd_loop() {
     [ -n "${RC_PERMISSION_MODE_OPTION}" ] && args+=(--permission-mode "${RC_PERMISSION_MODE_OPTION}")
 
     if ! logged_in; then
-        log "Not logged in. This pane only waits: detach (Ctrl-b d) and run 'claude-rc login' in any"
-        log "terminal of this devcontainer (claude.ai account — API keys and setup-token tokens can't"
-        log "use Remote Control). Checking every 30s…"
+        log "Not logged in. Waiting: log in from the Claude extension (or 'claude auth login' in a"
+        log "terminal) with a claude.ai account — API keys and setup-token tokens can't use Remote"
+        log "Control. Checking every 30s…"
         until logged_in; do sleep 30; done
         log "Logged in."
     fi
@@ -186,13 +181,22 @@ cmd_loop() {
     # Restart forever: the server exits after ~10 min without network, and a restart in the same
     # directory brings back the sessions it was serving. Back off when it keeps dying right away
     # (e.g. a policy or eligibility error) instead of hammering the API.
-    local delay=15 started elapsed
+    local delay=15 started elapsed watcher
     while true; do
         log "claude ${args[*]}"
         started="$(date +%s)"
+        rm -f "${UNTRUSTED_FILE}"
+        answer_prompts &
+        watcher=$!
         claude "${args[@]}"
+        kill "${watcher}" 2>/dev/null
         elapsed=$(($(date +%s) - started))
-        if [ "${elapsed}" -lt 60 ]; then
+        if [ -f "${UNTRUSTED_FILE}" ]; then
+            # Not trusted yet: trusting is the user's call, made in the Claude extension. Retry
+            # soon, without the backoff meant for server errors.
+            log "${RC_DIR} isn't trusted yet — trust it in the Claude extension. Retrying in 30s."
+            delay=30
+        elif [ "${elapsed}" -lt 60 ]; then
             delay=$((delay * 2))
             [ "${delay}" -gt 300 ] && delay=300
         else
@@ -200,6 +204,26 @@ cmd_loop() {
         fi
         log "server exited after ${elapsed}s — restarting in ${delay}s (Ctrl-C now to stop the loop)."
         sleep "${delay}"
+    done
+}
+
+# answer_prompts: runs next to `claude remote-control` in the same tmux pane and answers its
+# two first-run questions by looking at the screen, once each per run.
+#   "Enable Remote Control? (y/n)" → y: the user asked for it with the remoteControl option.
+#   "Trust <dir>? [y/N]"           → n: trusting a directory is the user's decision, taken in
+#                                    the Claude extension; the server exits and is retried.
+answer_prompts() {
+    local screen enabled="false" trust="false"
+    while sleep 2; do
+        screen="$(tmux capture-pane -p -t "${SESSION}" 2>/dev/null)" || return 0
+        if [ "${enabled}" = "false" ] && grep -Fq 'Enable Remote Control?' <<<"${screen}"; then
+            enabled="true"
+            tmux send-keys -t "${SESSION}" y Enter
+        elif [ "${trust}" = "false" ] && grep -Eq 'Trust .*\? \[y/N\]' <<<"${screen}"; then
+            trust="true"
+            : >"${UNTRUSTED_FILE}"
+            tmux send-keys -t "${SESSION}" n Enter
+        fi
     done
 }
 
@@ -214,9 +238,9 @@ cmd_login() {
         claude auth login || return 1
     fi
     if running; then
-        log "the server notices the login within 30s. Then 'claude-rc attach' to accept its prompts."
+        log "the server notices the login within 30s."
     else
-        log "now 'claude-rc start', then 'claude-rc attach' to accept its prompts."
+        log "now 'claude-rc start'."
     fi
 }
 
@@ -265,8 +289,8 @@ claude-rc — Claude Code Remote Control server for this devcontainer
   claude-rc start     start the server in a detached tmux session (idempotent)
   claude-rc stop      stop it
   claude-rc restart   stop, then start
-  claude-rc login     log in with a claude.ai account (once per devcontainer)
-  claude-rc attach    open the server's terminal (first-run prompts); Ctrl-b d to leave
+  claude-rc login     log in from a terminal (the Claude extension does the same)
+  claude-rc attach    open the server's terminal, for debugging; Ctrl-b d to leave
   claude-rc status    show whether it runs, its name, directory and last output
 
 Sessions show up at claude.ai/code and in the Claude app's Code tab, prefixed by the name.

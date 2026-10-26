@@ -43,6 +43,13 @@ if ! pgrep -f 'claude-rc loop$' >/dev/null 2>&1; then
 fi
 echo "✅ PASS: Remote Control loop running"
 
+# ~/.claude.json lives in the volume (login, trust and the Remote Control confirmation survive).
+if [ "${CLAUDE_CONFIG_DIR:-}" != "/mnt/h4claude" ]; then
+    echo "❌ FAIL: CLAUDE_CONFIG_DIR is '${CLAUDE_CONFIG_DIR:-unset}', expected /mnt/h4claude"
+    exit 1
+fi
+echo "✅ PASS: CLAUDE_CONFIG_DIR points at the volume"
+
 # The name option is sanitized ("h4 test" → "h4-test") before it reaches the session list.
 STATE="$(find /tmp /run/user -path '*claude-rc-*/state.env' 2>/dev/null | head -n 1)"
 if [ -z "${STATE}" ] || ! grep -q '^RC_NAME=h4-test$' "${STATE}"; then
