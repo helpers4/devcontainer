@@ -12,7 +12,8 @@
     "features": {
       "claude-dev": {
         "remoteControl": true,
-        "remoteControlName": "h4 test"
+        "remoteControlName": "h4 test",
+        "remoteControlAutoTrust": true
       }
     }
   }

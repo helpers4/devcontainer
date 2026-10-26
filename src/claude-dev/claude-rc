@@ -13,8 +13,8 @@
 # it runs after postCreateCommand has linked ~/.claude to the persistent volume, so the
 # server never writes credentials or trust decisions into the ephemeral image directory.
 #
-# First run: log in and trust the workspace folder from the Claude extension — the loop waits for
-# both, answers "Enable Remote Control?" itself, then keeps the server up.
+# First run: log in from the Claude extension — the loop waits for it, answers "Enable Remote
+# Control?" itself (and the trust question with remoteControlAutoTrust), then keeps the server up.
 #
 # Usage: claude-rc <start|login|stop|restart|attach|status|help>
 
@@ -31,6 +31,7 @@ RC_NAME_OPTION=""
 RC_DIR_OPTION=""
 RC_SPAWN_OPTION="same-dir"
 RC_PERMISSION_MODE_OPTION=""
+RC_AUTO_TRUST_OPTION="false"
 # shellcheck source=/dev/null
 [ -f "${OPTIONS_FILE}" ] && . "${OPTIONS_FILE}"
 
@@ -148,7 +149,7 @@ cmd_start() {
         return 0
     fi
     log "Remote Control server '${name}' starting in ${dir}."
-    log "First time in this devcontainer? Log in and trust ${dir} from the Claude extension: the server starts by itself."
+    log "First time in this devcontainer? Log in from the Claude extension: the server starts by itself."
 }
 
 cmd_loop() {
@@ -196,9 +197,9 @@ cmd_loop() {
         kill "${watcher}" 2>/dev/null
         elapsed=$(($(date +%s) - started))
         if [ -f "${UNTRUSTED_FILE}" ]; then
-            # Not trusted yet: trusting is the user's call, made in the Claude extension. Retry
-            # soon, without the backoff meant for server errors.
-            log "${RC_DIR} isn't trusted yet — trust it in the Claude extension. Retrying in 30s."
+            # Not trusted yet and remoteControlAutoTrust is off. Retry soon, without the backoff
+            # meant for server errors.
+            log "${RC_DIR} isn't trusted yet: run 'claude' once there and accept, or set remoteControlAutoTrust. Retrying in 30s."
             delay=30
         elif [ "${elapsed}" -lt 60 ]; then
             delay=$((delay * 2))
@@ -214,8 +215,10 @@ cmd_loop() {
 # answer_prompts: runs next to `claude remote-control` in the same tmux pane and answers its
 # two first-run questions by looking at the screen, once each per run.
 #   "Enable Remote Control? (y/n)" → y: the user asked for it with the remoteControl option.
-#   "Trust <dir>? [y/N]"           → n: trusting a directory is the user's decision, taken in
-#                                    the Claude extension; the server exits and is retried.
+#   "Trust <dir>? [y/N]"           → y with remoteControlAutoTrust, n otherwise (the server then
+#                                    exits and is retried until you trust <dir> yourself). The
+#                                    Claude extension doesn't set this trust: it relies on VS
+#                                    Code's Workspace Trust.
 answer_prompts() {
     local screen enabled="false" trust="false"
     while sleep 2; do
@@ -225,8 +228,12 @@ answer_prompts() {
             tmux send-keys -t "${SESSION}" y Enter
         elif [ "${trust}" = "false" ] && grep -Eq 'Trust .*\? \[y/N\]' <<<"${screen}"; then
             trust="true"
-            : >"${UNTRUSTED_FILE}"
-            tmux send-keys -t "${SESSION}" n Enter
+            if [ "${RC_AUTO_TRUST_OPTION}" = "true" ]; then
+                tmux send-keys -t "${SESSION}" y Enter
+            else
+                : >"${UNTRUSTED_FILE}"
+                tmux send-keys -t "${SESSION}" n Enter
+            fi
         fi
     done
 }
