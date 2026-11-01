@@ -170,17 +170,22 @@ sync_git_identity() {
         return 0
     fi
 
-    local name email signing
+    local name email signing tmp
     name="$(git_get user.name)"
     email="$(git_get user.email)"
     signing="$(signing_config)"
+    # Replaced, not rewritten in place: an attach run as root (images without a remoteUser)
+    # leaves a root-owned file that the container user can't open for writing.
+    tmp="$(mktemp "${GIT_CONF}.XXXXXX")" || return 0
     {
         echo "# Written by the helpers4 jj feature on every attach, from your git config."
         echo "# Your own jj config (jj config set --user ...) overrides anything here."
         [ -n "${name}" ] && echo "user.name = $(toml_string "${name}")"
         [ -n "${email}" ] && echo "user.email = $(toml_string "${email}")"
         [ -n "${signing}" ] && echo "${signing}"
-    } > "${GIT_CONF}"
+    } > "${tmp}"
+    chmod 644 "${tmp}"
+    mv -f "${tmp}" "${GIT_CONF}"
 
     if [ -n "${email}" ]; then
         log "identity from git: ${name:-<no name>} <${email}>${signing:+, signed on push}"
