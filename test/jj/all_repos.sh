@@ -18,7 +18,7 @@ pass() { echo "✅ PASS: $*"; }
 
 OWNER="$(stat -c '%U' /mnt/h4jj)"
 as_user() {
-    if [ "$(id -un)" = "${OWNER}" ]; then bash -c "$1"; else su "${OWNER}" -s /bin/bash -c "$1"; fi
+    if [ "$(id -un)" = "${OWNER}" ]; then bash -c "$1" < /dev/null; else su "${OWNER}" -s /bin/bash -c "$1" < /dev/null; fi
 }
 
 [ "$(stat -c '%U' /workspaces)" = "${OWNER}" ] || fail "/workspaces is not owned by ${OWNER}"

@@ -24,9 +24,9 @@ OWNER="$(stat -c '%U' "${STAGED}")"
 OWNER_HOME="$(getent passwd "${OWNER}" | cut -d: -f6)"
 as_user() {
     if [ "$(id -un)" = "${OWNER}" ]; then
-        bash -c "$1"
+        bash -c "$1" < /dev/null
     else
-        su "${OWNER}" -s /bin/bash -c "$1"
+        su "${OWNER}" -s /bin/bash -c "$1" < /dev/null
     fi
 }
 
@@ -65,7 +65,7 @@ set -e
 git config --global --unset commit.gpgsign || true
 git config --global user.name 'Test User'
 git config --global user.email test@example.com
-git init -q --bare '${REMOTE}'
+git init -q --bare -b main '${REMOTE}'
 git init -q -b main '${REPO}'
 cd '${REPO}'
 echo one > file && git add file && git commit -q -m init
@@ -79,9 +79,27 @@ git config --global user.signingkey ~/missing-key.pub
 OUT="$(as_user "cd '${REPO}' && ${SETUP} attach" 2>&1)"
 echo "${OUT}"
 
-[ -d "${REPO}/.jj" ] || fail "the workspace repo was not turned into a jj repo"
+# initRepos=auto: a repo that only ever saw git is left alone.
+[ -e "${REPO}/.jj" ] && fail "a plain git repo was turned into a jj repo"
+grep -q 'plain git, no jj commit in their history: jj-test-repo' <<< "${OUT}" || fail "the plain git repo is not listed"
+pass "plain git repo left untouched"
+
+# Someone pushes a commit made with jj: the repo's history now says it's used with jj.
+as_user "
+set -e
+rm -rf ~/jj-test-other
+jj git clone --quiet '${REMOTE}' ~/jj-test-other
+cd ~/jj-test-other && echo jj > other && jj commit -m 'made with jj' --quiet
+jj bookmark move main --to @- --quiet && jj git push --bookmark main --quiet
+cd '${REPO}' && git pull -q
+"
+rm -rf "${OWNER_HOME}/jj-test-other"
+OUT="$(as_user "cd '${REPO}' && ${SETUP} attach" 2>&1)"
+echo "${OUT}"
+
+[ -d "${REPO}/.jj" ] || fail "a repo with jj commits in its history was not turned into a jj repo"
 [ -d "${REPO}/.git" ] || fail "the jj repo is not colocated"
-pass "workspace repo turned into a colocated jj repo"
+pass "repo with jj history turned into a colocated jj repo"
 
 grep -q 'user.email = "test@example.com"' "${GIT_CONF}" || fail "git identity not written to ${GIT_CONF}"
 [ "$(as_user "cd '${REPO}' && jj config get user.name")" = "Test User" ] || fail "jj does not see the git identity"
@@ -89,6 +107,8 @@ pass "jj uses the git identity"
 
 grep -q 'signing' "${GIT_CONF}" && fail "signing enabled with a key file that doesn't exist"
 grep -q "won't sign" <<< "${OUT}" || fail "no warning about the missing signing key"
+# The git commit that jj never touched has no change-id: the check reads headers, not messages.
+as_user "cd '${REPO}' && git cat-file -p HEAD~1" | grep -q '^change-id ' && fail "the git-made commit has a change-id header"
 pass "signing left off when the key is missing"
 
 as_user "cd '${REPO}' && jj bookmark list --tracked" | grep -q '^main' || fail "main@origin is not tracked"

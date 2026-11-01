@@ -18,7 +18,7 @@ h4_require_root
 
 # Feature options
 JJ_VERSION="${VERSION:-"latest"}"
-INIT_REPOS="${INITREPOS:-"workspace"}"
+INIT_REPOS="${INITREPOS:-"auto"}"
 GIT_IDENTITY="${GITIDENTITY:-"true"}"
 CLAUDE_SKILL="${CLAUDESKILL:-"true"}"
 # USERNAME is injected by the devcontainer CLI from the 'username' feature option.
@@ -27,9 +27,9 @@ h4_detect_user
 h4_resolve_home
 
 case "${INIT_REPOS}" in
-    workspace | all | off) ;;
+    auto | workspace | all | off) ;;
     *)
-        echo "(!) initRepos must be workspace, all or off, got '${INIT_REPOS}'" >&2
+        echo "(!) initRepos must be auto, workspace, all or off, got '${INIT_REPOS}'" >&2
         exit 1
         ;;
 esac
