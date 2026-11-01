@@ -63,6 +63,12 @@ No VS Code extension — nub doesn't have one. This feature is CLI tooling only.
 - **Does not install the `nub` npm/pnpm shims** (`nub pm shim`, which hardlinks `~/.nub/shims/{npm,npx,…}` to transparently intercept package-manager calls). That's a deeper, PATH-wide interception decision left to the consuming project to opt into explicitly — this feature only makes the `nub`/`nubx` binaries available.
 - **Does not manage Node versions.** See "Why this feature exists" above.
 
+## Troubleshooting
+
+### `node` fails to install on a bare image
+
+The official `node` feature installs the Node LTS. From Node 26, its build needs `libatomic1`, which bare `debian` / `ubuntu` images don't have, and the `node` feature doesn't install it: the build stops with `libatomic.so.1: cannot open shared object file`. Use a `mcr.microsoft.com/devcontainers/base:*` image (it has it), or add `libatomic1` to your image before the features run.
+
 ## Links
 
 - **nub**: https://nubjs.com/
