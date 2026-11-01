@@ -336,6 +336,8 @@ LABELS_JQ='
 # - Other entries (outside /workspaces, "uri" entries) are left alone.
 # - A folder's name gets its status icon, unless you renamed it: only a missing name, the
 #   plain repo name or a name with one of our icons is updated.
+# - A jj repo (a .jj folder, see the jj feature) gets " (jj)" after its name: in a workspace
+#   that mixes jj and plain git repos, you see which is which.
 # The file is written the way VS Code writes it: tabs, no final newline.
 update_workspace() {
     local file="${PROJECT_DIR}/${CODE_WORKSPACE_NAME_OPTION:-${ORG}.code-workspace}"
@@ -371,17 +373,23 @@ update_workspace() {
         [ "${dir}" = "${PROJECT_DIR}" ] || [ -n "${EXCLUDED[${name}]:-}" ] || present+=("${name}")
     done < <(list_checkouts "${WORKSPACES_DIR}")
 
-    local labels='{}'
+    local labels='{}' jj='{}'
     [ -n "${ORG_REPOS}" ] && labels="$(jq -c "${LABELS_JQ}" <<<"${ORG_REPOS}")"
+    [ -d "${PROJECT_DIR}/.jj" ] && jj="$(jq -c --arg n "${MASTER_REPO}" '.[$n] = true' <<<"${jj}")"
+    for name in "${present[@]}"; do
+        [ -d "${WORKSPACES_DIR}/${name}/.jj" ] && jj="$(jq -c --arg n "${name}" '.[$n] = true' <<<"${jj}")"
+    done
 
     local new
     if ! new="$(jq --tab --argjson info "${info}" --argjson labels "${labels}" --argjson icons "${ICONS}" \
-        --arg project "${MASTER_REPO}" --args '
-        def generated($n): . as $name | $name == null or $name == $n or any($icons[]; . + " " + $n == $name);
+        --argjson jj "${jj}" --arg project "${MASTER_REPO}" --args '
+        def generated($n): . as $name | $name == null or $name == $n
+            or any($icons[]; . + " " + $n == $name or . + " " + $n + " (jj)" == $name);
+        def name_for($n): $labels[$n] + (if $jj[$n] then " (jj)" else "" end);
         def with_name($n):
             if $labels[$n] == null then .
-            elif has("name") then (if .name | generated($n) then .name = $labels[$n] else . end)
-            else {name: $labels[$n]} + . end;
+            elif has("name") then (if .name | generated($n) then .name = name_for($n) else . end)
+            else {name: name_for($n)} + . end;
         . as $doc
         | ($ARGS.positional) as $present
         | (.folders // []) as $folders

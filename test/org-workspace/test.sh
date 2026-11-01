@@ -375,3 +375,13 @@ FAKE_REPOS="boot a:private b c:internal d:fork" run_case
 FAKE_REPOS="boot a b c:internal d:fork" FAKE_LIST_FAIL=1 run_case
 [ "$(names)" = "🌍 boot|my a|🌍 b|🏢 c|🔀 d" ] && pass "names are left alone when gh fails" || fail "names changed: $(names)"
 
+mkdir "${CASE}/ws/boot/.jj" "${CASE}/ws/b/.jj" "${CASE}/ws/a/.jj"
+FAKE_REPOS="boot a b c:internal d:fork" run_case
+[ "$(names)" = "🌍 boot (jj)|my a|🌍 b (jj)|🏢 c|🔀 d" ] \
+    && pass "jj repos get (jj) after their name, a renamed folder still keeps its own" || fail "unexpected names: $(names)"
+
+rmdir "${CASE}/ws/b/.jj"
+FAKE_REPOS="boot a b c:internal d:fork" run_case
+[ "$(names)" = "🌍 boot (jj)|my a|🌍 b|🏢 c|🔀 d" ] \
+    && pass "(jj) goes when a repo is no longer a jj repo" || fail "unexpected names: $(names)"
+
