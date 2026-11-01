@@ -6,8 +6,9 @@ Installs [jj (Jujutsu)](https://jj-vcs.github.io/jj/), a version control system 
 top of your Git repos, and the [VisualJJ](https://www.visualjj.com/) extension. Open the
 devcontainer and start using `jj`: nothing else to set up.
 
-- **Your repo becomes a jj repo**, colocated with git: `jj` and `git` both work in it, and
-  your team, CI and GitHub still only see Git.
+- **The repos you use jj in become jj repos**, colocated with git: `jj` and `git` both work
+  in them, and your team, CI and GitHub still only see Git. Repos you only use git in are
+  left untouched, so a workspace can mix both.
 - **jj gets your git identity and commit signing**, on every attach. jj never reads git's
   config on its own: without this, its commits would have no author and couldn't be pushed.
 - **Your jj config survives rebuilds**, in a Docker named volume dedicated to this
@@ -45,14 +46,16 @@ agent — in a project that is, and stays, a Git repo.
 No `initializeCommand` required — Docker creates the volume automatically the first time it's
 needed.
 
-With Claude Code, and every repo of an [`org-workspace`](../org-workspace) turned into a jj repo:
+With Claude Code and an [`org-workspace`](../org-workspace): the org's repos you use jj in
+become jj repos, the others stay plain git, and the workspace's folder names say which is which
+(`🔒 api (jj)`):
 
 ```jsonc
 {
   "features": {
     "ghcr.io/helpers4/devcontainer/claude-dev:1": { "installCli": true },
     "ghcr.io/helpers4/devcontainer/org-workspace:1": { "org": "my-org" },
-    "ghcr.io/helpers4/devcontainer/jj:1": { "initRepos": "all" }
+    "ghcr.io/helpers4/devcontainer/jj:1": {}
   }
 }
 ```
@@ -78,7 +81,7 @@ Without VisualJJ:
 |--------|------|---------|-------------|
 | `username` | string | `auto` | Container user who uses jj. `auto` detects vscode/node/codespace/uid-1000, in that order. |
 | `version` | string | `latest` | jj version to install: `latest`, or a release such as `0.46.0`. |
-| `initRepos` | string | `workspace` | Git repos to turn into colocated jj repos: `workspace` (the repo you opened), `all` (it and every repo next to it), `off` (none). See [Your repos](#your-repos). |
+| `initRepos` | string | `auto` | Git repos to turn into colocated jj repos: `auto` (those you already use jj in, among the repo you opened and the ones next to it), `workspace` (the repo you opened), `all` (it and every repo next to it), `off` (none). See [Your repos](#your-repos). |
 | `gitIdentity` | boolean | `true` | Give jj the name, email and commit signing of your git config, on every attach. See [Identity and signing](#identity-and-signing). |
 | `claudeSkill` | boolean | `true` | Add a jj skill to Claude Code, when Claude Code is in the container. See [AI agents](#ai-agents). |
 
@@ -87,11 +90,35 @@ Without VisualJJ:
 On every attach, each repo in `initRepos`' scope that isn't a jj repo yet is turned into one
 with `jj git init --colocate`:
 
-- `workspace`: the repo of the folder you opened.
-- `all`: that repo and every git repo next to it — in `/workspaces`, where
-  [`org-workspace`](../org-workspace) clones its repos (when the folder you opened isn't a repo
-  itself: every repo inside it).
+- `auto` (default): among the repo of the folder you opened and every git repo next to it, the
+  ones **you already use jj in**. The others stay plain git, untouched.
+- `workspace`: the repo of the folder you opened, whatever it holds.
+- `all`: that repo and every git repo next to it, whatever they hold.
 - `off`: none. Run `jj git init` in a repo yourself when you want it.
+
+"Next to it" means in the same folder — `/workspaces`, where [`org-workspace`](../org-workspace)
+clones its repos — or, when the folder you opened isn't a repo itself, inside it. Never next to
+a repo in your home folder, where the neighbours are dotfile repos (`~/.oh-my-zsh`).
+
+### How `auto` recognizes a jj repo
+
+`.jj` is local, never committed: a fresh clone of a repo you work on with jj looks like any
+other git repo. But every commit jj creates carries a `change-id` header in its git object, and
+GitHub keeps it through a push and a rebase merge. So `auto` converts a repo when one of the
+last 200 commits of its branches, local or remote, has that header: you, or a teammate, already
+work on it with jj. A repo that only ever saw git has none, and stays as it is.
+
+- A repo you want to start using jj in: run `jj git init` in it once. It stays a jj repo (its
+  `.jj` folder is kept, in `org-workspace`'s volume or your project folder), and once you've
+  pushed from jj, every new clone of it is recognized too.
+- A repo whose PRs are squash-merged: the squashed commits on `main` lose the header, but the
+  PR branches still on the remote keep it.
+- A repo you want to keep plain git although someone pushed jj commits to it: set
+  `initRepos` to `workspace` or `off`.
+
+With `auto`, the attach log lists the repos left as plain git.
+
+### What changes in a jj repo
 
 **Colocated** means the repo keeps its `.git` where it is: every git tool, IDE extension, CI
 job and `gh` command keeps working, and jj adds a `.jj` folder that git ignores. Nothing is
@@ -119,6 +146,16 @@ it:
 | In the middle of a merge, rebase, cherry-pick or bisect | Retried on the next attach. |
 
 To go back to git only, delete the `.jj` folder and `git switch` back to your branch.
+
+### With `org-workspace`
+
+[`org-workspace`](../org-workspace) (v1.2.0+) adds `(jj)` to the folder name of each jj repo in
+the `.code-workspace` file, e.g. `🔒 api (jj)`: in a workspace that mixes jj and plain git repos,
+you see which is which. When this feature converts a repo, it runs `org-workspace` again, so the
+name changes right away instead of at the next rebuild.
+
+A jj repo's clone is never deleted by `org-workspace`'s cleanup: git sees its `.jj` folder as an
+ignored file, which counts as possible local work.
 
 ## Identity and signing
 
@@ -200,7 +237,8 @@ come with this feature:
 3. **Once per container** (`postCreateCommand`, `jj-setup.sh create`): makes the volume
    writable by the container user, installs the Claude Code skill.
 4. **Every attach** (`postAttachCommand`, `jj-setup.sh attach`): identity and signing from git,
-   repos turned into jj repos, VisualJJ version check.
+   repos turned into jj repos (then `org-workspace`'s folder names refreshed), VisualJJ version
+   check.
 
 Every step only warns when something goes wrong: the container always starts. To run the attach
 step again by hand: `/usr/local/share/jj/jj-setup.sh attach`, from the workspace folder.

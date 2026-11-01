@@ -15,6 +15,8 @@
 # Best-effort: never fails the container start, only warns.
 
 set -uo pipefail
+# Nothing here asks for input: jj and git get no stdin to wait on or read from.
+exec < /dev/null
 
 # shellcheck source=/dev/null
 . /usr/local/share/helpers4/common.sh
@@ -179,14 +181,15 @@ sync_git_identity() {
 # ── attach: repos ────────────────────────────────────────────────────────────
 
 # Repos in scope, one per line, deduplicated by real path (org-workspace's /workspaces/<name>
-# are links into its volume). workspace: the repo holding the workspace folder. all: that one
-# and every repo next to it — or inside the workspace folder, when it isn't a repo itself.
+# are links into its volume). workspace: the repo holding the workspace folder. all and auto:
+# that one and every repo next to it — or inside the workspace folder, when it isn't a repo
+# itself.
 list_repos() {
     local top base dir
     top="$(git rev-parse --show-toplevel 2>/dev/null || true)"
     {
         [ -n "${top}" ] && echo "${top}"
-        if [ "${INIT_REPOS}" = "all" ]; then
+        if [ "${INIT_REPOS}" = "all" ] || [ "${INIT_REPOS}" = "auto" ]; then
             if [ -n "${top}" ]; then base="$(dirname "${top}")"; else base="${PWD}"; fi
             # Next to a repo in the home folder are dotfile repos (~/.oh-my-zsh...), not projects.
             case "$(readlink -f "${base}")" in
@@ -197,6 +200,24 @@ list_repos() {
             done
         fi
     } | while IFS= read -r dir; do readlink -f "${dir}"; done | awk '!seen[$0]++'
+}
+
+# True when the repo's recent history, on any local or remote branch, holds a commit made
+# with jj: jj writes a "change-id" header into every git commit it creates, and GitHub keeps
+# it through a push and a rebase merge (not a squash merge, hence the remote branches too).
+# It's the only trace jj leaves in the repo itself — .jj is never committed — so a fresh
+# clone of a repo you work on with jj is recognized, and a plain git repo never is.
+has_jj_history() {
+    local dir="$1"
+    # awk reads everything instead of stopping at the first match: an early exit would kill
+    # cat-file with SIGPIPE, and pipefail would turn the match into a failure.
+    git -C "${dir}" rev-list -n 200 --branches --remotes HEAD 2>/dev/null \
+        | git -C "${dir}" cat-file --batch 2>/dev/null \
+        | awk '
+            /^[0-9a-f]+ commit [0-9]+$/ { header = 1; next }
+            header && $0 == "" { header = 0 }
+            header && /^change-id / { found = 1 }
+            END { exit !found }'
 }
 
 # Why a git checkout must stay as it is, or nothing if it can be turned into a jj repo.
@@ -251,6 +272,7 @@ init_repo() {
         warn "${name}: jj git init failed: ${out}"
         return
     fi
+    CONVERTED=$((CONVERTED + 1))
     track_upstreams "${dir}"
     log "${name}: now a colocated jj repo (git still works; git's HEAD gets detached on the first jj change)"
 
@@ -274,16 +296,39 @@ heal_author() {
     fi
 }
 
+# org-workspace marks jj repos in the .code-workspace folder names, but it writes them when the
+# container is created, before the first attach converts anything: run it again so a repo
+# converted just now shows up as one right away. It's idempotent, and only runs after a
+# conversion, so at most once per new jj repo.
+refresh_org_workspace() {
+    local script="/usr/local/share/org-workspace/clone-repos.sh"
+    [ "${CONVERTED}" -gt 0 ] && [ -x "${script}" ] || return 0
+    "${script}"
+}
+
 setup_repos() {
     [ "${INIT_REPOS}" = "off" ] && return 0
     command -v git > /dev/null 2>&1 || return 0
     local dir
+    local -a plain=()
+    CONVERTED=0
     # Read from fd 3: jj reads stdin, and would swallow the rest of the list.
     while IFS= read -r dir <&3; do
         [ -n "${dir}" ] || continue
-        [ -d "${dir}/.jj" ] || init_repo "${dir}"
+        if [ ! -d "${dir}/.jj" ]; then
+            if [ "${INIT_REPOS}" = "auto" ] && ! has_jj_history "${dir}"; then
+                plain+=("$(basename "${dir}")")
+                continue
+            fi
+            init_repo "${dir}"
+        fi
         [ -d "${dir}/.jj" ] && heal_author "${dir}"
     done 3< <(list_repos)
+
+    if [ "${#plain[@]}" -gt 0 ]; then
+        log "plain git, no jj commit in their history: ${plain[*]} (run jj git init in one to switch it to jj)"
+    fi
+    refresh_org_workspace
 }
 
 # ── attach: VisualJJ ─────────────────────────────────────────────────────────

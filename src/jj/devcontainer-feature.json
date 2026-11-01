@@ -19,9 +19,9 @@
     },
     "initRepos": {
       "type": "string",
-      "enum": ["workspace", "all", "off"],
-      "default": "workspace",
-      "description": "Git repos to turn into colocated jj repos (git keeps working in them): workspace = the repo you opened; all = it and every repo next to it, such as org-workspace's; off = none, run `jj git init` yourself."
+      "enum": ["auto", "workspace", "all", "off"],
+      "default": "auto",
+      "description": "Git repos to turn into colocated jj repos (git keeps working in them). auto = among the repo you opened and the ones next to it (such as org-workspace's), only those whose history already has jj commits: plain git repos stay untouched. workspace = the repo you opened; all = it and every repo next to it; off = none, run `jj git init` yourself."
     },
     "gitIdentity": {
       "type": "boolean",
