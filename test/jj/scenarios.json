@@ -1,0 +1,10 @@
+{
+  "all_repos": {
+    "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+    "features": {
+      "jj": {
+        "initRepos": "all"
+      }
+    }
+  }
+}

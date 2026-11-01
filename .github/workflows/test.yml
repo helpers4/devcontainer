@@ -44,6 +44,14 @@ jobs:
           - features: git-absorb
             baseImage: mcr.microsoft.com/devcontainers/base:ubuntu
 
+          # jj - works on any base image
+          - features: jj
+            baseImage: mcr.microsoft.com/devcontainers/base:debian
+          - features: jj
+            baseImage: ubuntu:latest
+          - features: jj
+            baseImage: mcr.microsoft.com/devcontainers/base:ubuntu
+
           # graphite-dev - node feature is pulled in via dependsOn
           - features: graphite-dev
             baseImage: mcr.microsoft.com/devcontainers/base:ubuntu
@@ -194,6 +202,7 @@ jobs:
           # scenarios.json; see AGENTS.md "Testing non-default options".
           - features: claude-dev
           - features: cline-dev
+          - features: jj
           - features: kimi-dev
           - features: mistral-dev
           - features: org-workspace
