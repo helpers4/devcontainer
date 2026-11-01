@@ -96,6 +96,10 @@ A name you wrote yourself is kept. Only a missing name, the plain repo name or a
 these icons is updated, so the icon follows when a repo changes status. Folders outside the org
 keep their plain name.
 
+A [jj](../jj) repo (one with a `.jj` folder) gets `(jj)` after its name, e.g. `🔒 api (jj)`: in a
+workspace that mixes jj and plain git repos, you see which is which. The `jj` feature updates the
+names as soon as it turns a repo into a jj repo, without waiting for the next rebuild.
+
 ## Cleaning up
 
 A repo that is no longer wanted (you excluded it, or it was archived or deleted upstream) loses
@@ -130,6 +134,7 @@ tested in a real Codespace yet.
 
 ## Version History
 
+- **v1.2.0**: A jj repo's folder name gets `(jj)` after it.
 - **v1.1.0**: Folder names get a status icon (public, private, internal, fork, archived). The
   workspace file now matches what is in `/workspaces`: an archived repo no longer stays in it
   after a rebuild, and dead entries are removed. `autoDiscover` with two visibilities no longer
