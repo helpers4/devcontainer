@@ -260,9 +260,9 @@ container for users, sometimes silently.
 - **`claude-dev`'s `~/.claude` swap (two bullets up) is generically hostile to any
   feature that drops files under `~/.claude` at build time — not a claude-dev-specific
   quirk, a hazard for every feature that might do this, now or in the future.**
-  `peon-ping` hit this first: its binary/hooks, installed at *image build* time (no
-  volume exists yet then — see the bullet above), vanished the moment claude-dev's swap
-  ran. Fixed on both sides:
+  `peon-ping` (since removed, see `deprecated/peon-ping`) hit this first: its binary/hooks,
+  installed at *image build* time (no volume exists yet then — see the bullet above),
+  vanished the moment claude-dev's swap ran. Fixed on both sides:
   - `claude-dev`'s swap no longer discards what it finds: if `~/.claude` isn't already a
     symlink, whatever's in it gets added to the volume (`cp -rn`, never overwriting what
     the volume already has) before the swap, instead of being `rm -rf`'d outright. This
@@ -272,7 +272,7 @@ container for users, sometimes silently.
     already exists there, since preserving the volume's own accumulated state (real
     credentials, an actual edited `settings.json`, memory) always wins over guessing
     which side should overwrite the other.
-  - `peon-ping` itself no longer writes to `~/.claude` at build time at all — its actual
+  - `peon-ping` itself stopped writing to `~/.claude` at build time at all — its actual
     install (binary, packs, Claude Code hooks) is deferred to its own
     `postCreateCommand`, declared `installsAfter: ["claude-dev"]` so it runs right after
     claude-dev's own (a soft dependency — doesn't force-install claude-dev, so this must
