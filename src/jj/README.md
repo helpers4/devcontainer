@@ -161,8 +161,9 @@ ignored file, which counts as possible local work.
 
 jj has its own config and never reads git's. With `gitIdentity`, the name, email and signing
 settings of your git config — after the client has copied it in and `helpers4-common` has
-repaired it — are written to `/etc/jj/conf.d/10-helpers4-git.toml` on every attach. That's
-jj's system config: anything you set yourself with `jj config set --user` wins over it.
+repaired it — are written on every attach to `/etc/jj/conf.d/10-helpers4-git.toml` (a link to
+`.helpers4-git.toml` in the volume). That's jj's system config: anything you set yourself with
+`jj config set --user` wins over it.
 
 | git | jj |
 |-----|----|
@@ -228,14 +229,15 @@ come with this feature:
    - downloads `jj` from its [GitHub releases](https://github.com/jj-vcs/jj/releases) (musl
      build, amd64 or arm64) to `/usr/local/bin/jj`;
    - writes bash, zsh and fish completions in their system-wide directories;
-   - writes `/etc/jj/conf.d/50-helpers4-agents.toml`, and creates
-     `/etc/jj/conf.d/10-helpers4-git.toml` owned by the container user;
+   - writes `/etc/jj/conf.d/50-helpers4-agents.toml`, and links
+     `/etc/jj/conf.d/10-helpers4-git.toml` to a file in the volume;
    - links `~/.config/jj` (jj's user config) to `/mnt/h4jj`;
    - gives `/workspaces` to the container user (VisualJJ's workspaces).
 2. **Mount** (`devcontainer-feature.json → mounts`): the Docker named volume
    `helpers4-jj-config-${devcontainerId}` is attached at `/mnt/h4jj`.
 3. **Once per container** (`postCreateCommand`, `jj-setup.sh create`): makes the volume
-   writable by the container user, installs the Claude Code skill.
+   and `/workspaces` writable by the container user (its UID may have changed since the build),
+   installs the Claude Code skill.
 4. **Every attach** (`postAttachCommand`, `jj-setup.sh attach`): identity and signing from git,
    repos turned into jj repos (then `org-workspace`'s folder names refreshed), VisualJJ version
    check.
@@ -246,7 +248,7 @@ step again by hand: `/usr/local/share/jj/jj-setup.sh attach`, from the workspace
 ```text
 /usr/local/bin/jj
 /etc/jj/conf.d/
-├── 10-helpers4-git.toml      (from your git config, every attach)
+├── 10-helpers4-git.toml      -> /mnt/h4jj/.helpers4-git.toml (from your git config, every attach)
 └── 50-helpers4-agents.toml   (AI agent sessions only)
 ~/.config/jj -> /mnt/h4jj     (volume, 700: your own jj config)
 ```
