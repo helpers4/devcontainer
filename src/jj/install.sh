@@ -129,12 +129,12 @@ EOF
 echo "  ✅ ${CONF_DIR}/50-helpers4-agents.toml (non-interactive jj for AI agents)"
 
 # Rewritten on every attach by jj-setup.sh, as the container user, from the git config the
-# client has just copied in: owned by that user so no sudo is needed then.
+# client has just copied in. The file itself lives in the volume: a file here owned by the
+# user would be stuck with the build-time UID when the devcontainer CLI later gives the user
+# the host's (updateRemoteUserUID), while the volume is made writable again at runtime.
 GIT_CONF="${CONF_DIR}/10-helpers4-git.toml"
 if [ "${GIT_IDENTITY}" = "true" ]; then
-    printf '# Written by the helpers4 jj feature on every attach, from your git config.\n' > "${GIT_CONF}"
-    chown "${USERNAME}:${USER_GROUP}" "${GIT_CONF}"
-    chmod 644 "${GIT_CONF}"
+    ln -sfn "${STAGED}/.helpers4-git.toml" "${GIT_CONF}"
     echo "  ✅ ${GIT_CONF} (identity and signing from git, filled on attach)"
 else
     rm -f "${GIT_CONF}"
@@ -161,6 +161,7 @@ echo "  ✅ ${USER_CONFIG} -> ${STAGED} (kept across rebuilds)"
 # ── /workspaces writable ─────────────────────────────────────────────────────
 # VisualJJ creates its jj workspaces (one per agent task, among others) as sibling folders of
 # the repo, which sits in /workspaces: root-owned unless something gives it to the user.
+# jj-setup.sh does it again at runtime if the user's UID has changed since.
 mkdir -p /workspaces
 if [ "${USERNAME}" != "root" ]; then
     chown "${USERNAME}:${USER_GROUP}" /workspaces \

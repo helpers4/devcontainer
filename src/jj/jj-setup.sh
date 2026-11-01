@@ -24,7 +24,9 @@ exec < /dev/null
 . /usr/local/share/jj/options.env
 
 STAGED="/mnt/h4jj"
-GIT_CONF="/etc/jj/conf.d/10-helpers4-git.toml"
+# /etc/jj/conf.d/10-helpers4-git.toml links here: a file in the volume, which is made
+# writable for the container user, whatever UID it ended up with (see install.sh).
+GIT_CONF="${STAGED}/.helpers4-git.toml"
 SKILL_SRC="/usr/local/share/jj/claude-skill.md"
 SKILL_MARKER=".helpers4-jj"
 
@@ -45,6 +47,15 @@ setup_volume() {
     # Exclusive to this devcontainer (${devcontainerId}), so no --shared — see
     # h4_ensure_volume_writable's own comment in helpers4-common/install.sh.
     h4_ensure_volume_writable "${STAGED}"
+}
+
+# install.sh gave /workspaces to the container user by name, but the devcontainer CLI may give
+# that user the host's UID afterwards (updateRemoteUserUID) and only re-owns its home.
+setup_workspaces() {
+    [ -w /workspaces ] && return 0
+    if ! { command -v sudo > /dev/null 2>&1 && sudo -n chown "$(id -u):$(id -g)" /workspaces 2> /dev/null; }; then
+        warn "cannot write to /workspaces: VisualJJ can't create its workspaces there"
+    fi
 }
 
 # Claude Code reads skills from <config dir>/skills/<name>/SKILL.md. claude-dev points
@@ -154,8 +165,8 @@ signing_config() {
 sync_git_identity() {
     [ "${GIT_IDENTITY}" = "true" ] || return 0
     command -v git > /dev/null 2>&1 || return 0
-    if [ ! -w "${GIT_CONF}" ]; then
-        warn "${GIT_CONF} is not writable: jj won't get your git identity"
+    if [ ! -w "${STAGED}" ]; then
+        warn "${STAGED} is not writable: jj won't get your git identity"
         return 0
     fi
 
@@ -360,6 +371,7 @@ check_visualjj() {
 case "${1:-}" in
     create)
         setup_volume
+        setup_workspaces
         install_claude_skill
         ;;
     attach)
