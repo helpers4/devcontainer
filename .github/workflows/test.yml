@@ -55,8 +55,10 @@ jobs:
           # graphite-dev - node feature is pulled in via dependsOn
           - features: graphite-dev
             baseImage: mcr.microsoft.com/devcontainers/base:ubuntu
+          # Not ubuntu:latest: on 26.04 the node feature it depends on installs a Node build
+          # that needs libatomic.so.1, which the bare image no longer has.
           - features: graphite-dev
-            baseImage: ubuntu:latest
+            baseImage: ubuntu:24.04
 
           # bitwarden-secrets-manager - works on any base image
           - features: bitwarden-secrets-manager
