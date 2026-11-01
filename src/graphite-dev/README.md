@@ -31,6 +31,7 @@ Get your token at <https://app.graphite.com/activate> and export it on the host 
 ## How it works
 
 - **Install via npm.** Graphite publishes no standalone binary, and its Homebrew formula only wraps `npm install` on brew's own Node. So the feature `dependsOn` the official `node` feature and runs `npm install -g @withgraphite/graphite-cli@<version>`.
+- **Bare `debian` / `ubuntu` images need `libatomic1`.** The `node` feature installs the Node LTS. From Node 26, its build needs `libatomic1`, which bare `debian` / `ubuntu` images don't have, and the `node` feature doesn't install it: the build stops with `libatomic.so.1: cannot open shared object file`. Use a `mcr.microsoft.com/devcontainers/base:*` image (it has it), or add `libatomic1` to your image before the features run.
 - **Auth at start, not at build.** `postStartCommand` runs `gt auth --token "$GRAPHITE_TOKEN"`. The token never enters the image. A missing or rejected token prints a warning and never blocks the container start.
 - **No volume.** `gt` keeps its config in `~/.config/graphite`; since the token is re-applied on every start, there is nothing worth persisting.
 - **git 2.38+.** `gt` 1.x needs it. The install warns if the container's git is older.
