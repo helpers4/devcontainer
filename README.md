@@ -132,11 +132,11 @@ OS-level dependencies for headless Chromium, Firefox, and WebKit, a browser-bina
 
 ### package-auto-install
 
-Automatically detects and runs npm/yarn/pnpm install in non-interactive mode after container creation. Handles corepack setup for Node 24+ and intelligently detects the package manager from package.json or lockfiles.
+Automatically detects and runs npm/yarn/pnpm install in non-interactive mode after container creation. Handles corepack setup for Node 25+ and intelligently detects the package manager from package.json or lockfiles.
 
 **Key benefits:**
 - Automatic package manager detection from package.json or lockfiles
-- Corepack support for Node 24+ (auto-installs if needed)
+- Corepack support for Node 25+ (auto-installs if needed)
 - Non-interactive mode (CI=true) prevents prompts
 - Smart command selection (npm ci, pnpm --frozen-lockfile, yarn --immutable)
 - Eliminates need for manual postCreateCommand
@@ -337,7 +337,7 @@ Features from this repository are available via GitHub Container Registry. Refer
 | [auto-header](./src/auto-header) | Automatic file headers with customizable templates (simple or custom) | [README](./src/auto-header/README.md) |
 | [vite-plus](./src/vite-plus) | Complete Vite+ toolchain with Oxc, Vitest, and VS Code integration | [README](./src/vite-plus/README.md) |
 | [playwright-dev](./src/playwright-dev) | Playwright OS deps (Chromium/Firefox/WebKit) + shared browser-binary volume + VS Code extension | [README](./src/playwright-dev/README.md) |
-| [package-auto-install](./src/package-auto-install) | Automatic package installation with corepack support for Node 24+ | [README](./src/package-auto-install/README.md) |
+| [package-auto-install](./src/package-auto-install) | Automatic package installation with corepack support for Node 25+ | [README](./src/package-auto-install/README.md) |
 | [pnpm-store](./src/pnpm-store) | Shared pnpm store on the same filesystem as your code — no stray .pnpm-store in repos | [README](./src/pnpm-store/README.md) |
 | [typescript-dev](./src/typescript-dev) | TypeScript/JavaScript dev with indexing and web tools (requires essential-dev) | [README](./src/typescript-dev/README.md) |
 | [angular-dev](./src/angular-dev) | Angular development environment with extensions and CLI autocompletion | [README](./src/angular-dev/README.md) |

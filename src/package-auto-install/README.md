@@ -11,7 +11,7 @@ Automatically detects and runs npm/yarn/pnpm install in non-interactive mode aft
 ## Features
 
 - **Automatic detection**: Detects package manager based on lockfile (pnpm-lock.yaml, yarn.lock, package-lock.json)
-- **Corepack support**: Automatically installs and enables corepack if `packageManager` field is found in package.json (required for Node 24+)
+- **Corepack support**: Automatically installs and enables corepack if `packageManager` field is found in package.json (required for Node 25+)
 - **Non-interactive mode**: Sets `CI=true` to avoid prompts (e.g., pnpm won't ask to delete node_modules)
 - **Smart command selection**: Uses `npm ci`, `pnpm install --frozen-lockfile`, or `yarn install --immutable` when lockfiles exist
 - **Flexible configuration**: Override package manager, command, and working directory
@@ -166,7 +166,7 @@ For any IDE that does not have a parseable workspace file (Zed, Neovim, etc.) or
 
 ## How It Works
 
-### Corepack Support (Node 24+)
+### Corepack Support (Node 25+)
 
 If your `package.json` contains a `packageManager` field (e.g., `"packageManager": "pnpm@9.0.0"`):
 
@@ -175,7 +175,7 @@ If your `package.json` contains a `packageManager` field (e.g., `"packageManager
 3. Enables corepack with `corepack enable`
 4. Corepack then automatically installs and uses the exact package manager version specified
 
-Node 24+ dropped corepack from the default install, so this step is what makes the
+Node 25+ no longer ships corepack (Node 24 still does), so this step is what makes the
 `packageManager` field still work there without you installing corepack yourself.
 
 ### Package Manager Detection
