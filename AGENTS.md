@@ -77,6 +77,7 @@ version bump" below.
 | `pnpm-store` | 1.3.1 | Shared pnpm store via Docker named volume (dependsOn helpers4-common) |
 | `auto-header` | 1.2.4 | LGPL-3.0 license headers |
 | `git-absorb` | 1.2.3 | git-absorb from GitHub releases |
+| `jj` | 1.0.0 | jj CLI from jj-vcs/jj GitHub releases + VisualJJ extension; git identity/signing mirrored into `/etc/jj/conf.d` on attach, repos turned colocated (`initRepos`), `~/.config/jj` in a named volume, non-interactive config for AI agents + Claude Code skill |
 | `bitwarden-secrets-manager` | 1.2.4 | `bws` CLI from bitwarden/sdk-sm GitHub releases, token-only auth, no persisted state |
 | `dotfiles-sync` | 1.2.3 | Sync Git/SSH/GPG/npm/gh config from host; SSH key files opt-in (dependsOn helpers4-common) |
 | `shell-history` | 1.0.0 | Shell history (bash/zsh/fish) kept across rebuilds in a named volume per devcontainer |
