@@ -77,8 +77,8 @@ If you want to install Angular CLI as part of this feature:
 ```json
 {
     "features": {
-        "ghcr.io/devcontainers/features/node:1": {
-            "version": "20"
+        "ghcr.io/devcontainers/features/node:2": {
+            "version": "26"
         },
         "ghcr.io/helpers4/devcontainer/angular-dev:1": {
             "installCli": true
