@@ -1,6 +1,6 @@
 {
   "with_cli": {
-    "image": "mcr.microsoft.com/devcontainers/typescript-node:22",
+    "image": "mcr.microsoft.com/devcontainers/typescript-node:26",
     "features": {
       "cline-dev": {
         "installCli": true
