@@ -123,7 +123,7 @@ exit-code indicators (✓/✗), run history, smart suggestions, and command deco
 
 ## Version History
 
-- **v1.3.0**: Adds `streetsidesoftware.code-spell-checker` and `timonwong.shellcheck` to the
+- **v1.2.5**: Adds `streetsidesoftware.code-spell-checker` and `timonwong.shellcheck` to the
   extensions, so projects no longer need to list them in their own `devcontainer.json`.
 - **v1.2.4**: Removed `install.sh`'s "Configure VS Code shell integration" loop — it grepped
   shell config files and printed a status line, but never wrote anything; shell integration is a
