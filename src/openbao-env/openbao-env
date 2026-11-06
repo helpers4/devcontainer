@@ -52,21 +52,31 @@ RETRY_AFTER="${OPENBAO_ENV_RETRY_AFTER:-300}"
 TOKEN_SOURCE=""
 HDR_FILE=""
 DEADLINE=0
-TMP_FILES=()
+TMP_DIR=""
+TMP_N=0
 
 warn() { printf 'openbao-env: %s\n' "$*" >&2; }
 
+# Every temp file (curl bodies, token headers) lives in one per-run directory, removed on
+# any exit, Ctrl-C or kill (only SIGKILL escapes: ensure_dir purges what that leaves).
 cleanup() {
-    local f
-    for f in "${TMP_FILES[@]+"${TMP_FILES[@]}"}"; do rm -f "${f}"; done
+    [ -n "${TMP_DIR}" ] && rm -rf -- "${TMP_DIR}"
+    TMP_DIR=""
 }
 trap cleanup EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
+trap 'exit 129' HUP
 
+# tmpfile → REPLY = a new empty 0600 file. Must NOT be called as $(tmpfile): a command
+# substitution is a subshell, so the parent would never learn about (nor delete) the dir.
 tmpfile() {
-    local f
-    f="$(mktemp "${DIR}/.tmp.XXXXXX")" || return 1
-    TMP_FILES+=("${f}")
-    printf '%s' "${f}"
+    if [ -z "${TMP_DIR}" ]; then
+        TMP_DIR="$(mktemp -d "${DIR}/.tmp.XXXXXX")" || { TMP_DIR=""; return 1; }
+    fi
+    TMP_N=$((TMP_N + 1))
+    REPLY="${TMP_DIR}/${TMP_N}"
+    : > "${REPLY}"
 }
 
 now() { date +%s; }
@@ -98,6 +108,9 @@ ensure_dir() {
         fi
     fi
     chmod 700 "${DIR}" 2> /dev/null || true
+    # Temp dirs of a run killed with SIGKILL (or left by 1.0.0, which leaked them): a run
+    # lasts a few seconds, so anything older than 2 minutes is abandoned.
+    find "${DIR}" -maxdepth 1 -name '.tmp.*' -mmin +2 -exec rm -rf -- {} + 2> /dev/null || true
 }
 
 # A root shell (sudo -i, a root lifecycle hook) must not leave root-owned files behind
@@ -142,12 +155,14 @@ describe_code() {
 set_header_from_file() {
     local tok
     tok="$(tr -d '[:space:]' < "$1")"
-    HDR_FILE="$(tmpfile)" || return 1
+    tmpfile || return 1
+    HDR_FILE="${REPLY}"
     printf 'X-Vault-Token: %s\n' "${tok}" > "${HDR_FILE}"
 }
 
 set_header_from_env() {
-    HDR_FILE="$(tmpfile)" || return 1
+    tmpfile || return 1
+    HDR_FILE="${REPLY}"
     printf 'X-Vault-Token: %s\n' "$(printf '%s' "${BAO_TOKEN}" | tr -d '[:space:]')" > "${HDR_FILE}"
 }
 
@@ -169,19 +184,22 @@ have_credentials() {
 # approle_login BODYFILE → stores the token in TOKEN_FILE, sets HDR_FILE.
 approle_login() {
     local body="$1" out code ttl
-    out="$(tmpfile)" || return 1
+    tmpfile || return 1
+    out="${REPLY}"
     HDR_FILE=""
     code="$(api POST "auth/${APPROLE_MOUNT}/login" "${out}" "${body}")"
     if [ "${code}" != "200" ]; then
         LOGIN_ERROR="AppRole login failed: $(describe_code "${code}")"
         return 1
     fi
-    if ! jq -er '.auth.client_token' "${out}" > "${TOKEN_FILE}.new" 2> /dev/null; then
-        rm -f "${TOKEN_FILE}.new"
+    local new_token
+    tmpfile || return 1
+    new_token="${REPLY}"
+    if ! jq -er '.auth.client_token' "${out}" > "${new_token}" 2> /dev/null; then
         LOGIN_ERROR="AppRole login answered without a token"
         return 1
     fi
-    mv -f "${TOKEN_FILE}.new" "${TOKEN_FILE}"
+    mv -f "${new_token}" "${TOKEN_FILE}"
     ttl="$(jq -r '.auth.lease_duration // 0' "${out}" 2> /dev/null)"
     case "${ttl}" in '' | *[!0-9]*) ttl=0 ;; esac
     if [ "${ttl}" -gt 0 ]; then echo "$(($(now) + ttl))" > "${TOKEN_EXPIRY_FILE}"; else echo 0 > "${TOKEN_EXPIRY_FILE}"; fi
@@ -191,7 +209,8 @@ approle_login() {
 # The host drops role-id + a response-wrapped secret_id; unwrap it (single use), then log in.
 login_wrapped() {
     local out code body
-    out="$(tmpfile)" || return 1
+    tmpfile || return 1
+    out="${REPLY}"
     set_header_from_file "${WRAPPED_FILE}" || return 1
     code="$(api POST sys/wrapping/unwrap "${out}")"
     # Whatever the server answered, the wrapping token is spent (or was never valid): drop
@@ -202,7 +221,8 @@ login_wrapped() {
         LOGIN_ERROR="unwrapping ${WRAPPED_FILE} failed: $(describe_code "${code}")"
         return 1
     fi
-    body="$(tmpfile)" || return 1
+    tmpfile || return 1
+    body="${REPLY}"
     if ! jq -e --rawfile r "${ROLE_ID_FILE}" \
         '{role_id: ($r | gsub("\\s"; "")), secret_id: (.data.secret_id // empty)}' \
         "${out}" > "${body}" 2> /dev/null; then
@@ -215,7 +235,8 @@ login_wrapped() {
 
 login_env_approle() {
     local body
-    body="$(tmpfile)" || return 1
+    tmpfile || return 1
+    body="${REPLY}"
     jq -n '{role_id: env.BAO_ROLE_ID, secret_id: env.BAO_SECRET_ID}' > "${body}"
     approle_login "${body}"
 }
@@ -255,12 +276,14 @@ FETCH_ERROR=""
 FAILED_PATHS=""
 read_paths() {
     local p out code ok=() keys_tmp
-    keys_tmp="$(tmpfile)" || return 1
+    tmpfile || return 1
+    keys_tmp="${REPLY}"
     FAILED_PATHS=""
     LAST_CODE=""
     NO_ANSWER=0
     while IFS= read -r p; do
-        out="$(tmpfile)" || return 1
+        tmpfile || return 1
+        out="${REPLY}"
         code="$(api GET "${MOUNT}/data/${p}" "${out}")"
         LAST_CODE="${code}"
         [ "${code}" = "000" ] && NO_ANSWER=$((NO_ANSWER + 1))
@@ -280,7 +303,8 @@ read_paths() {
     fi
 
     local env_tmp stamp
-    env_tmp="$(tmpfile)" || return 1
+    tmpfile || return 1
+    env_tmp="${REPLY}"
     stamp="$(now)-$$"
     # Names a shell or the dynamic linker treats specially are never taken from the server.
     if ! jq -rs --arg stamp "${stamp}" '
@@ -461,7 +485,8 @@ cmd_status() {
         local out code ttl
         DEADLINE=$(($(now) + TIMEOUT))
         set_header_from_env
-        out="$(tmpfile)"
+        tmpfile
+        out="${REPLY}"
         code="$(api GET auth/token/lookup-self "${out}")"
         if [ "${code}" = "200" ]; then
             ttl="$(jq -r '.data.ttl // 0' "${out}")"

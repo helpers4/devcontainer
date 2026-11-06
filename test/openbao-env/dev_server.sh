@@ -90,6 +90,23 @@ pass "wrapped-secret-id deleted after use"
 [ "$(stat -c '%a %U' "${D}/env")" = "600 ${U}" ] || fail "cache: $(stat -c '%a %U' "${D}/env")"
 [ "$(stat -c '%a %U' "${D}/token")" = "600 ${U}" ] || fail "token: $(stat -c '%a %U' "${D}/token")"
 pass "dir 700, cache and token 600, owned by ${U}"
+leftover="$(find "${D}" -maxdepth 1 -name '.tmp.*' | wc -l)"
+[ "${leftover}" -eq 0 ] || fail "${leftover} temp file(s) left in ${D} after the first load"
+pass "no temp file left after the first load"
+
+# Concurrent shells (one fetches, the others wait for the lock): still no leftovers.
+rm -f "${D}/env"
+pids=""
+for _ in 1 2 3 4; do
+    as_user bash -lc 'true' 2> /dev/null &
+    pids="${pids} $!"
+done
+# Not a bare `wait`: that would also wait for the dev server.
+for pid in ${pids}; do wait "${pid}"; done
+leftover="$(find "${D}" -maxdepth 1 -name '.tmp.*' | wc -l)"
+[ "${leftover}" -eq 0 ] || fail "${leftover} temp file(s) left in ${D} after concurrent loads"
+[ -f "${D}/env" ] || fail "concurrent loads produced no cache"
+pass "no temp file left after concurrent loads"
 grep -q "BAD-NAME" "${D}/env" && fail "invalid name written to the cache"
 pass "invalid variable name skipped"
 
