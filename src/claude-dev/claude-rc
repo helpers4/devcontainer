@@ -152,6 +152,28 @@ cmd_start() {
     log "First time in this devcontainer? Log in from the Claude extension: the server starts by itself."
 }
 
+# trust_rc_dir: with remoteControlAutoTrust, record the workspace trust in Claude Code's global
+# state file (what accepting the dialog writes). Recent Claude Code versions no longer ask
+# "Trust <dir>? [y/N]" under `remote-control`: they exit with "Workspace not trusted", so
+# answer_prompts below never gets a question to answer.
+trust_rc_dir() {
+    local file="${CLAUDE_CONFIG_DIR:-${HOME}}/.claude.json" tmp
+    [ -n "${CLAUDE_CONFIG_DIR:-}" ] || file="${HOME}/.claude.json"
+    if ! command -v jq >/dev/null 2>&1; then
+        warn "jq not found — can't record the trust of ${RC_DIR}; relying on the on-screen question."
+        return 0
+    fi
+    [ -f "${file}" ] || echo '{}' >"${file}"
+    tmp="$(mktemp "${file}.XXXXXX")" || return 0
+    if jq --arg d "${RC_DIR}" '.projects[$d] = ((.projects[$d] // {}) + {hasTrustDialogAccepted: true})' "${file}" >"${tmp}" 2>/dev/null; then
+        chmod 600 "${tmp}"
+        mv "${tmp}" "${file}"
+    else
+        rm -f "${tmp}"
+        warn "couldn't update ${file} — relying on the on-screen question."
+    fi
+}
+
 cmd_loop() {
     # shellcheck source=/dev/null
     . "${STATE_FILE}"
@@ -167,6 +189,8 @@ cmd_loop() {
         warn "spawn mode 'worktree' needs a git repository and ${RC_DIR} isn't one — using 'same-dir'."
         spawn="same-dir"
     fi
+
+    [ "${RC_AUTO_TRUST_OPTION}" = "true" ] && trust_rc_dir
 
     local args=(remote-control --name "${RC_NAME}" --remote-control-session-name-prefix "${RC_NAME}" --spawn "${spawn}")
     [ -n "${RC_PERMISSION_MODE_OPTION}" ] && args+=(--permission-mode "${RC_PERMISSION_MODE_OPTION}")
