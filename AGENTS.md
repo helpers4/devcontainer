@@ -79,6 +79,7 @@ version bump" below.
 | `git-absorb` | 1.2.3 | git-absorb from GitHub releases |
 | `jj` | 1.0.0 | jj CLI from jj-vcs/jj GitHub releases + VisualJJ extension; git identity/signing mirrored into `/etc/jj/conf.d` on attach, repos with jj commits in their history turned colocated (`initRepos: auto`), org-workspace names marked `(jj)`, `~/.config/jj` in a named volume, non-interactive config for AI agents + Claude Code skill |
 | `bitwarden-secrets-manager` | 1.2.4 | `bws` CLI from bitwarden/sdk-sm GitHub releases, token-only auth, no persisted state |
+| `openbao-env` | 1.0.0 | Loads OpenBao KV v2 secrets into every process's env: POSIX loader sourced by profile.d/bash.bashrc/zshrc (so the userEnvProbe sees them before any lifecycle hook), memory-only cache in `/dev/shm/openbao`, AppRole via host-dropped wrapped secret_id or env, `openbao-env` CLI, optional `bao` CLI |
 | `dotfiles-sync` | 1.2.3 | Sync Git/SSH/GPG/npm/gh config from host; SSH key files opt-in (dependsOn helpers4-common) |
 | `shell-history` | 1.0.0 | Shell history (bash/zsh/fish) kept across rebuilds in a named volume per devcontainer |
 | `org-workspace` | 1.2.0 | Clones every repo of a GitHub org into sibling `/workspaces` folders + generates/merges a multi-root `.code-workspace` (dependsOn helpers4-common, github-dev) |

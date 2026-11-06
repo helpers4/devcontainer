@@ -1,0 +1,44 @@
+{
+  "id": "openbao-env",
+  "version": "1.0.0",
+  "name": "OpenBao secrets",
+  "description": "Loads secrets from OpenBao (KV v2) into the environment of every process in the container: VS Code and its extensions, terminals, the lifecycle hooks of other features, AI agents. The container fetches its own secrets (AppRole, response-wrapped secret_id or token) into a memory-only cache, so nothing depends on the attaching client's localEnv. Optionally installs the bao CLI. Also self-heals your devcontainer setup.",
+  "documentationURL": "https://github.com/helpers4/devcontainer/tree/main/src/openbao-env",
+  "licenseURL": "https://github.com/helpers4/devcontainer/blob/main/LICENSE",
+  "keywords": ["helpers4", "openbao", "bao", "vault", "secrets", "approle", "env"],
+  "options": {
+    "paths": {
+      "type": "string",
+      "default": "",
+      "description": "Comma-separated KV v2 paths to load, e.g. 'shared/font-awesome,orgs/my-org'. Later paths override earlier ones on a duplicate key. Each key becomes an environment variable of the same name."
+    },
+    "mount": {
+      "type": "string",
+      "default": "kv",
+      "description": "Mount path of the KV v2 secrets engine."
+    },
+    "address": {
+      "type": "string",
+      "default": "",
+      "description": "OpenBao server address, e.g. 'https://bao.example.com:8200'. BAO_ADDR in the container's environment wins when set."
+    },
+    "installCli": {
+      "type": "boolean",
+      "default": true,
+      "description": "Also install the bao CLI from openbao/openbao GitHub releases (checksum verified). The loader itself only needs curl and jq."
+    },
+    "version": {
+      "type": "string",
+      "default": "latest",
+      "description": "bao CLI version when installCli is true: latest, or a release such as 2.7.2."
+    }
+  },
+  "postStartCommand": "/usr/local/bin/openbao-env check",
+  "installsAfter": [
+    "ghcr.io/devcontainers/features/common-utils",
+    "ghcr.io/helpers4/devcontainer/helpers4-common"
+  ],
+  "dependsOn": {
+    "ghcr.io/helpers4/devcontainer/helpers4-common:1": {}
+  }
+}

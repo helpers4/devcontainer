@@ -1,0 +1,529 @@
+#!/usr/bin/env bash
+
+# This file is part of helpers4.
+# Copyright (C) 2025 baxyz
+# SPDX-License-Identifier: LGPL-3.0-or-later
+#
+# openbao-env — fetch secrets from OpenBao (KV v2) into a memory-only cache that every
+# shell of the container sources (see loader.sh).
+#
+#   openbao-env status    address, paths, key NAMES per path, cache age, token TTL
+#   openbao-env refresh   re-fetch into the cache now
+#   openbao-env clear     drop the cache and the cached token
+#   openbao-env check     one-line warning when nothing is loaded (postStartCommand)
+#   openbao-env fetch     what the loader runs when the cache is missing (--auto: quiet,
+#                         backs off after a failure)
+#
+# Never prints a secret value: no `set -x`, curl bodies go to 0600 files under
+# /dev/shm/openbao, tokens and secret_ids reach curl through header/body FILES (not argv,
+# which any process can read in /proc), errors only name the step, the path and the HTTP
+# status. Runtime deps: curl + jq (+ flock when present). The bao CLI is never needed.
+
+set -uo pipefail
+umask 077
+
+CONFIG=/usr/local/share/openbao-env/config
+CFG_PATHS="" CFG_MOUNT="kv" CFG_ADDRESS="" CFG_USER="root"
+# shellcheck source=/dev/null
+[ -r "${CONFIG}" ] && . "${CONFIG}"
+
+DIR=/dev/shm/openbao
+CACHE="${DIR}/env"
+KEYS_FILE="${DIR}/keys"
+TOKEN_FILE="${DIR}/token"
+TOKEN_EXPIRY_FILE="${DIR}/token-expiry"
+ROLE_ID_FILE="${DIR}/role-id"
+WRAPPED_FILE="${DIR}/wrapped-secret-id"
+ERROR_FILE="${DIR}/last-error"
+NOCREDS_MARK="${DIR}/.warned"
+LOCK_FILE="${DIR}/.lock"
+
+ADDR_SOURCE="option"
+ADDR="${BAO_ADDR:-}"
+if [ -n "${ADDR}" ]; then ADDR_SOURCE="BAO_ADDR"; else ADDR="${CFG_ADDRESS}"; fi
+ADDR="${ADDR%/}"
+MOUNT="${OPENBAO_MOUNT:-${CFG_MOUNT}}"
+MOUNT="${MOUNT#/}"; MOUNT="${MOUNT%/}"
+PATHS="${OPENBAO_PATHS:-${CFG_PATHS}}"
+APPROLE_MOUNT="${OPENBAO_APPROLE_MOUNT:-approle}"
+TIMEOUT="${OPENBAO_ENV_TIMEOUT:-5}"
+RETRY_AFTER="${OPENBAO_ENV_RETRY_AFTER:-300}"
+
+TOKEN_SOURCE=""
+HDR_FILE=""
+DEADLINE=0
+TMP_FILES=()
+
+warn() { printf 'openbao-env: %s\n' "$*" >&2; }
+
+cleanup() {
+    local f
+    for f in "${TMP_FILES[@]+"${TMP_FILES[@]}"}"; do rm -f "${f}"; done
+}
+trap cleanup EXIT
+
+tmpfile() {
+    local f
+    f="$(mktemp "${DIR}/.tmp.XXXXXX")" || return 1
+    TMP_FILES+=("${f}")
+    printf '%s' "${f}"
+}
+
+now() { date +%s; }
+
+# Paths option → one path per line, trimmed, empty entries dropped.
+path_list() {
+    local p
+    local IFS=','
+    for p in ${PATHS}; do
+        p="${p#"${p%%[![:space:]]*}"}"; p="${p%"${p##*[![:space:]]}"}"
+        p="${p#/}"; p="${p%/}"
+        [ -n "${p}" ] && printf '%s\n' "${p}"
+    done
+}
+
+# ── State directory ──────────────────────────────────────────────────────────
+# Owned by the container's remote user, mode 700. The host may have created it (dropping
+# role-id / wrapped-secret-id) as another user: take it over with sudo when possible.
+ensure_dir() {
+    if [ ! -d "${DIR}" ] && ! mkdir -p "${DIR}" 2> /dev/null; then
+        warn "cannot create ${DIR}"
+        return 1
+    fi
+    if [ ! -O "${DIR}" ] && [ "$(id -u)" -ne 0 ]; then
+        if ! { command -v sudo > /dev/null 2>&1 \
+            && sudo -n chown -R "$(id -u):$(id -g)" "${DIR}" 2> /dev/null; }; then
+            warn "${DIR} belongs to another user and sudo can't take it over"
+            return 1
+        fi
+    fi
+    chmod 700 "${DIR}" 2> /dev/null || true
+}
+
+# A root shell (sudo -i, a root lifecycle hook) must not leave root-owned files behind
+# that the remote user then can't read or replace.
+fix_owner() {
+    [ "$(id -u)" -eq 0 ] || return 0
+    [ -n "${CFG_USER}" ] && [ "${CFG_USER}" != "root" ] || return 0
+    id -u "${CFG_USER}" > /dev/null 2>&1 || return 0
+    chown -R "${CFG_USER}:$(id -gn "${CFG_USER}")" "${DIR}" 2> /dev/null || true
+}
+
+# ── HTTP ─────────────────────────────────────────────────────────────────────
+# api METHOD PATH OUTFILE [BODYFILE] → prints the HTTP status (000 = no answer).
+# Uses ${HDR_FILE} (an "X-Vault-Token: …" line) when set. Every call shares DEADLINE.
+api() {
+    local method="$1" path="$2" out="$3" body="${4:-}" left code
+    left=$((DEADLINE - $(now)))
+    if [ "${left}" -le 0 ]; then
+        printf '000'
+        return 0
+    fi
+    local args=(-s -o "${out}" -w '%{http_code}' -X "${method}"
+        --connect-timeout "${left}" --max-time "${left}")
+    [ -n "${BAO_CACERT:-}" ] && args+=(--cacert "${BAO_CACERT}")
+    [ -n "${HDR_FILE}" ] && args+=(-H "@${HDR_FILE}")
+    [ -n "${body}" ] && args+=(-H 'Content-Type: application/json' --data-binary "@${body}")
+    code="$(curl "${args[@]}" "${ADDR}/v1/${path}" 2> /dev/null)"
+    printf '%s' "${code:-000}"
+}
+
+describe_code() {
+    case "$1" in
+        000) printf 'no answer from %s (network, TLS or timeout)' "${ADDR}" ;;
+        400) printf 'HTTP 400 (bad request: expired or invalid credential?)' ;;
+        403) printf 'HTTP 403 (permission denied)' ;;
+        404) printf 'HTTP 404 (not found)' ;;
+        *) printf 'HTTP %s' "$1" ;;
+    esac
+}
+
+# set_header_from_file FILE → HDR_FILE holds "X-Vault-Token: <first line of FILE>".
+set_header_from_file() {
+    local tok
+    tok="$(tr -d '[:space:]' < "$1")"
+    HDR_FILE="$(tmpfile)" || return 1
+    printf 'X-Vault-Token: %s\n' "${tok}" > "${HDR_FILE}"
+}
+
+set_header_from_env() {
+    HDR_FILE="$(tmpfile)" || return 1
+    printf 'X-Vault-Token: %s\n' "$(printf '%s' "${BAO_TOKEN}" | tr -d '[:space:]')" > "${HDR_FILE}"
+}
+
+# ── Credentials ──────────────────────────────────────────────────────────────
+have_wrapped_files() { [ -s "${ROLE_ID_FILE}" ] && [ -s "${WRAPPED_FILE}" ]; }
+have_env_approle() { [ -n "${BAO_ROLE_ID:-}" ] && [ -n "${BAO_SECRET_ID:-}" ]; }
+have_cached_token() {
+    [ -s "${TOKEN_FILE}" ] || return 1
+    local exp
+    exp="$(cat "${TOKEN_EXPIRY_FILE}" 2> /dev/null || echo 0)"
+    case "${exp}" in '' | *[!0-9]*) exp=0 ;; esac
+    # 0 = no expiry known (non-expiring token): keep it until it gets a 403.
+    [ "${exp}" -eq 0 ] || [ "${exp}" -gt "$(($(now) + 10))" ]
+}
+have_credentials() {
+    [ -n "${BAO_TOKEN:-}" ] || have_wrapped_files || have_cached_token || have_env_approle
+}
+
+# approle_login BODYFILE → stores the token in TOKEN_FILE, sets HDR_FILE.
+approle_login() {
+    local body="$1" out code ttl
+    out="$(tmpfile)" || return 1
+    HDR_FILE=""
+    code="$(api POST "auth/${APPROLE_MOUNT}/login" "${out}" "${body}")"
+    if [ "${code}" != "200" ]; then
+        LOGIN_ERROR="AppRole login failed: $(describe_code "${code}")"
+        return 1
+    fi
+    if ! jq -er '.auth.client_token' "${out}" > "${TOKEN_FILE}.new" 2> /dev/null; then
+        rm -f "${TOKEN_FILE}.new"
+        LOGIN_ERROR="AppRole login answered without a token"
+        return 1
+    fi
+    mv -f "${TOKEN_FILE}.new" "${TOKEN_FILE}"
+    ttl="$(jq -r '.auth.lease_duration // 0' "${out}" 2> /dev/null)"
+    case "${ttl}" in '' | *[!0-9]*) ttl=0 ;; esac
+    if [ "${ttl}" -gt 0 ]; then echo "$(($(now) + ttl))" > "${TOKEN_EXPIRY_FILE}"; else echo 0 > "${TOKEN_EXPIRY_FILE}"; fi
+    set_header_from_file "${TOKEN_FILE}"
+}
+
+# The host drops role-id + a response-wrapped secret_id; unwrap it (single use), then log in.
+login_wrapped() {
+    local out code body
+    out="$(tmpfile)" || return 1
+    set_header_from_file "${WRAPPED_FILE}" || return 1
+    code="$(api POST sys/wrapping/unwrap "${out}")"
+    # Whatever the server answered, the wrapping token is spent (or was never valid): drop
+    # it now. Only keep it when the server never answered, so a later shell can retry.
+    [ "${code}" != "000" ] && rm -f "${WRAPPED_FILE}"
+    HDR_FILE=""
+    if [ "${code}" != "200" ]; then
+        LOGIN_ERROR="unwrapping ${WRAPPED_FILE} failed: $(describe_code "${code}")"
+        return 1
+    fi
+    body="$(tmpfile)" || return 1
+    if ! jq -e --rawfile r "${ROLE_ID_FILE}" \
+        '{role_id: ($r | gsub("\\s"; "")), secret_id: (.data.secret_id // empty)}' \
+        "${out}" > "${body}" 2> /dev/null; then
+        LOGIN_ERROR="the unwrapped response holds no secret_id"
+        return 1
+    fi
+    : > "${out}"
+    approle_login "${body}"
+}
+
+login_env_approle() {
+    local body
+    body="$(tmpfile)" || return 1
+    jq -n '{role_id: env.BAO_ROLE_ID, secret_id: env.BAO_SECRET_ID}' > "${body}"
+    approle_login "${body}"
+}
+
+# First match wins: BAO_TOKEN, host-dropped wrapped secret_id, cached token, BAO_ROLE_ID +
+# BAO_SECRET_ID. $1 = "nocache" to skip the cached token (after it got a 403).
+acquire_token() {
+    local skip_cache="${1:-}"
+    LOGIN_ERROR=""
+    if [ -n "${BAO_TOKEN:-}" ]; then
+        TOKEN_SOURCE="BAO_TOKEN"
+        set_header_from_env
+        return
+    fi
+    if have_wrapped_files; then
+        TOKEN_SOURCE="wrapped secret_id"
+        login_wrapped && return 0
+    fi
+    if [ "${skip_cache}" != "nocache" ] && have_cached_token; then
+        TOKEN_SOURCE="cached token"
+        set_header_from_file "${TOKEN_FILE}"
+        return
+    fi
+    if have_env_approle; then
+        TOKEN_SOURCE="BAO_ROLE_ID/BAO_SECRET_ID"
+        login_env_approle && return 0
+    fi
+    [ -n "${LOGIN_ERROR}" ] || LOGIN_ERROR="no credentials (BAO_TOKEN, ${WRAPPED_FILE}, BAO_ROLE_ID/BAO_SECRET_ID)"
+    return 1
+}
+
+# ── Fetch ────────────────────────────────────────────────────────────────────
+# Reads every path, merges them in order (a later path wins on a duplicate key), writes
+# the cache atomically. Unreadable paths are listed in FAILED_PATHS. Returns 0 when at
+# least one path was read.
+FETCH_ERROR=""
+FAILED_PATHS=""
+read_paths() {
+    local p out code ok=() keys_tmp
+    keys_tmp="$(tmpfile)" || return 1
+    FAILED_PATHS=""
+    LAST_CODE=""
+    NO_ANSWER=0
+    while IFS= read -r p; do
+        out="$(tmpfile)" || return 1
+        code="$(api GET "${MOUNT}/data/${p}" "${out}")"
+        LAST_CODE="${code}"
+        [ "${code}" = "000" ] && NO_ANSWER=$((NO_ANSWER + 1))
+        if [ "${code}" = "200" ] && jq -e '.data.data | type == "object"' "${out}" > /dev/null 2>&1; then
+            ok+=("${out}")
+            printf '%s\t%s\n' "${p}" "$(jq -r '.data.data | keys | join(" ")' "${out}")" >> "${keys_tmp}"
+        else
+            FAILED_PATHS="${FAILED_PATHS}${FAILED_PATHS:+, }${p} ($(describe_code "${code}"))"
+            printf '%s\t!%s\n' "${p}" "$(describe_code "${code}")" >> "${keys_tmp}"
+        fi
+    done < <(path_list)
+    if [ "${#ok[@]}" -eq 0 ]; then
+        # Every path failed the same way: name the cause once.
+        [ "${NO_ANSWER}" -gt 0 ] && [ "${NO_ANSWER}" -eq "$(path_list | wc -l)" ] \
+            && FETCH_ERROR="$(describe_code 000)"
+        return 1
+    fi
+
+    local env_tmp stamp
+    env_tmp="$(tmpfile)" || return 1
+    stamp="$(now)-$$"
+    # Names a shell or the dynamic linker treats specially are never taken from the server.
+    if ! jq -rs --arg stamp "${stamp}" '
+        def ok_name: test("^[A-Za-z_][A-Za-z0-9_]*$")
+            and (test("^(LD_.*|BASH_ENV|ENV|IFS|PS4|PROMPT_COMMAND|SHELLOPTS|BASHOPTS|OPENBAO_ENV_.*)$") | not);
+        (map(.data.data) | add) as $all
+        | "# Written by openbao-env — memory only, sourced by /usr/local/share/openbao-env/loader.sh",
+          "_openbao_stamp=" + ($stamp | @sh),
+          ($all | to_entries[]
+            | select(.key | ok_name)
+            | (.value | if type == "string" then . else tojson end) as $v
+            | select($v | contains("\u0000") | not)
+            | "_openbao_set " + (.key | @sh) + " " + ($v | @sh))
+        ' "${ok[@]}" > "${env_tmp}" 2> /dev/null; then
+        FETCH_ERROR="could not parse the server's answer"
+        return 1
+    fi
+    local skipped
+    skipped="$(jq -rs '[map(.data.data) | add | keys[]
+        | select((test("^[A-Za-z_][A-Za-z0-9_]*$") and (test("^(LD_.*|BASH_ENV|ENV|IFS|PS4|PROMPT_COMMAND|SHELLOPTS|BASHOPTS|OPENBAO_ENV_.*)$") | not)) | not)]
+        | join(" ")' "${ok[@]}" 2> /dev/null)"
+    [ -n "${skipped}" ] && warn "skipped keys that can't be environment variable names: ${skipped}"
+    chmod 600 "${env_tmp}" "${keys_tmp}"
+    mv -f "${keys_tmp}" "${KEYS_FILE}"
+    mv -f "${env_tmp}" "${CACHE}"
+}
+
+do_fetch() {
+    local mode="$1"
+    if [ -z "$(path_list)" ]; then
+        [ "${mode}" = "auto" ] || warn "no paths configured (feature option 'paths' or OPENBAO_PATHS)"
+        return 1
+    fi
+    command -v curl > /dev/null 2>&1 && command -v jq > /dev/null 2>&1 \
+        || { warn "curl and jq are required"; return 1; }
+    ensure_dir || return 1
+
+    if [ "${mode}" = "auto" ]; then
+        # Not configured at all: say so once per container, then stay quiet.
+        if [ -z "${ADDR}" ] || ! have_credentials; then
+            if [ ! -e "${NOCREDS_MARK}" ]; then
+                if [ -z "${ADDR}" ]; then
+                    warn "no secrets loaded: no server address (BAO_ADDR or the 'address' option). See 'openbao-env status'."
+                else
+                    warn "no secrets loaded: no credentials (BAO_TOKEN, ${WRAPPED_FILE} or BAO_ROLE_ID/BAO_SECRET_ID). See 'openbao-env status'."
+                fi
+                : > "${NOCREDS_MARK}"
+                fix_owner
+            fi
+            return 1
+        fi
+        # A recent failure: don't make every new shell wait for the same timeout again,
+        # unless the host has just dropped fresh credentials.
+        if [ -s "${ERROR_FILE}" ] && ! have_wrapped_files; then
+            local last
+            last="$(head -n1 "${ERROR_FILE}" | cut -d' ' -f1)"
+            case "${last}" in '' | *[!0-9]*) last=0 ;; esac
+            [ $(($(now) - last)) -ge "${RETRY_AFTER}" ] || return 1
+        fi
+    fi
+    if [ -z "${ADDR}" ]; then
+        warn "no server address: set BAO_ADDR or the feature's 'address' option"
+        return 1
+    fi
+
+    # One fetch at a time: concurrent shells (VS Code opens several at once) wait for the
+    # first one and reuse its cache.
+    if command -v flock > /dev/null 2>&1; then
+        exec 9> "${LOCK_FILE}"
+        if ! flock -w "${TIMEOUT}" 9; then
+            [ "${mode}" = "auto" ] || warn "another openbao-env fetch is still running"
+            return 1
+        fi
+        if [ "${mode}" = "auto" ] && [ -f "${CACHE}" ]; then
+            return 0
+        fi
+    fi
+
+    DEADLINE=$(($(now) + TIMEOUT))
+    FETCH_ERROR=""
+    if ! acquire_token; then
+        FETCH_ERROR="${LOGIN_ERROR}"
+    elif ! read_paths; then
+        if [ "${TOKEN_SOURCE}" = "cached token" ] && [ "${LAST_CODE}" = "403" ]; then
+            # The cached token was revoked or expired early: forget it, try fresh credentials.
+            rm -f "${TOKEN_FILE}" "${TOKEN_EXPIRY_FILE}"
+            if acquire_token nocache; then
+                FETCH_ERROR=""
+                read_paths || FETCH_ERROR="${FETCH_ERROR:-could not read any path: ${FAILED_PATHS}}"
+            else
+                FETCH_ERROR="cached token rejected; ${LOGIN_ERROR}"
+            fi
+        else
+            FETCH_ERROR="${FETCH_ERROR:-could not read any path: ${FAILED_PATHS}}"
+        fi
+    fi
+
+    if [ -n "${FETCH_ERROR}" ]; then
+        printf '%s %s\n' "$(now)" "${FETCH_ERROR}" > "${ERROR_FILE}"
+        warn "no secrets loaded: ${FETCH_ERROR}"
+        fix_owner
+        return 1
+    fi
+    rm -f "${ERROR_FILE}"
+    [ -n "${FAILED_PATHS}" ] && warn "some paths were not loaded: ${FAILED_PATHS}"
+    fix_owner
+    return 0
+}
+
+# ── Commands ─────────────────────────────────────────────────────────────────
+human_age() {
+    local s="$1"
+    if [ "${s}" -lt 60 ]; then printf '%ss' "${s}"
+    elif [ "${s}" -lt 3600 ]; then printf '%sm' "$((s / 60))"
+    else printf '%sh%02dm' "$((s / 3600))" "$((s % 3600 / 60))"; fi
+}
+
+cmd_status() {
+    local p
+    echo "OpenBao env"
+    echo "  address:     ${ADDR:-(none: set BAO_ADDR or the 'address' option)}${ADDR:+ (from ${ADDR_SOURCE})}"
+    echo "  mount:       ${MOUNT}"
+    echo "  paths:       $(path_list | paste -sd, - | sed 's/,/, /g')"
+    [ -n "$(path_list)" ] || echo "               (none: set the 'paths' option or OPENBAO_PATHS)"
+
+    local creds=()
+    [ -n "${BAO_TOKEN:-}" ] && creds+=("BAO_TOKEN")
+    have_wrapped_files && creds+=("wrapped secret_id in ${DIR}")
+    have_env_approle && creds+=("BAO_ROLE_ID/BAO_SECRET_ID")
+    echo "  credentials: ${creds[*]:-none besides a cached token}"
+
+    if [ -s "${TOKEN_FILE}" ]; then
+        local exp
+        exp="$(cat "${TOKEN_EXPIRY_FILE}" 2> /dev/null || echo 0)"
+        case "${exp}" in '' | *[!0-9]*) exp=0 ;; esac
+        if [ "${exp}" -eq 0 ]; then echo "  token:       cached, no expiry"
+        elif [ "${exp}" -gt "$(now)" ]; then echo "  token:       cached, expires in $(human_age $((exp - $(now))))"
+        else echo "  token:       cached, expired"; fi
+    else
+        echo "  token:       none cached"
+    fi
+
+    if [ -f "${CACHE}" ]; then
+        local mtime
+        mtime="$(stat -c %Y "${CACHE}" 2> /dev/null || now)"
+        echo "  cache:       ${CACHE}, $(human_age $(($(now) - mtime))) old"
+    else
+        echo "  cache:       none (a new shell or 'openbao-env refresh' fetches it)"
+    fi
+    if [ -s "${ERROR_FILE}" ]; then
+        echo "  last error:  $(cut -d' ' -f2- "${ERROR_FILE}" | head -n1)"
+    fi
+
+    if [ -s "${KEYS_FILE}" ]; then
+        echo "  keys (later paths win on duplicates):"
+        local path keys k
+        while IFS=$'\t' read -r path keys; do
+            case "${keys}" in
+                !*) printf '    %s: not loaded, %s\n' "${path}" "${keys#!}" ;;
+                *) printf '    %s: %s\n' "${path}" "${keys:-(empty)}" ;;
+            esac
+        done < "${KEYS_FILE}"
+
+        # What this shell actually has — names only.
+        local loaded=() kept=() missing=()
+        for k in $(grep -v '^!' "${KEYS_FILE}" | cut -f2 | tr ' ' '\n' | sort -u); do
+            [[ "${k}" =~ ^[A-Za-z_][A-Za-z0-9_]*$ ]] || continue
+            if [[ " ${OPENBAO_ENV_KEYS:-} " == *" ${k} "* ]]; then loaded+=("${k}")
+            elif [ -n "${!k:-}" ]; then kept+=("${k}")
+            else missing+=("${k}"); fi
+        done
+        echo "  this shell:"
+        echo "    from OpenBao:          ${loaded[*]:-(none)}"
+        [ "${#kept[@]}" -gt 0 ] && echo "    already set, kept:     ${kept[*]}"
+        [ "${#missing[@]}" -gt 0 ] && echo "    missing (new shell?):  ${missing[*]}"
+    fi
+    if [ -n "${BAO_TOKEN:-}" ] && [ -n "${ADDR}" ] && command -v curl > /dev/null 2>&1 && ensure_dir; then
+        local out code ttl
+        DEADLINE=$(($(now) + TIMEOUT))
+        set_header_from_env
+        out="$(tmpfile)"
+        code="$(api GET auth/token/lookup-self "${out}")"
+        if [ "${code}" = "200" ]; then
+            ttl="$(jq -r '.data.ttl // 0' "${out}")"
+            echo "  BAO_TOKEN:   valid, ttl $([ "${ttl}" = 0 ] && echo none || human_age "${ttl}")"
+        else
+            echo "  BAO_TOKEN:   lookup failed, $(describe_code "${code}")"
+        fi
+    fi
+    return 0
+}
+
+cmd_refresh() {
+    rm -f "${NOCREDS_MARK}" 2> /dev/null
+    if do_fetch manual; then
+        local n
+        n="$(grep -c '^_openbao_set ' "${CACHE}" 2> /dev/null || echo 0)"
+        echo "openbao-env: ${n} variable(s) cached from $(path_list | paste -sd, - | sed 's/,/, /g')."
+        echo "Open a new terminal (or run 'Developer: Reload Window' in VS Code) to use them;"
+        echo "in this shell: . /usr/local/share/openbao-env/loader.sh"
+        return 0
+    fi
+    return 1
+}
+
+cmd_clear() {
+    rm -f "${CACHE}" "${KEYS_FILE}" "${TOKEN_FILE}" "${TOKEN_EXPIRY_FILE}" "${ERROR_FILE}" "${NOCREDS_MARK}"
+    echo "openbao-env: cache and cached token removed (variables already exported stay in running shells)."
+}
+
+cmd_check() {
+    [ -n "$(path_list)" ] || return 0
+    [ -f "${CACHE}" ] && return 0
+    if [ -s "${ERROR_FILE}" ]; then
+        warn "no secrets loaded: $(cut -d' ' -f2- "${ERROR_FILE}" | head -n1). Fix it, then run 'openbao-env refresh'."
+    else
+        warn "no secrets loaded yet. Run 'openbao-env status' for details."
+    fi
+    return 0
+}
+
+usage() {
+    cat << 'EOF'
+Usage: openbao-env <command>
+
+  status    server, paths, key names per path, cache age, token TTL (never values)
+  refresh   fetch the secrets again into the memory-only cache
+  clear     remove the cache and the cached token
+  check     warn when nothing is loaded (used by postStartCommand)
+EOF
+}
+
+case "${1:-status}" in
+    status) cmd_status ;;
+    refresh) cmd_refresh ;;
+    clear) cmd_clear ;;
+    check) cmd_check ;;
+    fetch)
+        if [ "${2:-}" = "--auto" ]; then do_fetch auto; else do_fetch manual; fi
+        ;;
+    -h | --help | help) usage ;;
+    *)
+        usage >&2
+        exit 2
+        ;;
+esac

@@ -1,0 +1,21 @@
+{
+  "without_cli": {
+    "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+    "features": {
+      "openbao-env": {
+        "installCli": false,
+        "paths": "orgs/test",
+        "address": "http://127.0.0.1:9"
+      }
+    }
+  },
+  "dev_server": {
+    "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+    "features": {
+      "openbao-env": {
+        "paths": "shared/common, orgs/test",
+        "address": "http://127.0.0.1:8200"
+      }
+    }
+  }
+}
