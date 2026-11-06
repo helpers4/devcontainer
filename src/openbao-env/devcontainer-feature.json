@@ -1,6 +1,6 @@
 {
   "id": "openbao-env",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "name": "OpenBao secrets",
   "description": "Loads secrets from OpenBao (KV v2) into the environment of every process in the container: VS Code and its extensions, terminals, the lifecycle hooks of other features, AI agents. The container fetches its own secrets (AppRole, response-wrapped secret_id or token) into a memory-only cache, so nothing depends on the attaching client's localEnv. Optionally installs the bao CLI. Also self-heals your devcontainer setup.",
   "documentationURL": "https://github.com/helpers4/devcontainer/tree/main/src/openbao-env",
