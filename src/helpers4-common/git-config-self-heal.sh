@@ -114,7 +114,9 @@ if [ "${GPG_FORMAT}" = "ssh" ]; then
     SIGNINGKEY="$(_get user.signingkey)"
     SIGNINGKEY="${SIGNINGKEY/#\~/${HOME}}"
 
-    if [ -n "${SIGNINGKEY}" ] && [ ! -f "${SIGNINGKEY}" ]; then
+    # A `key::` value is the public key itself (git's literal form), not a path: nothing to heal.
+    # Treating it as a path used to write the key to a file named after it in the working directory.
+    if [ -n "${SIGNINGKEY}" ] && [ "${SIGNINGKEY#key::}" = "${SIGNINGKEY}" ] && [ ! -f "${SIGNINGKEY}" ]; then
         FOUND=""
 
         # Strategy 1: a file with the same basename already exists locally —
