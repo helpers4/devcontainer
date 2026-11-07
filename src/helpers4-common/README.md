@@ -48,7 +48,7 @@ stale as installed tools move around):
   resolve here, it's rewritten to the bare command name once a same-named binary is found on
   `$PATH`. Bare, not a freshly-resolved absolute path again: it never goes stale a second time
   even if the tool moves on a future rebuild.
-- `user.signingkey` (only when `gpg.format=ssh`) — if the file is missing, tries a same-basename
+- `user.signingkey` (only when `gpg.format=ssh`, and not a `key::` literal, which is the key itself) — if the file is missing, tries a same-basename
   file under `~/.ssh`/`~/.gnupg` first (covers a case like `dotfiles-sync` having already placed
   the real file under a different absolute path than the host's), then falls back to recovering
   the public key live from a forwarded `ssh-agent`, matched against `user.email` (`ssh-add -L`
