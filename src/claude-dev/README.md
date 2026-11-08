@@ -198,7 +198,7 @@ without depending on that user's shell profile already including
 
 ## Version History
 
-- **v1.5.0**: `remoteControlModel` option: default model of the Remote Control sessions
+- **v1.4.2**: `remoteControlModel` option: default model of the Remote Control sessions
   (`claude remote-control` has no `--model`, so `claude-rc` exports it as `ANTHROPIC_MODEL`).
 - **v1.4.0**: `CLAUDE_CONFIG_DIR` now points at the volume, so `~/.claude.json` (account, trust)
   persists too. Added `remoteControl` (off by default) and its `remoteControlName`,
