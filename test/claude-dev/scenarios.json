@@ -13,7 +13,8 @@
       "claude-dev": {
         "remoteControl": true,
         "remoteControlName": "h4 test",
-        "remoteControlAutoTrust": true
+        "remoteControlAutoTrust": true,
+        "remoteControlModel": "sonnet"
       }
     }
   }

@@ -43,6 +43,15 @@ if ! pgrep -f 'claude-rc loop$' >/dev/null 2>&1; then
 fi
 echo "✅ PASS: Remote Control loop running"
 
+# remoteControlModel: claude-rc exports it as ANTHROPIC_MODEL before starting the server (whose
+# sessions inherit it). /proc/<loop>/environ can't show a later export, so read claude-rc's view.
+if ! grep -q '^RC_MODEL_OPTION=sonnet$' "${ENV_FILE}" \
+    || ! claude-rc status 2>/dev/null | grep -qE '^model: +sonnet$'; then
+    echo "❌ FAIL: remoteControlModel=sonnet not applied (options file or claude-rc status)"
+    exit 1
+fi
+echo "✅ PASS: remoteControlModel applied as the server's model"
+
 # ~/.claude.json lives in the volume (login, trust and the Remote Control confirmation survive).
 if [ "${CLAUDE_CONFIG_DIR:-}" != "/mnt/h4claude" ]; then
     echo "❌ FAIL: CLAUDE_CONFIG_DIR is '${CLAUDE_CONFIG_DIR:-unset}', expected /mnt/h4claude"

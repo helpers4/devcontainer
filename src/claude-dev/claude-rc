@@ -31,9 +31,13 @@ RC_NAME_OPTION=""
 RC_DIR_OPTION=""
 RC_SPAWN_OPTION="same-dir"
 RC_PERMISSION_MODE_OPTION=""
+RC_MODEL_OPTION=""
 RC_AUTO_TRUST_OPTION="false"
 # shellcheck source=/dev/null
 [ -f "${OPTIONS_FILE}" ] && . "${OPTIONS_FILE}"
+# `claude remote-control` has no --model flag: the sessions it spawns inherit the server's
+# environment, so the default model goes through ANTHROPIC_MODEL.
+if [ -n "${RC_MODEL_OPTION}" ]; then export ANTHROPIC_MODEL="${RC_MODEL_OPTION}"; fi
 
 log() { echo "[claude-rc] $*"; }
 warn() { echo "[claude-rc] ⚠️  $*" >&2; }
@@ -303,6 +307,7 @@ cmd_attach() {
 
 cmd_status() {
     echo "remoteControl option: ${RC_ENABLED}"
+    echo "model:                ${ANTHROPIC_MODEL:-default}"
     if running; then
         # shellcheck source=/dev/null
         [ -f "${STATE_FILE}" ] && . "${STATE_FILE}"

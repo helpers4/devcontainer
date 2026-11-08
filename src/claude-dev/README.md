@@ -147,6 +147,7 @@ convention would silently share one memory/settings bucket under that model.
 | `remoteControlSpawn` | `same-dir` \| `worktree` | `same-dir` | How the server creates sessions. |
 | `remoteControlAutoTrust` | boolean | `false` | Answer yes to "Trust this folder?" for the server's folder — see [Trusting the folder](#remote-control-drive-this-devcontainer-from-your-phone-or-another-computer). Without it, run `claude` once in the folder and accept. |
 | `remoteControlPermissionMode` | string | `""` | Starting permission mode for the server's sessions (e.g. `acceptEdits`, `plan`). Empty: Claude Code's default. |
+| `remoteControlModel` | string | `""` | Default model of the server's sessions (`sonnet`, `opus`, or a full model id), exported as `ANTHROPIC_MODEL` to the server; its sessions inherit it. Empty: Claude Code's default. |
 
 ## IDE support
 
@@ -197,6 +198,8 @@ without depending on that user's shell profile already including
 
 ## Version History
 
+- **v1.5.0**: `remoteControlModel` option: default model of the Remote Control sessions
+  (`claude remote-control` has no `--model`, so `claude-rc` exports it as `ANTHROPIC_MODEL`).
 - **v1.4.0**: `CLAUDE_CONFIG_DIR` now points at the volume, so `~/.claude.json` (account, trust)
   persists too. Added `remoteControl` (off by default) and its `remoteControlName`,
   `remoteControlDir`, `remoteControlSpawn` and `remoteControlPermissionMode` options: keeps a
