@@ -33,6 +33,7 @@ RC_SPAWN_OPTION="same-dir"
 RC_PERMISSION_MODE_OPTION=""
 RC_MODEL_OPTION=""
 RC_AUTO_TRUST_OPTION="false"
+RC_PRE_CREATE_SESSION_OPTION="false"
 # shellcheck source=/dev/null
 [ -f "${OPTIONS_FILE}" ] && . "${OPTIONS_FILE}"
 # `claude remote-control` has no --model flag: the sessions it spawns inherit the server's
@@ -198,6 +199,11 @@ cmd_loop() {
 
     local args=(remote-control --name "${RC_NAME}" --remote-control-session-name-prefix "${RC_NAME}" --spawn "${spawn}")
     [ -n "${RC_PERMISSION_MODE_OPTION}" ] && args+=(--permission-mode "${RC_PERMISSION_MODE_OPTION}")
+    # The session the server pre-creates is registered with this directory's git remote as its
+    # source. claude.ai then adds GitHub rules to that session's system prompt: GitHub only through
+    # its connector, only for that repository, no gh CLI — whatever gh and tokens exist here.
+    # Sessions started from claude.ai/code or the app carry no source, so no such rules.
+    [ "${RC_PRE_CREATE_SESSION_OPTION}" = "true" ] || args+=(--no-create-session-in-dir)
 
     if ! logged_in; then
         log "Not logged in. Waiting: log in from the Claude extension (or 'claude auth login' in a"
@@ -308,6 +314,11 @@ cmd_attach() {
 cmd_status() {
     echo "remoteControl option: ${RC_ENABLED}"
     echo "model:                ${ANTHROPIC_MODEL:-default}"
+    if [ "${RC_PRE_CREATE_SESSION_OPTION}" = "true" ]; then
+        echo "first session:        pre-created by the server"
+    else
+        echo "first session:        none, start one from claude.ai/code or the app"
+    fi
     if running; then
         # shellcheck source=/dev/null
         [ -f "${STATE_FILE}" ] && . "${STATE_FILE}"

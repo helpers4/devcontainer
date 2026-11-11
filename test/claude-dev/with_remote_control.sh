@@ -52,6 +52,20 @@ if ! grep -q '^RC_MODEL_OPTION=sonnet$' "${ENV_FILE}" \
 fi
 echo "✅ PASS: remoteControlModel applied as the server's model"
 
+# remoteControlPreCreateSession defaults to false: the server must get --no-create-session-in-dir
+# (a pre-created session is restricted to claude.ai's GitHub connector). No login in CI, so the
+# server never starts: check the options file, claude-rc's view and the flag in the script.
+if ! grep -q '^RC_PRE_CREATE_SESSION_OPTION=false$' "${ENV_FILE}" \
+    || ! claude-rc status 2>/dev/null | grep -qE '^first session: +none'; then
+    echo "❌ FAIL: remoteControlPreCreateSession isn't off by default (options file or claude-rc status)"
+    exit 1
+fi
+if ! grep -q -- '--no-create-session-in-dir' /usr/local/bin/claude-rc; then
+    echo "❌ FAIL: claude-rc doesn't pass --no-create-session-in-dir"
+    exit 1
+fi
+echo "✅ PASS: no pre-created session by default"
+
 # ~/.claude.json lives in the volume (login, trust and the Remote Control confirmation survive).
 if [ "${CLAUDE_CONFIG_DIR:-}" != "/mnt/h4claude" ]; then
     echo "❌ FAIL: CLAUDE_CONFIG_DIR is '${CLAUDE_CONFIG_DIR:-unset}', expected /mnt/h4claude"

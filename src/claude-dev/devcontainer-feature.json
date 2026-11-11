@@ -1,6 +1,6 @@
 {
   "id": "claude-dev",
-  "version": "1.4.2",
+  "version": "1.4.3",
   "name": "Claude Code Development Environment",
   "description": "Installs the Claude Code IDE extension (anthropic.claude-code) for VS Code and Cursor, and optionally the claude CLI. Persists ~/.claude (credentials, config, memory) across rebuilds and Codespaces via a Docker named volume, dedicated to this devcontainer. Also self-heals your devcontainer setup.",
   "documentationURL": "https://github.com/helpers4/devcontainer/tree/main/src/claude-dev",
@@ -31,7 +31,7 @@
     "remoteControlName": {
       "type": "string",
       "default": "",
-      "description": "Title of the server's first session and prefix of every session name in claude.ai/code (not the environment label, which Claude Code takes from the git repository name). Empty means: $CLAUDE_RC_NAME, then org-workspace's org, then the owner of the origin remote, then the workspace folder name."
+      "description": "Prefix of every session name in claude.ai/code, and title of the pre-created session when remoteControlPreCreateSession is on (not the environment label, which Claude Code takes from the git repository name). Empty means: $CLAUDE_RC_NAME, then org-workspace's org, then the owner of the origin remote, then the workspace folder name."
     },
     "remoteControlDir": {
       "type": "string",
@@ -61,6 +61,11 @@
       "type": "string",
       "default": "",
       "description": "Default model of the server's sessions (e.g. sonnet, opus, or a full model id), exported as ANTHROPIC_MODEL to the server. Empty means Claude Code's default."
+    },
+    "remoteControlPreCreateSession": {
+      "type": "boolean",
+      "default": false,
+      "description": "Let the server pre-create a session when it starts. Off by default: claude.ai ties a pre-created session to the directory's GitHub repository and tells Claude to reach GitHub only through its connector, for that repository alone, ignoring the gh CLI and tokens of the devcontainer. Sessions you start from claude.ai/code or the app are not restricted."
     }
   },
   "containerEnv": {
