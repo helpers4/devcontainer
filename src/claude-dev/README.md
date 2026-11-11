@@ -81,6 +81,16 @@ Code's Workspace Trust). Two ways:
 - `false` (default): run `claude` once in the folder and accept the question. The server picks it
   up within 30 s; until then its pane says it isn't trusted.
 
+**Starting a session:** pick this devcontainer's environment in claude.ai/code or the app and
+start a session there. The server does not pre-create one (`remoteControlPreCreateSession:
+false`), on purpose: a pre-created session is registered with the folder's git remote as its
+source, and claude.ai then adds GitHub rules to its system prompt — GitHub only through the
+claude.ai connector, only for that one repository, no `gh` CLI — whatever `gh` and tokens the
+devcontainer has. Claude then refuses to use them, e.g. on the sibling repos of an
+[`org-workspace`](../org-workspace). A session started from claude.ai/code or the app carries no
+source and uses the devcontainer's own `gh` and git credentials. Turn the option on only if you
+want that ready-made session and work on a single repository through the connector.
+
 **Day to day:** `claude-rc status` shows whether it runs, its name, directory and last output;
 `claude-rc stop` / `start` / `restart` do what they say. A stopped server's sessions come back
 with `claude-rc start` for about 4 hours.
@@ -142,12 +152,13 @@ convention would silently share one memory/settings bucket under that model.
 | `username` | string | `auto` | Container user that receives the `~/.claude` symlink. `auto` detects vscode/node/codespace/uid-1000, in that order; set an explicit username to override. |
 | `installCli` | boolean | `false` | Install the Claude Code CLI (`claude` command) via the official native installer. |
 | `remoteControl` | boolean | `false` | Keep a Remote Control server running in a background tmux session — see [Remote Control](#remote-control-drive-this-devcontainer-from-your-phone-or-another-computer). Implies `installCli`. |
-| `remoteControlName` | string | `""` | Title of the first session and prefix of every session name. Not the environment label, which is the git repo name. Empty: automatic (see above). |
+| `remoteControlName` | string | `""` | Prefix of every session name, and title of the pre-created session if there is one. Not the environment label, which is the git repo name. Empty: automatic (see above). |
 | `remoteControlDir` | string | `""` | Directory the server runs in. Empty: the workspace folder (the one you opened in VS Code). |
 | `remoteControlSpawn` | `same-dir` \| `worktree` | `same-dir` | How the server creates sessions. |
 | `remoteControlAutoTrust` | boolean | `false` | Answer yes to "Trust this folder?" for the server's folder — see [Trusting the folder](#remote-control-drive-this-devcontainer-from-your-phone-or-another-computer). Without it, run `claude` once in the folder and accept. |
 | `remoteControlPermissionMode` | string | `""` | Starting permission mode for the server's sessions (e.g. `acceptEdits`, `plan`). Empty: Claude Code's default. |
 | `remoteControlModel` | string | `""` | Default model of the server's sessions (`sonnet`, `opus`, or a full model id), exported as `ANTHROPIC_MODEL` to the server; its sessions inherit it. Empty: Claude Code's default. |
+| `remoteControlPreCreateSession` | boolean | `false` | Let the server pre-create a session at start. Off: such a session is limited to GitHub's claude.ai connector and the folder's repository — see [Starting a session](#remote-control-drive-this-devcontainer-from-your-phone-or-another-computer). |
 
 ## IDE support
 
@@ -198,6 +209,11 @@ without depending on that user's shell profile already including
 
 ## Version History
 
+- **v1.4.3**: the Remote Control server no longer pre-creates a session
+  (`--no-create-session-in-dir`). claude.ai restricted that session to its GitHub connector and
+  to the folder's repository, so Claude refused the devcontainer's `gh` and tokens. Start
+  sessions from claude.ai/code or the app; `remoteControlPreCreateSession: true` brings the
+  pre-created session back. `claude-rc status` shows which applies.
 - **v1.4.2**: `remoteControlModel` option: default model of the Remote Control sessions
   (`claude remote-control` has no `--model`, so `claude-rc` exports it as `ANTHROPIC_MODEL`).
 - **v1.4.0**: `CLAUDE_CONFIG_DIR` now points at the volume, so `~/.claude.json` (account, trust)
